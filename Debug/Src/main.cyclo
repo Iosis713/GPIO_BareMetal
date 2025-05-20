@@ -1,0 +1,3 @@
+../Src/main.cpp:49:6:void ConfigureLD2()	1
+../Src/main.cpp:35:5:int main()	3
+../Src/main.cpp:70:6:void PrimitiveDelay()	2
