@@ -6,4 +6,3 @@
  */
 
 #include "../Inc/gpio.hpp"
-

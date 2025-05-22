@@ -52,10 +52,11 @@ int main(void)
 	GpioOutput<GPIOA_BASE, 5> ld2;
 	while (true)
 	{
-		ld2.Set();
-		Delay(1000);
-		ld2.Clear();
-		Delay(500);
+		//ld2.Set();
+		//Delay(200);
+		//ld2.Clear();
+		ld2.Toggle();
+		Delay(400);
 	}
 
 	/*

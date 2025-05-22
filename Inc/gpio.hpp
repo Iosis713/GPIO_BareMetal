@@ -12,6 +12,8 @@
 #include <stm32l476xx.h>
 #include <cstdint>
 
+#include "config.hpp"
+
 template<typename Derived>
 class IGpio
 {
@@ -24,9 +26,11 @@ public:
 		if (Derived::portAddr == GPIOA_BASE)
 			RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
 		else if (Derived::portAddr == GPIOB_BASE)
-			RCC->AHB2ENR |=RCC_AHB2ENR_GPIOBEN;
+			RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
 		else if (Derived::portAddr == GPIOC_BASE)
-				RCC->AHB2ENR |=RCC_AHB2ENR_GPIOCEN;
+			RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
+		else if (Derived::portAddr == GPIOD_BASE)
+			RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN;
 	}
 };
 
@@ -46,53 +50,65 @@ private:
 	void ConfigureAsOutput()
 	{
 		auto port = this->Port();
-		//to refactor in the way of ConfigureLD2 switch-case
-		port->MODER &= ~(0b11 << (pin * 2));
-		port->MODER |= (0b01 << (pin * 2));
-		port->OTYPER &= ~(1 << pin);
-		port->OSPEEDR &= ~(0b11 << (pin * 2));
-		port->PUPDR &= ~(0b11 << (pin * 2));
-	}
-	/*
-	void ConfigureLD2()
-	{
-		//Reference Manual - Reset and clock control RCC
-		//RCC->AHB2ENR |= (1<<0);
-		RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN; //enable clock for GPIOA
-		//GPIO registers
-		//GPIOx_MODER - port mode register
-		GPIOA->MODER |= GPIO_MODER_MODE5_0; //1
-		GPIOA->MODER &= ~(GPIO_MODER_MODE5_1); //0
-		//output type register -  OTYPER
-		GPIOA->OTYPER &= ~(GPIO_OTYPER_OT5); //bit 5, value 0
-		//OSPEEDR how fast the edge rises
-		GPIOA->OSPEEDR &= ~(GPIO_OSPEEDR_OSPEED5);
-		//PUPDR pull-up pull-down register
-		GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPD5); //00 -no pull up/no pull down
-											 //10 - pull down
-											 //would be like this?
-		//GPIOA->PUPDR |= GPIO_PUPDR_PUPD5_0;
-		//GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPD5_1);
-	}
-	*/
+		static_assert(pin >= 0 && pin < 16, "Invalid pin number: needs to be in range of 0 - 15!");
 
+		// STM32L476RGT6 Reference Manual:
+		// GPIOx_MODER (GPIO port mode register) controls the mode of each pin.
+		// 00 = Input mode
+		// 01 = General purpose output mode
+		// 10 = Alternate function mode
+		// 11 = Analog mode (reset state)
+		port->MODER &= ~MODER_MASKS[pin];
+		port->MODER |= MODER_OUTPUT_BITS[pin];
+
+		// GPIOx_OTYPER (GPIO port output type register):
+		// 0 = Output push-pull (reset state)
+		// 1 = Output open-drain
+		port->OTYPER &= ~OTYPER_BITS[pin];
+
+		// GPIOx_OSPEEDR (GPIO port output speed register):
+		// 00 = Low speed (reset value)
+		// 01 = Medium speed
+		// 10 = High speed
+		// 11 = Very high speed
+		port->OSPEEDR &= ~OSPEEDR_MASKS[pin];
+
+	    // GPIOx_PUPDR (GPIO port pull-up/pull-down register):
+		// Reset value: 0x6400 0000 (for port A) - pin15 [pull-up], pin14 [pull-down], others [No pull-up/pull-down]
+		// Reset value: 0x0000 0100 (for port B) - pin4 [pull-up]
+		// Reset value: 0x0000 0000 (for other ports)
+
+	    // 00 = No pull-up, no pull-down
+	    // 01 = Pull-up
+	    // 10 = Pull-down
+	    // 11 = Reserved
+		port->PUPDR &= ~PUPDR_MASKS[pin];
+	}
 
 public:
 	static constexpr std::uintptr_t portAddr = portAddr_;
 	static constexpr uint8_t pin = pin_;
 
+	GpioOutput(const GpioOutput& source) = delete;
+	GpioOutput(GpioOutput&& source) = delete;
+	GpioOutput& operator=(const GpioOutput& source) = delete;
+	GpioOutput& operator=(GpioOutput&& source) = delete;
 	GpioOutput()
 	{
 		this->EnableClock();
 		ConfigureAsOutput();
 	}
+	~GpioOutput() = default;
 
-	void SetImpl() { this->Port()->BSRR |= GPIO_BSRR_BS5; }
-	void ClearImpl() { this->Port()->BSRR |= GPIO_BSRR_BR5; }
+
+	bool IsPinSet() const { return this->Port()->ODR & PinMask<pin>(); }
+
+	void SetImpl() { this->Port()->BSRR |= BSRR_BS_MASKS[pin]; }
+	void ClearImpl() { this->Port()->BSRR |= BSRR_BR_MASKS[pin]; }
 	void ToggleImpl()
 	{
 		//should be refactored and checked what ODR means. And applied in a way that Set/Clear is implemented
-		if (this->Port->ODR & (1 << pin))
+		if (IsPinSet())
 			ClearImpl();
 		else
 			SetImpl();
