@@ -17,6 +17,8 @@
  */
 
 #include "main.h"
+#include <atomic>
+#include "../Inc/gpio.hpp"
 
 //bit set/reset register BSRR
 //set high state to PA5
@@ -28,22 +30,46 @@
 
 void inline LD2on() { GPIOA->BSRR |= GPIO_BSRR_BS5; };
 void inline LD2off() { GPIOA->BSRR |= GPIO_BSRR_BR5; };
+//volatile uint32_t Tick = 0; //for C type, as in modern cpp its not allowed to increment volatile; can be Tick += 1;
+std::atomic<uint32_t> Tick = 0;
+
 
 void ConfigureLD2();
 void PrimitiveDelay();
+void Delay(const uint32_t delay);
+
+//drivers/cmsis/include/core_cm0plus////systick_config - method
+//To Cortex system timer - in hal clock config
 
 int main(void)
 {
-	ConfigureLD2();
+	//4MHz --> 1s = 4 000 000
+	// 4000 000 / 1000
+	SysTick_Config(4000);
 
-    /* Loop forever */
+	//C++style
+	//lets document this later (21.05
+	GpioOutput<GPIOA_BASE, 5> ld2;
+	while (true)
+	{
+		ld2.Set();
+		Delay(1000);
+		ld2.Clear();
+		Delay(500);
+	}
+
+	/*
+	//C style
+	ConfigureLD2();
 	while(true)
 	{
 		LD2on();
-		PrimitiveDelay();
+		//PrimitiveDelay();
+		Delay(1500);
 		LD2off();
-		PrimitiveDelay();
-	}
+		Delay(500);
+		//PrimitiveDelay();
+	}*/
 }
 
 void ConfigureLD2()
@@ -75,3 +101,21 @@ void PrimitiveDelay()
 	}
 }
 
+//interrupt handler
+extern "C" void SysTick_Handler(void)
+{
+	//Tick += 1; for volatile, as volatile uint32_t tick; tick++ is deprecated for C++20/23
+	Tick.fetch_add(1, std::memory_order_relaxed);
+}
+
+//uint32_t snapshot = tick_counter.load(std::memory_order_relaxed);
+
+void Delay(const uint32_t delay)
+{
+	const uint32_t startTime = Tick.load(std::memory_order_relaxed);
+
+	while(Tick.load(std::memory_order_relaxed) < startTime + delay)
+	{
+		//just wait
+	}
+}
