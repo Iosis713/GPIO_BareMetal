@@ -57,34 +57,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := GPIO_Output_BareMetal
+BUILD_ARTIFACT_NAME := GPIO_BareMetal
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-GPIO_Output_BareMetal.elf \
+GPIO_BareMetal.elf \
 
 MAP_FILES += \
-GPIO_Output_BareMetal.map \
+GPIO_BareMetal.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-GPIO_Output_BareMetal.list \
+GPIO_BareMetal.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: GPIO_Output_BareMetal.elf secondary-outputs
+main-build: GPIO_BareMetal.elf secondary-outputs
 
 # Tool invocations
-GPIO_Output_BareMetal.elf GPIO_Output_BareMetal.map: $(OBJS) $(USER_OBJS) /home/bartoszlozinski/Programming/Embedded/BareMetalSTM32/GPIO_Output_BareMetal/STM32L476RGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-g++ -o "GPIO_Output_BareMetal.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/bartoszlozinski/Programming/Embedded/BareMetalSTM32/GPIO_Output_BareMetal/STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="GPIO_Output_BareMetal.map" -Wl,--gc-sections -static -fno-exceptions -fno-rtti --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
+GPIO_BareMetal.elf GPIO_BareMetal.map: $(OBJS) $(USER_OBJS) /home/bartoszlozinski/Programming/Embedded/BareMetalSTM32/GPIO_BareMetal/STM32L476RGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-g++ -o "GPIO_BareMetal.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/bartoszlozinski/Programming/Embedded/BareMetalSTM32/GPIO_BareMetal/STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="GPIO_BareMetal.map" -Wl,--gc-sections -static -fno-exceptions -fno-rtti --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -93,14 +93,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-GPIO_Output_BareMetal.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "GPIO_Output_BareMetal.list"
+GPIO_BareMetal.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "GPIO_BareMetal.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) GPIO_Output_BareMetal.elf GPIO_Output_BareMetal.list GPIO_Output_BareMetal.map default.size.stdout
+	-$(RM) GPIO_BareMetal.elf GPIO_BareMetal.list GPIO_BareMetal.map default.size.stdout
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)

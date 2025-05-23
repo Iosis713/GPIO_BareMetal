@@ -24,18 +24,13 @@
 //set high state to PA5
 //Reference manual (BS - bit set)
 //#define LD2_ON 	GPIOA->BSRR |=GPIO_BSRR_BS5
-
 //reference manual (BR - bit reset)
 //#define LD2_OFF GPIOA->BSRR |= GPIO_BSRR_BR5
 
-void inline LD2on() { GPIOA->BSRR |= GPIO_BSRR_BS5; };
-void inline LD2off() { GPIOA->BSRR |= GPIO_BSRR_BR5; };
 //volatile uint32_t Tick = 0; //for C type, as in modern cpp its not allowed to increment volatile; can be Tick += 1;
 std::atomic<uint32_t> Tick = 0;
 
-
 void ConfigureLD2();
-void PrimitiveDelay();
 void Delay(const uint32_t delay);
 
 //drivers/cmsis/include/core_cm0plus////systick_config - method
@@ -56,51 +51,11 @@ int main(void)
 		//Delay(200);
 		//ld2.Clear();
 		ld2.Toggle();
-		Delay(400);
-	}
-
-	/*
-	//C style
-	ConfigureLD2();
-	while(true)
-	{
-		LD2on();
-		//PrimitiveDelay();
 		Delay(1500);
-		LD2off();
-		Delay(500);
-		//PrimitiveDelay();
-	}*/
-}
-
-void ConfigureLD2()
-{
-	//Reference Manual - Reset and clock control RCC
-	//RCC->AHB2ENR |= (1<<0);
-	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN; //enable clock for GPIOA
-	//GPIO registers
-	//GPIOx_MODER - port mode register
-	GPIOA->MODER |= GPIO_MODER_MODE5_0; //1
-	GPIOA->MODER &= ~(GPIO_MODER_MODE5_1); //0
-	//output type register -  OTYPER
-	GPIOA->OTYPER &= ~(GPIO_OTYPER_OT5); //bit 5, value 0
-	//OSPEEDR how fast the edge rises
-	GPIOA->OSPEEDR &= ~(GPIO_OSPEEDR_OSPEED5);
-	//PUPDR pull-up pull-down register
-	GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPD5); //00 -no pull up/no pull down
-										 //10 - pull down
-										 //would be like this?
-	//GPIOA->PUPDR |= GPIO_PUPDR_PUPD5_0;
-	//GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPD5_1);
-}
-
-void PrimitiveDelay()
-{
-	for (uint32_t i = 0; i < 100000; i++)
-	{
-		__asm__ volatile("nop");
 	}
+
 }
+
 
 //interrupt handler
 extern "C" void SysTick_Handler(void)
