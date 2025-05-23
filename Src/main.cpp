@@ -30,8 +30,13 @@
 //volatile uint32_t Tick = 0; //for C type, as in modern cpp its not allowed to increment volatile; can be Tick += 1;
 std::atomic<uint32_t> Tick = 0;
 
-void ConfigureLD2();
 void Delay(const uint32_t delay);
+
+//USER BUTTON - PC13 -- 0 - button pressed
+//						1 - button released
+
+void ConfigureUserButton();
+bool IsButtonPressed();
 
 //drivers/cmsis/include/core_cm0plus////systick_config - method
 //To Cortex system timer - in hal clock config
@@ -42,16 +47,23 @@ int main(void)
 	// 4000 000 / 1000
 	SysTick_Config(4000);
 
+	ConfigureUserButton();
+
 	//C++style
 	//lets document this later (21.05
 	GpioOutput<GPIOA_BASE, 5> ld2;
 	while (true)
 	{
+		if (IsButtonPressed())
+			ld2.Set();
+		else
+			ld2.Clear();
+
 		//ld2.Set();
 		//Delay(200);
 		//ld2.Clear();
-		ld2.Toggle();
-		Delay(1500);
+		//ld2.Toggle();
+		//Delay(1500);
 	}
 
 }
@@ -75,3 +87,24 @@ void Delay(const uint32_t delay)
 		//just wait
 	}
 }
+
+void ConfigureUserButton()
+{
+	//enable clock for Port C
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
+	GPIOC->MODER &= ~(GPIO_MODER_MODE13); //default 11 into 00
+	//OTYPER and OSPEEDR are not required, as PC13 will work as an INPUT
+	//can be also checked in application note document
+
+	//could also have reset value, as it is 00 for Port C
+	GPIOC->PUPDR &= ~(GPIO_PUPDR_PUPD13);//No pull-up, no pull-down (floating), 00
+}
+
+bool IsButtonPressed()
+{
+	if (GPIOC->IDR & (1 << 13)) //only for pin 13
+		return false;
+	else
+		return true;
+}
+
