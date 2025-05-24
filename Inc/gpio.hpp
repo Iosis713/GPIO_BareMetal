@@ -34,6 +34,7 @@ public:
 	}
 };
 
+/*
 template<typename Derived>
 class IGpioOutput : public IGpio<Derived>
 {
@@ -41,10 +42,10 @@ public:
 	void Set() { static_cast<Derived*>(this)->SetImpl(); }
 	void Clear() { static_cast<Derived*>(this)->ClearImpl(); }
 	void Toggle() { static_cast<Derived*>(this)->ToggleImpl(); }
-};
+};*/
 
 template<std::uintptr_t portAddr_, uint8_t pin_>
-class GpioOutput : public IGpioOutput<GpioOutput<portAddr_, pin_>>
+class GpioOutput : public IGpio<GpioOutput<portAddr_, pin_>>
 {
 private:
 	void ConfigureAsOutput()
@@ -103,16 +104,9 @@ public:
 
 	bool IsPinSet() const { return this->Port()->ODR & PinMask<pin>(); }
 
-	void SetImpl() { this->Port()->BSRR |= BSRR_BS_MASKS[pin]; }
-	void ClearImpl() { this->Port()->BSRR |= BSRR_BR_MASKS[pin]; }
-	void ToggleImpl()
-	{
-		//should be refactored and checked what ODR means. And applied in a way that Set/Clear is implemented
-		if (IsPinSet())
-			ClearImpl();
-		else
-			SetImpl();
-	}
+	void Set() { this->Port()->BSRR |= BSRR_BS_MASKS[pin]; }
+	void Clear() { this->Port()->BSRR |= BSRR_BR_MASKS[pin]; }
+	void Toggle() { this->Port()->ODR ^= ODR_OD_MASKS[pin]; /*Bitwise XOR*/}
 };
 
 

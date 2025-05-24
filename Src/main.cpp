@@ -36,6 +36,8 @@ void Delay(const uint32_t delay);
 //						1 - button released
 
 void ConfigureUserButton();
+
+constexpr uint16_t PC13 = (1<<13);
 bool IsButtonPressed();
 
 //drivers/cmsis/include/core_cm0plus////systick_config - method
@@ -55,17 +57,17 @@ int main(void)
 	while (true)
 	{
 		if (IsButtonPressed())
-			ld2.Set();
-		else
-			ld2.Clear();
-
-		//ld2.Set();
-		//Delay(200);
-		//ld2.Clear();
-		//ld2.Toggle();
-		//Delay(1500);
+		{
+			Delay(50);
+			if (IsButtonPressed())
+			{
+				ld2.Toggle();
+				//state machine would be better -- to check and learn
+				// obj checking whether state changed - would be fine
+				while(IsButtonPressed()) {}
+			}
+		}
 	}
-
 }
 
 
@@ -102,7 +104,14 @@ void ConfigureUserButton()
 
 bool IsButtonPressed()
 {
-	if (GPIOC->IDR & (1 << 13)) //only for pin 13
+	//by bit shifting
+	//if (GPIOC->IDR & (1 << 13)) //only for pin 13
+
+	//by macro mask
+	//if (GPIOC->IDR & GPIO_IDR_ID13)
+
+	//using constexpr uint16_t or macro for C language
+	if (GPIOC->IDR & PC13)
 		return false;
 	else
 		return true;
