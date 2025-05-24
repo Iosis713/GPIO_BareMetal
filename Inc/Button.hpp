@@ -14,10 +14,7 @@ template<std::uintptr_t portAddr_, uint8_t pin_, OptionsPUPDR pupdrOption>
 class Button : public GpioInput<portAddr_, pin_, pupdrOption>
 {
 private:
-
 public:
-
-
 	Button(const Button& source) = delete;
 	Button(Button&& source) = delete;
 	Button& operator=(const Button& source) = delete;
@@ -25,7 +22,7 @@ public:
 	Button()
 	{
 		this->EnableClock();
-		this->ConfigureAsOutput();
+		this->ConfigureAsInput();
 	}
 	bool IsButtonPressed() const
 	{

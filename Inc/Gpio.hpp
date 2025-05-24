@@ -109,25 +109,18 @@ template<std::uintptr_t portAddr_, uint8_t pin_, OptionsPUPDR pupdrOption>
 class GpioInput : public IGpio<GpioInput<portAddr_, pin_, pupdrOption>>
 {
 protected:
-	void ConfigureAsOutput()
+	void ConfigureAsInput()
 	{
 		auto port = this->Port();
 		static_assert(pin >= 0 && pin < 16, "Invalid pin number: needs to be in range of 0 - 15!");
 		port->MODER &= ~(MODER_MASKS[pin]); //00 - input
+		port->PUPDR &= ~(PUPDR_MASKS[pin]); //00- no pull-up, no pull-down
 		{
 			using enum OptionsPUPDR;
-			if constexpr (pupdrOption == None)
-				port->PUPDR &= ~(PUPDR_MASKS[pin]); //00- no pull-up, no pull-down
-			else if constexpr (pupdrOption == PullUp)
-			{
-				port->PUPDR &= ~(PUPDR_MASKS_0[pin]);
-				port->PUPDR |= PUPDR_MASKS_1[pin];
-			}
-			else if constexpr (pupdrOption ==PullDown)
-			{
+			if constexpr (pupdrOption == PullUp)
 				port->PUPDR |= PUPDR_MASKS_0[pin];
-				port->PUPDR &= ~(PUPDR_MASKS_1[pin]);
-			}
+			else if constexpr (pupdrOption == PullDown)
+				port->PUPDR |= PUPDR_MASKS_1[pin];
 		}
 	}
 public:
@@ -141,7 +134,7 @@ public:
 	GpioInput()
 	{
 		this->EnableClock();
-		ConfigureAsOutput();
+		ConfigureAsInput();
 	}
 
 	bool ReadPin() const
