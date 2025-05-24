@@ -102,7 +102,7 @@ enum class OptionsPUPDR
     None, // 00 = No pull-up, no pull-down
     PullUp, // 01 = Pull-up
     PullDown,// 10 = Pull-down
-    Reserved,// 11 = Reserved
+    /*Reserved,// 11 = Reserved - but you shouldn't use reserved pin*/
 };
 
 template<std::uintptr_t portAddr_, uint8_t pin_, OptionsPUPDR pupdrOption>
@@ -115,9 +115,19 @@ protected:
 		static_assert(pin >= 0 && pin < 16, "Invalid pin number: needs to be in range of 0 - 15!");
 		port->MODER &= ~(MODER_MASKS[pin]); //00 - input
 		{
-		using enum OptionsPUPDR;
-		if constexpr (pupdrOption == None)
+			using enum OptionsPUPDR;
+			if constexpr (pupdrOption == None)
 				port->PUPDR &= ~(PUPDR_MASKS[pin]); //00- no pull-up, no pull-down
+			else if constexpr (pupdrOption == PullUp)
+			{
+				port->PUPDR &= ~(PUPDR_MASKS_0[pin]);
+				port->PUPDR |= PUPDR_MASKS_1[pin];
+			}
+			else if constexpr (pupdrOption ==PullDown)
+			{
+				port->PUPDR |= PUPDR_MASKS_0[pin];
+				port->PUPDR &= ~(PUPDR_MASKS_1[pin]);
+			}
 		}
 	}
 public:
