@@ -16,9 +16,9 @@
  ******************************************************************************
  */
 
+#include <Gpio.hpp>
 #include "main.h"
 #include <atomic>
-#include "../Inc/gpio.hpp"
 
 //bit set/reset register BSRR
 //set high state to PA5

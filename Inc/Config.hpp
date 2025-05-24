@@ -6,6 +6,8 @@
  */
 
 #include <array>
+#include <cstdint>
+#include "main.h"
 
 #ifndef CONFIG_HPP_
 #define CONFIG_HPP_

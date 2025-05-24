@@ -9,10 +9,10 @@
 #ifndef INC_GPIO_HPP_
 #define INC_GPIO_HPP_
 
+#include <Config.hpp>
 #include <stm32l476xx.h>
 #include <cstdint>
 
-#include "config.hpp"
 
 template<typename Derived>
 class IGpio
@@ -99,5 +99,44 @@ public:
 	void Toggle() { this->Port()->ODR ^= ODR_OD_MASKS[pin]; /*Bitwise XOR*/}
 };
 
+enum class OptionsPUPDR
+{
+    None, // 00 = No pull-up, no pull-down
+    PullUp, // 01 = Pull-up
+    PullDown,// 10 = Pull-down
+    Reserved,// 11 = Reserved
+};
+
+template<std::uintptr_t portAddr_, uint8_t pin_>
+class GpioInput : public IGpio<GpioInput<portAddr_, pin_>>
+{
+private:
+	void ConfigureAsOutput()
+	{
+		auto port = this->Port();
+		static_assert(pin >= 0 && pin < 16, "Invalid pin number: needs to be in range of 0 - 15!");
+		port->MODER &= ~(MODER_MASKS[pin]);
+		port->PUPDR &= ~(PUPDR_MASKS[pin]);
+	}
+public:
+	static constexpr std::uintptr_t portAddr = portAddr_;
+	static constexpr uint8_t pin = pin_;
+
+	GpioInput(const GpioInput& source) = delete;
+	GpioInput(GpioInput&& source) = delete;
+	GpioInput& operator=(const GpioInput& source) = delete;
+	GpioInput& operator=(GpioInput&& source) = delete;
+	GpioInput()
+	{
+		this->EnableClock();
+		ConfigureAsOutput();
+	}
+
+	bool ReadPin() const
+	{
+		//true - high state, false - low state
+		return this->Port()->IDR & PinMask<pin>() ;
+	};
+};
 
 #endif /* INC_GPIO_HPP_ */
