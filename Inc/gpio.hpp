@@ -34,16 +34,6 @@ public:
 	}
 };
 
-/*
-template<typename Derived>
-class IGpioOutput : public IGpio<Derived>
-{
-public:
-	void Set() { static_cast<Derived*>(this)->SetImpl(); }
-	void Clear() { static_cast<Derived*>(this)->ClearImpl(); }
-	void Toggle() { static_cast<Derived*>(this)->ToggleImpl(); }
-};*/
-
 template<std::uintptr_t portAddr_, uint8_t pin_>
 class GpioOutput : public IGpio<GpioOutput<portAddr_, pin_>>
 {
