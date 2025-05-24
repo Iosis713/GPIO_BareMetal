@@ -10,5 +10,6 @@
 
 //#include <stdint.h>
 #include <stm32l4xx.h>
+#include "Config.hpp"
 
 #endif /* MAIN_H_ */

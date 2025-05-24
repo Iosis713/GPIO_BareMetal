@@ -9,10 +9,8 @@
 #ifndef INC_GPIO_HPP_
 #define INC_GPIO_HPP_
 
-#include <Config.hpp>
-#include <stm32l476xx.h>
+#include "main.h"
 #include <cstdint>
-
 
 template<typename Derived>
 class IGpio
@@ -107,16 +105,20 @@ enum class OptionsPUPDR
     Reserved,// 11 = Reserved
 };
 
-template<std::uintptr_t portAddr_, uint8_t pin_>
-class GpioInput : public IGpio<GpioInput<portAddr_, pin_>>
+template<std::uintptr_t portAddr_, uint8_t pin_, OptionsPUPDR pupdrOption>
+class GpioInput : public IGpio<GpioInput<portAddr_, pin_, pupdrOption>>
 {
-private:
+protected:
 	void ConfigureAsOutput()
 	{
 		auto port = this->Port();
 		static_assert(pin >= 0 && pin < 16, "Invalid pin number: needs to be in range of 0 - 15!");
-		port->MODER &= ~(MODER_MASKS[pin]);
-		port->PUPDR &= ~(PUPDR_MASKS[pin]);
+		port->MODER &= ~(MODER_MASKS[pin]); //00 - input
+		{
+		using enum OptionsPUPDR;
+		if constexpr (pupdrOption == None)
+				port->PUPDR &= ~(PUPDR_MASKS[pin]); //00- no pull-up, no pull-down
+		}
 	}
 public:
 	static constexpr std::uintptr_t portAddr = portAddr_;

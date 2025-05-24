@@ -16,29 +16,13 @@
  ******************************************************************************
  */
 
-#include <Gpio.hpp>
+#include "../Inc/Gpio.hpp"
+#include "../Inc/Button.hpp"
 #include "main.h"
 #include <atomic>
 
-//bit set/reset register BSRR
-//set high state to PA5
-//Reference manual (BS - bit set)
-//#define LD2_ON 	GPIOA->BSRR |=GPIO_BSRR_BS5
-//reference manual (BR - bit reset)
-//#define LD2_OFF GPIOA->BSRR |= GPIO_BSRR_BR5
-
-//volatile uint32_t Tick = 0; //for C type, as in modern cpp its not allowed to increment volatile; can be Tick += 1;
 std::atomic<uint32_t> Tick = 0;
-
 void Delay(const uint32_t delay);
-
-//USER BUTTON - PC13 -- 0 - button pressed
-//						1 - button released
-
-void ConfigureUserButton();
-
-constexpr uint16_t PC13 = (1<<13);
-bool IsButtonPressed();
 
 //drivers/cmsis/include/core_cm0plus////systick_config - method
 //To Cortex system timer - in hal clock config
@@ -49,22 +33,21 @@ int main(void)
 	// 4000 000 / 1000
 	SysTick_Config(4000);
 
-	ConfigureUserButton();
-
 	//C++style
-	//lets document this later (21.05
 	GpioOutput<GPIOA_BASE, 5> ld2;
+	const Button<GPIOC_BASE, 13, OptionsPUPDR::None> userButton;
+
 	while (true)
 	{
-		if (IsButtonPressed())
+		if (userButton.IsButtonPressed())
 		{
 			Delay(50);
-			if (IsButtonPressed())
+			if (userButton.IsButtonPressed())
 			{
 				ld2.Toggle();
 				//state machine would be better -- to check and learn
 				// obj checking whether state changed - would be fine
-				while(IsButtonPressed()) {}
+				while(userButton.IsButtonPressed()) {}
 			}
 		}
 	}
@@ -78,7 +61,6 @@ extern "C" void SysTick_Handler(void)
 	Tick.fetch_add(1, std::memory_order_relaxed);
 }
 
-//uint32_t snapshot = tick_counter.load(std::memory_order_relaxed);
 
 void Delay(const uint32_t delay)
 {
@@ -89,31 +71,3 @@ void Delay(const uint32_t delay)
 		//just wait
 	}
 }
-
-void ConfigureUserButton()
-{
-	//enable clock for Port C
-	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
-	GPIOC->MODER &= ~(GPIO_MODER_MODE13); //default 11 into 00
-	//OTYPER and OSPEEDR are not required, as PC13 will work as an INPUT
-	//can be also checked in application note document
-
-	//could also have reset value, as it is 00 for Port C
-	GPIOC->PUPDR &= ~(GPIO_PUPDR_PUPD13);//No pull-up, no pull-down (floating), 00
-}
-
-bool IsButtonPressed()
-{
-	//by bit shifting
-	//if (GPIOC->IDR & (1 << 13)) //only for pin 13
-
-	//by macro mask
-	//if (GPIOC->IDR & GPIO_IDR_ID13)
-
-	//using constexpr uint16_t or macro for C language
-	if (GPIOC->IDR & PC13)
-		return false;
-	else
-		return true;
-}
-
