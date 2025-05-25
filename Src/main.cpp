@@ -24,38 +24,20 @@
 //drivers/cmsis/include/core_cm0plus////systick_config - method
 //To Cortex system timer - in hal clock config
 
-void Delay(const uint32_t delay)
-{
-	const uint32_t startTime = SystemTimer::Now();
-
-	while(SystemTimer::Now() < startTime + delay)
-	{
-		//just wait
-	}
-}
-
-//constexpr uint32_t LD2_TIMER = 500; //ms
-//constexpr uint32_t LD3_TIMER = 1000;
-//constexpr uint32_t LD4_TIMER = 250;
+void Delay(const uint32_t delay);
 
 int main(void)
 {
-	//4MHz --> 1s = 4 000 000
-	// 4000 000 / 1000
-	SysTick_Config(4000);
-
-	//uint32_t TimerLD2 = SystemTimer::Now();
-	//uint32_t TimerLD3 = SystemTimer::Now();
-	//uint32_t TimerLD4 = SystemTimer::Now();
+	SystemTimer::Init(4000);
 
 	Timer timerLD2(100);
 	Timer timerLD3(250);
 	Timer timerLD4(500);
 
-	//C++style
 	GpioOutput<GPIOA_BASE, 5> ld2;
 	GpioOutput<GPIOA_BASE, 6> ld3;
 	GpioOutput<GPIOA_BASE, 7> ld4;
+
 	while (true)
 	{
 		if (timerLD2.IsExpired())
@@ -66,5 +48,15 @@ int main(void)
 
 		if (timerLD4.IsExpired())
 			ld4.Toggle();
+	}
+}
+
+void Delay(const uint32_t delay)
+{
+	const uint32_t startTime = SystemTimer::Now();
+
+	while(SystemTimer::Now() < startTime + delay)
+	{
+		//just wait
 	}
 }

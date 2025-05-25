@@ -7,11 +7,6 @@
 
 #include "../Inc/Timer.hpp"
 
-SystemTimer::SystemTimer(const uint32_t ticksPerInterrupt)
-{
-	SysTick_Config(ticksPerInterrupt);
-}
-
 Timer::Timer(const uint32_t delay)
 	:delay_(delay)
 	, lastEnabled_(SystemTimer::Now())

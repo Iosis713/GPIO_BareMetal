@@ -21,9 +21,9 @@ public:
 	SystemTimer(SystemTimer&& source) = delete;
 	SystemTimer& operator=(const SystemTimer& source) = delete;
 	SystemTimer& operator=(SystemTimer&& source) = delete;
-	SystemTimer() = delete;
-	SystemTimer(const uint32_t ticksPerInterrupt);
+	SystemTimer() = default;
 
+	static void Init(const uint32_t ticksPerInterrupt) { SysTick_Config(ticksPerInterrupt); }
 	static uint32_t Now() { return tick_.load(std::memory_order_relaxed); }
 	static void Inc() { tick_.fetch_add(1, std::memory_order_relaxed); }
 };
