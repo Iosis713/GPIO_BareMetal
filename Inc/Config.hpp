@@ -13,25 +13,6 @@
 #ifndef CONFIG_HPP_
 #define CONFIG_HPP_
 
-inline std::atomic<uint32_t> Tick = 0;
-
-extern "C" inline void SysTick_Handler(void)
-{
-	//Tick += 1; for volatile, as volatile uint32_t tick; tick++ is deprecated for C++20/23
-	Tick.fetch_add(1, std::memory_order_relaxed);
-}
-
-inline void Delay(const uint32_t delay)
-{
-	const uint32_t startTime = Tick.load(std::memory_order_relaxed);
-
-	while(Tick.load(std::memory_order_relaxed) < startTime + delay)
-	{
-		//just wait
-	}
-}
-
-
 static constexpr std::array<uint32_t, 16> MODER_MASKS = {
 	GPIO_MODER_MODE0,  GPIO_MODER_MODE1,  GPIO_MODER_MODE2,  GPIO_MODER_MODE3,
 	GPIO_MODER_MODE4,  GPIO_MODER_MODE5,  GPIO_MODER_MODE6,  GPIO_MODER_MODE7,

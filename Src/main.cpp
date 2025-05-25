@@ -23,28 +23,62 @@
 //drivers/cmsis/include/core_cm0plus////systick_config - method
 //To Cortex system timer - in hal clock config
 
+std::atomic<uint32_t> Tick = 0;
+
+uint32_t GetSysTick() {return Tick.load(std::memory_order_relaxed);}
+
+extern "C" void SysTick_Handler(void)
+{
+	//Tick += 1; for volatile, as volatile uint32_t tick; tick++ is deprecated for C++20/23
+	Tick.fetch_add(1, std::memory_order_relaxed);
+}
+
+void Delay(const uint32_t delay)
+{
+	const uint32_t startTime = Tick.load(std::memory_order_relaxed);
+
+	while(Tick.load(std::memory_order_relaxed) < startTime + delay)
+	{
+		//just wait
+	}
+}
+
+constexpr uint32_t LD2_TIMER = 500; //ms
+constexpr uint32_t LD3_TIMER = 1000;
+constexpr uint32_t LD4_TIMER = 250;
+
 int main(void)
 {
 	//4MHz --> 1s = 4 000 000
 	// 4000 000 / 1000
 	SysTick_Config(4000);
 
+	uint32_t TimerLD2 = GetSysTick();
+	uint32_t TimerLD3 = GetSysTick();
+	uint32_t TimerLD4 = GetSysTick();
+
 	//C++style
 	GpioOutput<GPIOA_BASE, 5> ld2;
-	const Button<GPIOC_BASE, 13, OptionsPUPDR::None> userButton;
-
+	GpioOutput<GPIOA_BASE, 6> ld3;
+	GpioOutput<GPIOA_BASE, 7> ld4;
 	while (true)
 	{
-		if (userButton.IsButtonPressed())
+		if ((GetSysTick() -  TimerLD2) > LD2_TIMER)
 		{
-			Delay(50);
-			if (userButton.IsButtonPressed())
-			{
-				ld2.Toggle();
-				//state machine would be better -- to check and learn
-				// obj checking whether state changed - would be fine
-				while(userButton.IsButtonPressed()) {}
-			}
+			TimerLD2 = GetSysTick();
+			ld2.Toggle();
+		}
+
+		if ((GetSysTick() -  TimerLD3) > LD3_TIMER)
+		{
+			TimerLD3 = GetSysTick();
+			ld3.Toggle();
+		}
+
+		if ((GetSysTick() -  TimerLD4) > LD4_TIMER)
+		{
+			TimerLD4 = GetSysTick();
+			ld4.Toggle();
 		}
 	}
 }
