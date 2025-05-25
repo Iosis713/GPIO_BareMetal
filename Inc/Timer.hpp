@@ -28,4 +28,20 @@ public:
 	static void Inc() { tick_.fetch_add(1, std::memory_order_relaxed); }
 };
 
+class Timer
+{
+private:
+	uint32_t delay_ = 0;
+	uint32_t lastEnabled_ = 0;
+public:
+	Timer(const Timer& source) = delete;
+	Timer(Timer&& source) = delete;
+	Timer& operator=(const Timer& source) = delete;
+	Timer& operator=(Timer&& source) = delete;
+	Timer() = delete;
+	Timer(const uint32_t delay);
+
+	bool IsExpired();
+};
+
 #endif /* TIMER_HPP_ */

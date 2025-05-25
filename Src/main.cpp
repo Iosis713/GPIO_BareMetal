@@ -34,9 +34,9 @@ void Delay(const uint32_t delay)
 	}
 }
 
-constexpr uint32_t LD2_TIMER = 500; //ms
-constexpr uint32_t LD3_TIMER = 1000;
-constexpr uint32_t LD4_TIMER = 250;
+//constexpr uint32_t LD2_TIMER = 500; //ms
+//constexpr uint32_t LD3_TIMER = 1000;
+//constexpr uint32_t LD4_TIMER = 250;
 
 int main(void)
 {
@@ -44,9 +44,13 @@ int main(void)
 	// 4000 000 / 1000
 	SysTick_Config(4000);
 
-	uint32_t TimerLD2 = SystemTimer::Now();
-	uint32_t TimerLD3 = SystemTimer::Now();
-	uint32_t TimerLD4 = SystemTimer::Now();
+	//uint32_t TimerLD2 = SystemTimer::Now();
+	//uint32_t TimerLD3 = SystemTimer::Now();
+	//uint32_t TimerLD4 = SystemTimer::Now();
+
+	Timer timerLD2(100);
+	Timer timerLD3(250);
+	Timer timerLD4(500);
 
 	//C++style
 	GpioOutput<GPIOA_BASE, 5> ld2;
@@ -54,22 +58,13 @@ int main(void)
 	GpioOutput<GPIOA_BASE, 7> ld4;
 	while (true)
 	{
-		if ((SystemTimer::Now() -  TimerLD2) > LD2_TIMER)
-		{
-			TimerLD2 = SystemTimer::Now();
+		if (timerLD2.IsExpired())
 			ld2.Toggle();
-		}
 
-		if ((SystemTimer::Now() -  TimerLD3) > LD3_TIMER)
-		{
-			TimerLD3 = SystemTimer::Now();
+		if (timerLD3.IsExpired())
 			ld3.Toggle();
-		}
 
-		if ((SystemTimer::Now() -  TimerLD4) > LD4_TIMER)
-		{
-			TimerLD4 = SystemTimer::Now();
+		if (timerLD4.IsExpired())
 			ld4.Toggle();
-		}
 	}
 }
