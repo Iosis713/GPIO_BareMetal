@@ -19,10 +19,6 @@
 #include "../Inc/Gpio.hpp"
 #include "../Inc/Button.hpp"
 #include "main.h"
-#include <atomic>
-
-std::atomic<uint32_t> Tick = 0;
-void Delay(const uint32_t delay);
 
 //drivers/cmsis/include/core_cm0plus////systick_config - method
 //To Cortex system timer - in hal clock config
@@ -50,24 +46,5 @@ int main(void)
 				while(userButton.IsButtonPressed()) {}
 			}
 		}
-	}
-}
-
-
-//interrupt handler
-extern "C" void SysTick_Handler(void)
-{
-	//Tick += 1; for volatile, as volatile uint32_t tick; tick++ is deprecated for C++20/23
-	Tick.fetch_add(1, std::memory_order_relaxed);
-}
-
-
-void Delay(const uint32_t delay)
-{
-	const uint32_t startTime = Tick.load(std::memory_order_relaxed);
-
-	while(Tick.load(std::memory_order_relaxed) < startTime + delay)
-	{
-		//just wait
 	}
 }
