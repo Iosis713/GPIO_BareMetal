@@ -18,26 +18,17 @@
 
 #include "../Inc/Gpio.hpp"
 #include "../Inc/Button.hpp"
+#include "../Inc/Timer.hpp"
 #include "main.h"
 
 //drivers/cmsis/include/core_cm0plus////systick_config - method
 //To Cortex system timer - in hal clock config
 
-std::atomic<uint32_t> Tick = 0;
-
-uint32_t GetSysTick() {return Tick.load(std::memory_order_relaxed);}
-
-extern "C" void SysTick_Handler(void)
-{
-	//Tick += 1; for volatile, as volatile uint32_t tick; tick++ is deprecated for C++20/23
-	Tick.fetch_add(1, std::memory_order_relaxed);
-}
-
 void Delay(const uint32_t delay)
 {
-	const uint32_t startTime = Tick.load(std::memory_order_relaxed);
+	const uint32_t startTime = SystemTimer::Now();
 
-	while(Tick.load(std::memory_order_relaxed) < startTime + delay)
+	while(SystemTimer::Now() < startTime + delay)
 	{
 		//just wait
 	}
@@ -53,9 +44,9 @@ int main(void)
 	// 4000 000 / 1000
 	SysTick_Config(4000);
 
-	uint32_t TimerLD2 = GetSysTick();
-	uint32_t TimerLD3 = GetSysTick();
-	uint32_t TimerLD4 = GetSysTick();
+	uint32_t TimerLD2 = SystemTimer::Now();
+	uint32_t TimerLD3 = SystemTimer::Now();
+	uint32_t TimerLD4 = SystemTimer::Now();
 
 	//C++style
 	GpioOutput<GPIOA_BASE, 5> ld2;
@@ -63,21 +54,21 @@ int main(void)
 	GpioOutput<GPIOA_BASE, 7> ld4;
 	while (true)
 	{
-		if ((GetSysTick() -  TimerLD2) > LD2_TIMER)
+		if ((SystemTimer::Now() -  TimerLD2) > LD2_TIMER)
 		{
-			TimerLD2 = GetSysTick();
+			TimerLD2 = SystemTimer::Now();
 			ld2.Toggle();
 		}
 
-		if ((GetSysTick() -  TimerLD3) > LD3_TIMER)
+		if ((SystemTimer::Now() -  TimerLD3) > LD3_TIMER)
 		{
-			TimerLD3 = GetSysTick();
+			TimerLD3 = SystemTimer::Now();
 			ld3.Toggle();
 		}
 
-		if ((GetSysTick() -  TimerLD4) > LD4_TIMER)
+		if ((SystemTimer::Now() -  TimerLD4) > LD4_TIMER)
 		{
-			TimerLD4 = GetSysTick();
+			TimerLD4 = SystemTimer::Now();
 			ld4.Toggle();
 		}
 	}

@@ -5,9 +5,9 @@
  *      Author: bartoszlozinski
  */
 
+#include <stm32l4xx.h>
 #include <array>
 #include <cstdint>
-#include "main.h"
 #include <atomic>
 
 #ifndef CONFIG_HPP_

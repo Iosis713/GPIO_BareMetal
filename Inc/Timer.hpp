@@ -1,0 +1,31 @@
+/*
+ * Timer.hpp
+ *
+ *  Created on: May 25, 2025
+ *      Author: bartoszlozinski
+ */
+
+#pragma once
+#ifndef TIMER_HPP_
+#define TIMER_HPP_
+
+#include "main.h"
+#include <atomic>
+
+class SystemTimer
+{
+private:
+	inline static std::atomic<uint32_t> tick_ = 0;
+public:
+	SystemTimer(const SystemTimer& source) = delete;
+	SystemTimer(SystemTimer&& source) = delete;
+	SystemTimer& operator=(const SystemTimer& source) = delete;
+	SystemTimer& operator=(SystemTimer&& source) = delete;
+	SystemTimer() = delete;
+	SystemTimer(const uint32_t ticksPerInterrupt);
+
+	static uint32_t Now() { return tick_.load(std::memory_order_relaxed); }
+	static void Inc() { tick_.fetch_add(1, std::memory_order_relaxed); }
+};
+
+#endif /* TIMER_HPP_ */
