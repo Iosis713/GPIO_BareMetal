@@ -24,31 +24,90 @@
 //drivers/cmsis/include/core_cm0plus////systick_config - method
 //To Cortex system timer - in hal clock config
 
+//USART2_TX - PA2
+//USART2_RX - PA3
+
+void UART2_Config();
 void Delay(const uint32_t delay);
 
 int main(void)
 {
 	SystemTimer::Init(4000);
+	UART2_Config();
 
 	Timer timerLD2(100);
-	Timer timerLD3(250);
-	Timer timerLD4(500);
-
+	Timer uart2Timer(500);
 	GpioOutput<GPIOA_BASE, 5> ld2;
-	GpioOutput<GPIOA_BASE, 6> ld3;
-	GpioOutput<GPIOA_BASE, 7> ld4;
+
+	//UART2 - https://www.youtube.com/watch?v=Hf7eOcW0qLw - 8 min stopped
 
 	while (true)
 	{
 		if (timerLD2.IsExpired())
 			ld2.Toggle();
 
-		if (timerLD3.IsExpired())
-			ld3.Toggle();
+		//put data to transmit register
+		//Receive data register RDR
+		//Transmit data register TDR
+		if (uart2Timer.IsExpired())
+		{
+			USART2->TDR = 'A';
+			//while (!(USART2->ISR & USART_ISR_TXE)) {/*end for end of transmission*/}
 
-		if (timerLD4.IsExpired())
-			ld4.Toggle();
+
+			//interrupt status register ISR - what happens inside UART
+			//bit TXE - transmit data register empty
+			//0 - data is not transferred to the shift register
+			//1 - data is transferred to the shift register
+			// wait when it's not transferred
+
+			//or
+			//TC transmission complete - 0 (not complete) - 1 (complete)
+			while(!(USART2->ISR & USART_ISR_TC)) {/*just wait until transmission is finished*/}
+
+
+		}
+
 	}
+}
+
+void UART2_Config()
+{
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
+
+	//PA2 TX
+	GPIOA->MODER &= ~(GPIO_MODER_MODE2_0);//11 after reset -- analog = 0b10;
+	//AF7 needs to be 0111
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL2_0;//datasheet alternate function AF7
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL2_1;
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL2_2;
+	//OTYPER = 0b0 - push-pull for reset state
+	//GPIOA->OSPEEDR = 0b00 - very low speed by reset state
+
+	//PA3 RX
+	GPIOA->MODER &= ~(GPIO_MODER_MODE3_0);//11 after reset
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3_0;
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3_1;
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3_2;
+	GPIOA->OTYPER |= GPIO_OTYPER_OT3;
+	//GPIOA->OSPEEDR = 0b00 - very low speed by reset state
+
+	//UART2 clock enable
+	RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;
+
+	//USART Baud Rate Register BRR - speed of the usart
+	//UARTDIV (RM 40.8 USART baud rate register) = 4 000 000 / 115200 = 34,7
+	USART2->BRR = 4000000/115200;
+
+	//frame 8m1 -- 0b00 - for USART_CR1 (reset value)
+	//PCE parity control enable: 0 - disabled (reset value), 1 - enabled
+	//USART_CR2 STOP register - 00 - 1 stop bit; (RM USART_CR2) reset value
+	//USART_CR1 UE (UART enable bit) - 0 -disabled (reset value): 1 - enabled
+	USART2->CR1 |= USART_CR1_UE; // enabled
+
+	//transmitter and receiver enable TE/RE bits --> 0 - disabled, 1 - enabled
+	USART2->CR1 |= USART_CR1_TE; //transmitter enabled
+	USART2->CR1 |= USART_CR1_RE; //receiver enabled
 }
 
 void Delay(const uint32_t delay)
