@@ -65,6 +65,24 @@ int main(void)
 			//TC transmission complete - 0 (not complete) - 1 (complete)
 			while(!(USART2->ISR & USART_ISR_TC)) {/*just wait until transmission is finished*/}
 
+			//TO connect with you linux terminal (for example at ubuntu)
+			/*
+			 * check tty com ports with
+			 * dmesg | grep tty 		(or sudo if not allow due to reading the kernel buffer failed: Operation not permitted)
+			 * screen /dev/tty*ACMx* [baud rate] (i.e. screen /dev/ttyACM1 11520
+			 *
+			 * to kill screen process: ctrl + A --> K to kill process
+			 * to detach session:      ctrl + A --> D
+			 * available sockets:      screen -ls
+			 * reconnect:              screen -r [ID]
+			 *
+			 * if you cannot reconnect, try: lsof /dev/ttyACM1
+			 * kill [PID]
+			 *
+			 * try once more
+			 *
+			 * */
+
 
 		}
 
