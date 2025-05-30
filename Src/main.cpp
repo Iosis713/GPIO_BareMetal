@@ -19,19 +19,14 @@
 #include "../Inc/Gpio.hpp"
 #include "../Inc/Button.hpp"
 #include "../Inc/Timer.hpp"
-#include "main.h"
+#include "../Inc/Uart.hpp"
+#include "../Inc/Config.hpp"
 
 //drivers/cmsis/include/core_cm0plus////systick_config - method
 //To Cortex system timer - in hal clock config
 
 //USART2_TX - PA2
 //USART2_RX - PA3
-
-enum class ERROR_CODE
-{
-	OK = 0,
-	NOK = 1,
-};
 
 void UART2_Config();
 void UART2_SendChar(const char ch);
@@ -42,29 +37,28 @@ void Delay(const uint32_t delay);
 int main(void)
 {
 	SystemTimer::Init(4000);
-	UART2_Config();
 
 	//Timer timerLD2(100);
 	Timer uart2Timer(500);
 	GpioOutput<GPIOA_BASE, 5> ld2;
+	UART<GPIOA_BASE, 2, 3> uart2;
 
 	//UART2 - https://www.youtube.com/watch?v=Hf7eOcW0qLw - 8 min stopped
 
-	char ReceiveTemp = '\0';
 	while (true)
 	{
 		//if (timerLD2.IsExpired())
 		//	ld2.Toggle();
-		if (UART2_GetChar(ReceiveTemp) == ERROR_CODE::OK)
+		if (uart2.GetChar() == ERROR_CODE::OK)
 		{
-			if (ReceiveTemp == '1')
+			if (uart2.GetActualChar() == '1')
 				ld2.Set();
-			else if (ReceiveTemp == '0')
+			else if (uart2.GetActualChar()  == '0')
 				ld2.Clear();
 		}
 
 		if (uart2Timer.IsExpired())
-			UART2_SendString("Bare Metal STM32L476RGT6\r\n");
+			uart2.SendString("Bare Metal STM32L476RGT6\r\n");
 	}
 }
 

@@ -9,7 +9,7 @@
 #ifndef TIMER_HPP_
 #define TIMER_HPP_
 
-#include "main.h"
+#include "Config.hpp"
 #include <atomic>
 
 class SystemTimer

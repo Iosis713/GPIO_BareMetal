@@ -9,7 +9,7 @@
 #ifndef INC_GPIO_HPP_
 #define INC_GPIO_HPP_
 
-#include "main.h"
+#include "Config.hpp"
 #include <cstdint>
 
 template<typename Derived>

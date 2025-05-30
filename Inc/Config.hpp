@@ -5,13 +5,21 @@
  *      Author: bartoszlozinski
  */
 
+#pragma once
 #include <stm32l4xx.h>
+#include "stm32l476xx.h"
 #include <array>
 #include <cstdint>
 #include <atomic>
 
 #ifndef CONFIG_HPP_
 #define CONFIG_HPP_
+
+enum class ERROR_CODE
+{
+	OK = 0,
+	NOK = 1,
+};
 
 static constexpr std::array<uint32_t, 16> MODER_MASKS = {
 	GPIO_MODER_MODE0,  GPIO_MODER_MODE1,  GPIO_MODER_MODE2,  GPIO_MODER_MODE3,
@@ -75,12 +83,50 @@ static constexpr std::array<uint32_t, 16> BSRR_BR_MASKS = {
 	GPIO_BSRR_BR12, GPIO_BSRR_BR13, GPIO_BSRR_BS14, GPIO_BSRR_BR15
 };
 
+//Output data register ODR - reference manual 8.5.6
 static constexpr std::array<uint16_t, 16> ODR_OD_MASKS = {
 	GPIO_ODR_OD0, GPIO_ODR_OD1, GPIO_ODR_OD2, GPIO_ODR_OD3,
 	GPIO_ODR_OD4, GPIO_ODR_OD5, GPIO_ODR_OD6, GPIO_ODR_OD7,
 	GPIO_ODR_OD8, GPIO_ODR_OD9, GPIO_ODR_OD10, GPIO_ODR_OD11,
 	GPIO_ODR_OD12, GPIO_ODR_OD13, GPIO_ODR_OD14, GPIO_ODR_OD15
 };
+
+//Alternate function low register - reference manual 8.5.9
+static constexpr std::array<uint32_t, 8> AFRL_AFSEL_0_MASKS = {
+	GPIO_AFRL_AFSEL0_0, GPIO_AFRL_AFSEL1_0, GPIO_AFRL_AFSEL2_0, GPIO_AFRL_AFSEL3_0,
+	GPIO_AFRL_AFSEL4_0, GPIO_AFRL_AFSEL5_0, GPIO_AFRL_AFSEL6_0, GPIO_AFRL_AFSEL7_0,
+};
+
+static constexpr std::array<uint32_t, 8> AFRL_AFSEL_1_MASKS = {
+	GPIO_AFRL_AFSEL0_1, GPIO_AFRL_AFSEL1_1, GPIO_AFRL_AFSEL2_1, GPIO_AFRL_AFSEL3_1,
+	GPIO_AFRL_AFSEL4_1, GPIO_AFRL_AFSEL5_1, GPIO_AFRL_AFSEL6_1, GPIO_AFRL_AFSEL7_1,
+};
+
+static constexpr std::array<uint32_t, 8> AFRL_AFSEL_2_MASKS = {
+	GPIO_AFRL_AFSEL0_2, GPIO_AFRL_AFSEL1_2, GPIO_AFRL_AFSEL2_2, GPIO_AFRL_AFSEL3_2,
+	GPIO_AFRL_AFSEL4_2, GPIO_AFRL_AFSEL5_2, GPIO_AFRL_AFSEL6_2, GPIO_AFRL_AFSEL7_2,
+};
+
+static constexpr std::array<uint32_t, 8> AFRL_AFSEL_3_MASKS = {
+	GPIO_AFRL_AFSEL0_3, GPIO_AFRL_AFSEL1_3, GPIO_AFRL_AFSEL2_3, GPIO_AFRL_AFSEL3_3,
+	GPIO_AFRL_AFSEL4_3, GPIO_AFRL_AFSEL5_3, GPIO_AFRL_AFSEL6_3, GPIO_AFRL_AFSEL7_3,
+};
+
+/*
+namespace ClockUtils
+{
+	inline void UpdateCoreClock() { SystemCoreClockUpdate(); };
+	inline uint32_t GetSystemCoreClock() { return SystemCoreClock; };
+	inline uint32_t GetPLCK1Freq()
+	{
+		UpdateCoreClock();
+		const uint32_t hpre = (RCC->CFGR >> 4) & 0xF;
+		const uint32_t ahb_div = (hpre < 8) ? 1 : (1U << (hpre - 7) & 0x7);
+		const uint32_t ppre1 = (RCC->CFGR >> 8) & 0x7;
+		const uint32_t apb1_div = (ppre1 < 4) ? 1 : (1U << ((ppre1 - 3) + 1));
+		return SystemCoreClock / ahb_div / apb1_div;
+	}
+}*/
 
 template<int pin>
 constexpr uint32_t PinMask()
