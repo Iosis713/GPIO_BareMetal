@@ -105,7 +105,7 @@ ERROR_CODE UART2::GetString()
 		Timer receiverTimer(50);
 		if (USART2->ISR & USART_ISR_RXNE)
 		{
-			volatile char c = static_cast<char>(USART2->RDR);
+			const char c = static_cast<char>(USART2->RDR);
 			if (c == '\r' || c == '\n')
 				break;
 			else
