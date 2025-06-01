@@ -115,16 +115,14 @@ static constexpr std::array<uint32_t, 8> AFRL_AFSEL_3_MASKS = {
 /*
 namespace ClockUtils
 {
-	inline void UpdateCoreClock() { SystemCoreClockUpdate(); };
 	inline uint32_t GetSystemCoreClock() { return SystemCoreClock; };
 	inline uint32_t GetPLCK1Freq()
 	{
-		UpdateCoreClock();
 		const uint32_t hpre = (RCC->CFGR >> 4) & 0xF;
 		const uint32_t ahb_div = (hpre < 8) ? 1 : (1U << (hpre - 7) & 0x7);
 		const uint32_t ppre1 = (RCC->CFGR >> 8) & 0x7;
 		const uint32_t apb1_div = (ppre1 < 4) ? 1 : (1U << ((ppre1 - 3) + 1));
-		return SystemCoreClock / ahb_div / apb1_div;
+		return GetSystemCoreClock() / ahb_div / apb1_div;
 	}
 }*/
 
