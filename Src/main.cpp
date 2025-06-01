@@ -29,28 +29,31 @@
 
 void ConfigurationButtonEXTI();
 GpioOutput<GPIOA_BASE, 5> ld2;
+UART2 uart2;
 
 int main(void)
 {
 	SystemTimer::Init(4000);
 	Button<GPIOC_BASE, 13, OptionsPUPDR::PullUp> userButton;
-	UART2 uart2;
 	ConfigurationButtonEXTI();
 
-
+	uart2.ConfigureExtiReceive();
 	while (true)
 	{
 
-		if (uart2.GetString() == ERROR_CODE::OK)
+		if (uart2.GetStringIT() == ERROR_CODE::OK)
+		{
 			uart2.SendString(uart2.GetBuffer().data());
 
-		if (strcmp(uart2.GetBuffer().data(), "set") == 0)
-			ld2.Set();
-		else if (strcmp(uart2.GetBuffer().data(), "clear") == 0)
-			ld2.Clear();
-		else if (strcmp(uart2.GetBuffer().data(), "toggle") == 0)
-			ld2.Toggle();
+			if (strcmp(uart2.GetBuffer().data(), "set") == 0)
+				ld2.Set();
+			else if (strcmp(uart2.GetBuffer().data(), "clear") == 0)
+				ld2.Clear();
+			else if (strcmp(uart2.GetBuffer().data(), "toggle") == 0)
+				ld2.Toggle();
 
+			uart2.ClearBuffer();
+		}
 	}
 }
 
@@ -82,7 +85,6 @@ void ConfigurationButtonEXTI()
 //interrupt handling function from start-up
 //startup_stm32l476rgtx.s
 //EXTI15_10_IRQHandler
-
 extern "C" void EXTI15_10_IRQHandler(void)
 {
 	//which interrupt: status registers in RM 14.5.6 Pending register
@@ -93,6 +95,12 @@ extern "C" void EXTI15_10_IRQHandler(void)
 		EXTI->PR1 |= EXTI_PR1_PIF13; //cleared by '1'
 		ld2.Toggle();
 	}
+}
+
+//startup_stm32l476rgtx.s
+extern "C" void USART2_IRQHandler(void)
+{
+	uart2.IRQ_Handler();
 }
 
 /*

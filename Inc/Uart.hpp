@@ -35,6 +35,8 @@ protected:
 	std::array<char, 80> buffer_ {};
 	inline void EnableClock() { RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN; };
 	void UartConfig(const uint32_t baudRate = 115200);
+	volatile bool messageReady_ = false;
+	volatile uint8_t index_ = 0;
 	//void StoreReceivedCharIT(const char c);
 
 public:
@@ -49,10 +51,14 @@ public:
 
 	ERROR_CODE GetChar();
 	ERROR_CODE GetString();
+	ERROR_CODE GetStringIT();
 	inline std::array<char, 80>GetBuffer() { return this->buffer_; }
 	inline char GetActualChar() { return this->actualChar; }
 
 	void ConfigureExtiReceive();
+	void ClearBuffer();
+	void IRQ_Handler();
+
 };
 
 #endif /* UART_HPP_ */

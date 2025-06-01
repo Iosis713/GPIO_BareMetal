@@ -97,7 +97,7 @@ void UART2::SendString(const char str[])
 ERROR_CODE UART2::GetChar()
 {
 	//_______________RECEIVE___________________
-	//RXNE - dead data register is not empty
+	//RXNE - read data register is not empty
 	//if not empty - we can receive something
 	//0 - data is not received
 	//1 - received data is ready to be read
@@ -134,8 +134,40 @@ ERROR_CODE UART2::GetString()
 	return (i > 0) ? ERROR_CODE::OK : ERROR_CODE::NOK;
 }
 
-/*void UART2::StoreReceivedCharIT(const char c)
+ERROR_CODE UART2::GetStringIT()
 {
-	static uint8_t index = 0;
+	if (messageReady_)
+	{
+		messageReady_ = false;
+		return ERROR_CODE::OK;
+	}
+	return ERROR_CODE::NOK;
+}
 
-}*/
+void UART2::ClearBuffer()
+{
+	index_ = 0;
+	buffer_.fill('\0');
+}
+
+void UART2::IRQ_Handler()
+{
+	using enum ERROR_CODE;
+	//read data register is not empty (1)
+	if (USART2->ISR & USART_ISR_RXNE)
+	{
+		const char received = USART2->RDR; //Read data register
+
+		if (received == '\n' || received == '\r' || index_>= buffer_.size() - 1)
+		{
+			buffer_[index_] = '\0';
+			messageReady_ = true;
+			index_ = 0;
+		}
+		else
+		{
+			buffer_[index_] = received;
+			index_ += 1; //volatile++ is deprecated for c++20
+		}
+	}
+}
