@@ -6,6 +6,7 @@
  */
 
 #include "../Inc/Uart.hpp"
+#include "../Inc/Timer.hpp"
 
 UART2::UART2(const uint32_t baudRate)
 {
@@ -72,8 +73,11 @@ void UART2::SendString(const char str[])
 			SendChar(*str);
 			str++;
 		}
+		SendChar('\r');
+		SendChar('\n');
 	}
 }
+
 
 ERROR_CODE UART2::GetChar()
 {
@@ -91,4 +95,26 @@ ERROR_CODE UART2::GetChar()
 		return OK;
 	}
 	return NOK;
+}
+
+ERROR_CODE UART2::GetString()
+{
+	uint8_t i = 0;
+	while (i < maxLength - 1)
+	{
+		Timer receiverTimer(50);
+		if (USART2->ISR & USART_ISR_RXNE)
+		{
+			volatile char c = static_cast<char>(USART2->RDR);
+			if (c == '\r' || c == '\n')
+				break;
+			else
+				buffer_[i++] = c;
+		}
+		if (receiverTimer.IsExpired())
+			break;
+	}
+
+	buffer_[i] = '\0';
+	return (i > 0) ? ERROR_CODE::OK : ERROR_CODE::NOK;
 }

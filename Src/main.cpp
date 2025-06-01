@@ -21,7 +21,8 @@
 #include "../Inc/Timer.hpp"
 #include "../Inc/Uart.hpp"
 #include "../Inc/Config.hpp"
-
+#include <stdio.h>
+#include <cstring>
 //drivers/cmsis/include/core_cm0plus////systick_config - method
 //To Cortex system timer - in hal clock config
 
@@ -32,27 +33,20 @@ int main(void)
 {
 	SystemTimer::Init(4000);
 
-	//Timer timerLD2(100);
-	Timer uart2Timer(500);
 	GpioOutput<GPIOA_BASE, 5> ld2;
 	UART2 uart2;
 
-	//UART2 - https://www.youtube.com/watch?v=Hf7eOcW0qLw - 8 min stopped
-
 	while (true)
 	{
-		//if (timerLD2.IsExpired())
-		//	ld2.Toggle();
-		if (uart2.GetChar() == ERROR_CODE::OK)
-		{
-			if (uart2.GetActualChar() == '1')
-				ld2.Set();
-			else if (uart2.GetActualChar()  == '0')
-				ld2.Clear();
-		}
+		if (uart2.GetString() == ERROR_CODE::OK)
+			uart2.SendString(uart2.GetBuffer());
 
-		if (uart2Timer.IsExpired())
-			uart2.SendString("Bare Metal STM32L476RGT6\r\n");
+		if (strcmp(uart2.GetBuffer(), "set") == 0)
+			ld2.Set();
+		else if (strcmp(uart2.GetBuffer(), "clear") == 0)
+			ld2.Clear();
+		else if (strcmp(uart2.GetBuffer(), "toggle") == 0)
+			ld2.Toggle();
 	}
 }
 

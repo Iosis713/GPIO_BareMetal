@@ -31,6 +31,8 @@ class UART2
 protected:
 
 	char actualChar;
+	static constexpr uint8_t maxLength = 80;
+	char buffer_[maxLength] = "\0";
 	inline void EnableClock() { RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN; };
 	void UartConfig(const uint32_t baudRate = 115200);
 
@@ -45,6 +47,8 @@ public:
 	void SendString(const char str[]);
 
 	ERROR_CODE GetChar();
+	ERROR_CODE GetString();
+	inline const char* GetBuffer() { return this->buffer_; }
 	inline char GetActualChar() { return this->actualChar; }
 };
 

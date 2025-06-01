@@ -89,9 +89,7 @@ public:
 	}
 	~GpioOutput() = default;
 
-
 	bool IsPinSet() const { return this->Port()->ODR & PinMask<pin>(); }
-
 	void Set() { this->Port()->BSRR |= BSRR_BS_MASKS[pin]; }
 	void Clear() { this->Port()->BSRR |= BSRR_BR_MASKS[pin]; }
 	void Toggle() { this->Port()->ODR ^= ODR_OD_MASKS[pin]; /*Bitwise XOR*/}
