@@ -16,6 +16,7 @@ UART2::UART2(const uint32_t baudRate)
 
 void UART2::UartConfig(const uint32_t baudRate)
 {
+	//TX PA2
 	GPIOA->MODER &= ~GPIO_MODER_MODE2_0;//11 after reset -- analog = 0b10;
 	//AF7 needs to be 0111 ___ AFR[0] low register [1] high
 	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL2_0;//datasheet alternate function AF7
@@ -24,6 +25,7 @@ void UART2::UartConfig(const uint32_t baudRate)
 	//OTYPER = 0b0 - push-pull for reset state
 	//GPIOA->OSPEEDR = 0b00 - very low speed by reset state
 
+	//RX PA3
 	GPIOA->MODER &= ~GPIO_MODER_MODE3_0;
 	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3_0;
 	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3_1;
@@ -50,6 +52,19 @@ void UART2::UartConfig(const uint32_t baudRate)
 	USART2->CR1 |= USART_CR1_TE; //transmitter enabled - 0 disable, 1- enabled
 	USART2->CR1 |= USART_CR1_RE; //receiver enabled - 0 disable, 1- enabled
 };
+
+void UART2::ConfigureExtiReceive()
+{
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN; //enable SYSCFG clock
+	//9.2.6 System configuration controller SYSCFG
+	SYSCFG->EXTICR[0] &= ~SYSCFG_EXTICR1_EXTI3; //0000
+	SYSCFG->EXTICR[0] |= SYSCFG_EXTICR1_EXTI3_PA; //set bit for PC13 exti route to syscfg
+
+	USART2->CR1 |= USART_CR1_RXNEIE; //Enable RX interrupt
+	NVIC_SetPriority(USART2_IRQn, 1); //set priority (for exti ,  priotity = 1
+	NVIC_EnableIRQ(USART2_IRQn);//enable interrupt
+	//enum from stm32l476xx.h (CMSIS file) - Interrupt number definition
+}
 
 void UART2::SendChar(const char ch)
 {
@@ -100,7 +115,7 @@ ERROR_CODE UART2::GetChar()
 ERROR_CODE UART2::GetString()
 {
 	uint8_t i = 0;
-	while (i < maxLength - 1)
+	while (i < buffer_.size() - 1)
 	{
 		Timer receiverTimer(50);
 		if (USART2->ISR & USART_ISR_RXNE)
@@ -118,3 +133,9 @@ ERROR_CODE UART2::GetString()
 	buffer_[i] = '\0';
 	return (i > 0) ? ERROR_CODE::OK : ERROR_CODE::NOK;
 }
+
+/*void UART2::StoreReceivedCharIT(const char c)
+{
+	static uint8_t index = 0;
+
+}*/

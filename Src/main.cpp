@@ -19,7 +19,7 @@
 #include "../Inc/Gpio.hpp"
 #include "../Inc/Button.hpp"
 #include "../Inc/Timer.hpp"
-//#include "../Inc/Uart.hpp"
+#include "../Inc/Uart.hpp"
 #include "../Inc/Config.hpp"
 #include <stdio.h>
 #include <cstring>
@@ -34,23 +34,23 @@ int main(void)
 {
 	SystemTimer::Init(4000);
 	Button<GPIOC_BASE, 13, OptionsPUPDR::PullUp> userButton;
-	//UART2 uart2;
+	UART2 uart2;
 	ConfigurationButtonEXTI();
 
 
 	while (true)
 	{
-		/*
-		if (uart2.GetString() == ERROR_CODE::OK)
-			uart2.SendString(uart2.GetBuffer());
 
-		if (strcmp(uart2.GetBuffer(), "set") == 0)
+		if (uart2.GetString() == ERROR_CODE::OK)
+			uart2.SendString(uart2.GetBuffer().data());
+
+		if (strcmp(uart2.GetBuffer().data(), "set") == 0)
 			ld2.Set();
-		else if (strcmp(uart2.GetBuffer(), "clear") == 0)
+		else if (strcmp(uart2.GetBuffer().data(), "clear") == 0)
 			ld2.Clear();
-		else if (strcmp(uart2.GetBuffer(), "toggle") == 0)
+		else if (strcmp(uart2.GetBuffer().data(), "toggle") == 0)
 			ld2.Toggle();
-		*/
+
 	}
 }
 
@@ -77,8 +77,6 @@ void ConfigurationButtonEXTI()
 	//enum from stm32l476xx.h (CMSIS file) - Interrupt number definition
 	NVIC_SetPriority(EXTI15_10_IRQn, 1); //set priority (for exti 10 - 15, priotity = 1
 	NVIC_EnableIRQ(EXTI15_10_IRQn);//enable interrupt
-
-
 }
 
 //interrupt handling function from start-up
@@ -94,7 +92,6 @@ extern "C" void EXTI15_10_IRQHandler(void)
 	{
 		EXTI->PR1 |= EXTI_PR1_PIF13; //cleared by '1'
 		ld2.Toggle();
-
 	}
 }
 

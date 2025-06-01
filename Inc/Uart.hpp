@@ -22,6 +22,7 @@
 // try once more
 
 #include "Config.hpp"
+#include "array"
 
 #ifndef UART_HPP_
 #define UART_HPP_
@@ -31,10 +32,10 @@ class UART2
 protected:
 
 	char actualChar;
-	static constexpr uint8_t maxLength = 80;
-	char buffer_[maxLength] = "\0";
+	std::array<char, 80> buffer_ {};
 	inline void EnableClock() { RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN; };
 	void UartConfig(const uint32_t baudRate = 115200);
+	//void StoreReceivedCharIT(const char c);
 
 public:
 	UART2(const UART2& source) = delete;
@@ -48,8 +49,10 @@ public:
 
 	ERROR_CODE GetChar();
 	ERROR_CODE GetString();
-	inline const char* GetBuffer() { return this->buffer_; }
+	inline std::array<char, 80>GetBuffer() { return this->buffer_; }
 	inline char GetActualChar() { return this->actualChar; }
+
+	void ConfigureExtiReceive();
 };
 
 #endif /* UART_HPP_ */
