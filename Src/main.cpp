@@ -19,25 +19,28 @@
 #include "../Inc/Gpio.hpp"
 #include "../Inc/Button.hpp"
 #include "../Inc/Timer.hpp"
-#include "../Inc/Uart.hpp"
+//#include "../Inc/Uart.hpp"
 #include "../Inc/Config.hpp"
 #include <stdio.h>
 #include <cstring>
+
 //drivers/cmsis/include/core_cm0plus////systick_config - method
 //To Cortex system timer - in hal clock config
 
-//USART2_TX - PA2
-//USART2_RX - PA3
+void ConfigurationButtonEXTI();
+GpioOutput<GPIOA_BASE, 5> ld2;
 
 int main(void)
 {
 	SystemTimer::Init(4000);
+	Button<GPIOC_BASE, 13, OptionsPUPDR::PullUp> userButton;
+	//UART2 uart2;
+	ConfigurationButtonEXTI();
 
-	GpioOutput<GPIOA_BASE, 5> ld2;
-	UART2 uart2;
 
 	while (true)
 	{
+		/*
 		if (uart2.GetString() == ERROR_CODE::OK)
 			uart2.SendString(uart2.GetBuffer());
 
@@ -47,7 +50,60 @@ int main(void)
 			ld2.Clear();
 		else if (strcmp(uart2.GetBuffer(), "toggle") == 0)
 			ld2.Toggle();
+		*/
 	}
 }
 
+//RM EXTI
+//RM External iterrupt/event GPIO Mapping (multiplexer)
+//For single exti only single port
+//I.e interrupt for PC13 cannot be set for PA13 at the same time
+void ConfigurationButtonEXTI()
+{
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN; //enable SYSCFG clock
+	//9.2.6 System configuration controller SYSCFG
+	SYSCFG->EXTICR[3] &= ~SYSCFG_EXTICR4_EXTI13; //0000
+	SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI13_PC; //set bit for PC13 exti route to syscfg
+
+	//falling edge -> button normally opened -> high state
+	//falls frop high state to low, when button is pressed
+	EXTI->FTSR1 |= EXTI_FTSR1_FT13; //reference manual 14.5.3 Rising trigger selection register
+
+	EXTI->IMR1 |= EXTI_IMR1_IM13;//unmasked
+	//Interrupt mask register IMR
+	//masked thing is treated as it does not exist
+
+	//interrupt priority
+	//enum from stm32l476xx.h (CMSIS file) - Interrupt number definition
+	NVIC_SetPriority(EXTI15_10_IRQn, 1); //set priority (for exti 10 - 15, priotity = 1
+	NVIC_EnableIRQ(EXTI15_10_IRQn);//enable interrupt
+
+
+}
+
+//interrupt handling function from start-up
+//startup_stm32l476rgtx.s
+//EXTI15_10_IRQHandler
+
+extern "C" void EXTI15_10_IRQHandler(void)
+{
+	//which interrupt: status registers in RM 14.5.6 Pending register
+	//PIFx --> PIF13
+	//rc_w1 means - read, clear with 1
+	if (EXTI->PR1 & EXTI_PR1_PIF13)
+	{
+		EXTI->PR1 |= EXTI_PR1_PIF13; //cleared by '1'
+		ld2.Toggle();
+
+	}
+}
+
+/*
+ * there should be long, time consuming operations
+ * flag can be enabled (data is ready to send/receive)
+ * uart can rise interrupt when data is ready to receive
+ * then add to buffer
+ * when the sign is  '\0' it can be send
+ *
+ * */
 
