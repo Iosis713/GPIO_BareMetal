@@ -75,14 +75,14 @@ protected:
 		USART2->CR1 |= USART_CR1_RE; //receiver enabled - 0 disable, 1- enabled
 	};
 	volatile bool messageReady_ = false;
-	uint8_t index_ = 0;
+	std::array<char, bufferSize>::iterator index_;
 
 public:
 	UART2(const UART2& source) = delete;
 	UART2(UART2&& source) = delete;
 	UART2& operator=(const UART2& source) = delete;
 	UART2& operator=(UART2&& source) = delete;
-	UART2()
+	UART2() : index_(buffer_.begin())
 	{
 		this->EnableClock();
 		UartConfig();
@@ -178,7 +178,7 @@ public:
 	};
 	void ClearBuffer()
 	{
-		index_ = 0;
+		index_ = buffer_.begin();
 		buffer_.fill('\0');
 	};
 	void IRQ_Handler()
@@ -189,16 +189,16 @@ public:
 		{
 			const char received = USART2->RDR; //Read data register
 
-			if (received == '\n' || received == '\r' || index_>= buffer_.size() - 1)
+			if (received == '\n' || received == '\r' || index_ >= buffer_.end() - 1)
 			{
-				buffer_[index_] = '\0';
+				*index_ = '\0';
 				messageReady_ = true;
-				index_ = 0;
+				index_ = buffer_.begin();
 			}
 			else
 			{
-				buffer_[index_] = received;
-				index_ += 1; //volatile++ is deprecated for c++20
+				*index_ = received;
+				index_++;
 			}
 		}
 	};
