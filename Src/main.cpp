@@ -29,7 +29,7 @@
 
 void ConfigurationButtonEXTI();
 GpioOutput<GPIOA_BASE, 5> ld2;
-UART2 uart2;
+UART2<115200, 80> uart2;
 
 int main(void)
 {
