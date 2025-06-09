@@ -20,6 +20,14 @@ enum class OptionsPUPDR
     /*Reserved,// 11 = Reserved - but you shouldn't use reserved pin*/
 };
 
+enum class OptionsOTYPER
+{
+	// GPIOx_OTYPER (GPIO port output type register):
+	//reset value 0x0000 0000
+	PushPull, // 0 = Output push-pull (reset state)
+	OpenDrain,// 1 = Output open-drain
+};
+
 template<typename Derived>
 class IGpio
 {
@@ -38,6 +46,7 @@ public:
 		else if (Derived::portAddr == GPIOD_BASE)
 			RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN;
 	}
+
 	template<OptionsPUPDR pupdrOption>
 	void ConfigurePUPDR()
 	{
@@ -45,27 +54,33 @@ public:
 		// Reset value: 0x6400 0000 (for port A) - pin15 [pull-up], pin14 [pull-down], others [No pull-up/pull-down]
 		// Reset value: 0x0000 0100 (for port B) - pin4 [pull-up]
 		// Reset value: 0x0000 0000 (for other ports)
-
-	    // 00 = No pull-up, no pull-down
-	    // 01 = Pull-up
-	    // 10 = Pull-down
-	    // 11 = Reserved
+		using enum OptionsPUPDR;
 		auto port = this->Port();
 		port->PUPDR &= ~(PUPDR_MASKS[Derived::pin]); //00- no pull-up, no pull-down
-		{
-			using enum OptionsPUPDR;
-			if constexpr (pupdrOption == PullUp)
-				port->PUPDR |= PUPDR_MASKS_0[Derived::pin];
-			else if constexpr (pupdrOption == PullDown)
-				port->PUPDR |= PUPDR_MASKS_1[Derived::pin];
-		}
+		if constexpr (pupdrOption == PullUp)
+			port->PUPDR |= PUPDR_MASKS_0[Derived::pin];
+		else if constexpr (pupdrOption == PullDown)
+			port->PUPDR |= PUPDR_MASKS_1[Derived::pin];
 	}
+
+	template<OptionsOTYPER otyperOption>
+	void ConfigureOTYPER()
+	{
+		using enum OptionsOTYPER;
+		auto port = this->Port();
+		if constexpr (otyperOption == PushPull)
+			port->OTYPER &= ~OTYPER_BITS[Derived::pin];
+		else if constexpr (otyperOption == OpenDrain)
+			port->OTYPER |= OTYPER_BITS[Derived::pin];
+	}
+
 };
 
 template<std::uintptr_t portAddr_
         , uint8_t pin_
+		, OptionsOTYPER otyperOption = OptionsOTYPER::PushPull
 		, OptionsPUPDR pupdrOption = OptionsPUPDR::None>
-class GpioOutput : public IGpio<GpioOutput<portAddr_, pin_, pupdrOption>>
+class GpioOutput : public IGpio<GpioOutput<portAddr_, pin_, otyperOption, pupdrOption>>
 {
 private:
 	void ConfigureAsOutput()
@@ -82,9 +97,7 @@ private:
 		port->MODER &= ~MODER_MASKS[pin];
 		port->MODER |= MODER_OUTPUT_BITS[pin];
 
-		// GPIOx_OTYPER (GPIO port output type register):
-		// 0 = Output push-pull (reset state)
-		// 1 = Output open-drain
+		this->template ConfigureOTYPER<otyperOption>();
 		port->OTYPER &= ~OTYPER_BITS[pin];
 
 		// GPIOx_OSPEEDR (GPIO port output speed register):
@@ -119,8 +132,11 @@ public:
 	void Toggle() { this->Port()->ODR ^= ODR_OD_MASKS[pin]; /*Bitwise XOR*/}
 };
 
-template<std::uintptr_t portAddr_, uint8_t pin_, OptionsPUPDR pupdrOption>
-class GpioInput : public IGpio<GpioInput<portAddr_, pin_, pupdrOption>>
+template<std::uintptr_t portAddr_
+        , uint8_t pin_
+		, OptionsOTYPER otyperOption = OptionsOTYPER::PushPull
+		, OptionsPUPDR pupdrOption = OptionsPUPDR::None>
+class GpioInput : public IGpio<GpioInput<portAddr_, pin_, otyperOption, pupdrOption>>
 {
 protected:
 	void ConfigureAsInput()
@@ -128,6 +144,7 @@ protected:
 		auto port = this->Port();
 		static_assert(pin >= 0 && pin < 16, "Invalid pin number: needs to be in range of 0 - 15!");
 		port->MODER &= ~(MODER_MASKS[pin]); //00 - input
+		this->template ConfigureOTYPER<otyperOption>();
 		this->template ConfigurePUPDR<pupdrOption>();
 	}
 public:

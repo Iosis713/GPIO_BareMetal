@@ -11,7 +11,7 @@
 #define BUTTON_HPP_
 
 template<std::uintptr_t portAddr_, uint8_t pin_, OptionsPUPDR pupdrOption>
-class Button : public GpioInput<portAddr_, pin_, pupdrOption>
+class Button : public GpioInput<portAddr_, pin_, OptionsOTYPER::PushPull, pupdrOption>
 {
 private:
 public:
