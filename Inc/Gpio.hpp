@@ -148,7 +148,6 @@ private:
 		this->template ConfigureOTYPER<otyperOption>();
 		this->template ConfigureOSPEEDR<ospeedrOption>();
 		this->template ConfigurePUPDR<pupdrOption>();
-
 	}
 
 public:
