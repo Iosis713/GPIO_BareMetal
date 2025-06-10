@@ -39,17 +39,13 @@ extern "C" void TIM3_IRQHandler(void);
 
 GpioOutput<GPIOA_BASE, 5> ld2;
 UART2<115200, 80> uart2;
-PWM<GPIOA_BASE, 6, (4 - 1), (1000 - 1)> pwmTIM3_CH1;
+PWM<GPIOA_BASE, 6, TIM3_BASE, (4 - 1), (1000 - 1)> pwmTIM3_CH1;
 
 int main(void)
 {
 	SystemTimer::Init(4000);
 	Button<GPIOC_BASE, 13, OptionsPUPDR::PullUp> userButton;
 	ConfigurationButtonEXTI();
-	//TIM3_BaseConfiguration();
-	//TIM3_Start();
-	//TIM3_InterruptsConfiguration();
-	//TIM3_PWMConfiguration();
 	LED_PWMPinSetup();
 	Timer timerPWM(10);
 
@@ -222,21 +218,6 @@ extern "C" void USART2_IRQHandler(void)
 
 extern "C" void TIM3_IRQHandler(void)
 {
-	//RM 31.4.6 TIMx Status register (TIMx_SR) -- UIF (update interrupt flag) rc_w0 readClear_with0
-	//0 No update occured
-	//1 update interrupt pending. This bit is set by hardware when the registers are updated
-	/*if (TIM3->SR & TIM_SR_UIF)
-	{
-		TIM3->SR &= ~(TIM_SR_UIF);
-		//update event
-	}
-
-	//capture compare interrupt 1 (CH1) handler
-	if (TIM3->SR & TIM_SR_CC1IF)
-	{
-		TIM3->SR &= ~(TIM_SR_CC1IF);
-		//capture compare event
-	}*/
 	pwmTIM3_CH1.InterruptHandler();
 }
 
