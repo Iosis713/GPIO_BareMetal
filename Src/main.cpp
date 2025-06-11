@@ -29,24 +29,19 @@
 //To Cortex system timer - in hal clock config
 
 void ConfigurationButtonEXTI();
-void TIM3_BaseConfiguration();
-void TIM3_Start();
-void TIM3_InterruptsConfiguration();
-void TIM3_PWMConfiguration();
-void LED_PWMPinSetup();
 //from startup file
 extern "C" void TIM3_IRQHandler(void);
 
 GpioOutput<GPIOA_BASE, 5> ld2;
 UART2<115200, 80> uart2;
-PWM<GPIOA_BASE, 6, TIM3_BASE, (4 - 1), (1000 - 1)> pwmTIM3_CH1;
+PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3;
+PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Tim());
 
 int main(void)
 {
 	SystemTimer::Init(4000);
 	Button<GPIOC_BASE, 13, OptionsPUPDR::PullUp> userButton;
 	ConfigurationButtonEXTI();
-	LED_PWMPinSetup();
 	Timer timerPWM(10);
 
 	uart2.ConfigureExtiReceive();
@@ -69,98 +64,13 @@ int main(void)
 
 		if (timerPWM.IsExpired())
 		{
-			if (pwmTIM3_CH1.GetPulse_CH1() < pwmTIM3_CH1.GetMaxWidth() - 1)
-				pwmTIM3_CH1.SetPulse_CH1(pwmTIM3_CH1.GetPulse_CH1() + 5);
+			if (channel1.GetPulse_CH1() < pwmTim3.GetMaxWidth() - 1)
+				channel1.SetPulse_CH1(channel1.GetPulse_CH1() + 5);
 			else
-				pwmTIM3_CH1.SetPulse_CH1(0);
+				channel1.SetPulse_CH1(0);
 		}
 	}
 }
-
-//PWM
-//Timer clock - RM 6.2. Tim3 PCLK x1 or x2 -> TIMPCLK
-//HPRE = 0x00 --> div 1
-//PPRE1 = 0x00 --> div 1 (APB1PRE)
-
-void TIM3_BaseConfiguration()
-{
-	//RM 6.4.19 APB1ENR
-	RCC->APB1ENR1 |= RCC_APB1ENR1_TIM3EN; //1 enabled, 0 - disabled
-	//TIMx_prescaler 16bit; RM 31.4.14 TIMx prescaler
-	TIM3->PSC = (4 - 1);//1MHz
-	//TIMx_auto-reloeadRegister - 16bit
-	TIM3->ARR = (1000 - 1);//1kHz - defines top value for CNT register
-	//CNT register hold current value of timers counter
-}
-
-void TIM3_Start()
-{
-	//TIMER counter register
-	TIM3->CNT = 0;//reset if it had different value
-
-	//RM 31.4.1 CEN bit (Counter enable)
-	TIM3->CR1 |= TIM_CR1_CEN;
-}
-
-void TIM3_InterruptsConfiguration()
-{
-	//RM 31.4.4 DMA/Interrupt enable register (DIER)
-	//Trigger interrupt enable TIE (on/off - 1/0)
-	//Update interrupt enable UIE (on/off - 1/0)
-	//update interrupt is enabled
-	TIM3->DIER |= TIM_DIER_UIE;
-	//capture/compare 1 interrupt 1 (CH1) enable
-	TIM3->DIER |= TIM_DIER_CC1IE;
-
-	//priority and enable in nvic
-	//enum from stm32l476xx.h (CMSIS)
-	NVIC_SetPriority(TIM3_IRQn, 1);
-	NVIC_EnableIRQ(TIM3_IRQn);
-}
-
-void TIM3_PWMConfiguration()
-{
-
-	//RM 31.4.8 TIMx capture/compare mode register 1 (TIMx_CCMR1) [alternate] - output
-	//Capture/Compare 1 Selection -CC1S - is output (0) by default, but check this bit
-	//Output Compare 1 Mode - OC1M - PWM mode 1 -active when CNT < CCR1
-	//0110  for PWM mode 1
-	TIM3->CCMR1 |= TIM_CCMR1_OC1M_1;
-	TIM3->CCMR1 |= TIM_CCMR1_OC1M_2;
-
-	// Enable preload for CCR1 (this is **required** for PWM to work)
-	TIM3->CCMR1 |= TIM_CCMR1_OC1PE;
-
-
-	//RM 31.4.16 Capture/compare register 1
-	//Capture compare register (to which value counter will be compared to set high state
-	//its pulse value in other words
-	//lets assume 50% = 499, as ARR = 999
-	//this can be used to modify pulse
-	TIM3->CCR1 = 500;
-	//Capture/compare enable register (TIMx_CCER1) RM 31.4.11
-	//capture/compare output enable bit
-	TIM3->CCER |= TIM_CCER_CC1E;
-}
-
-void LED_PWMPinSetup()
-{
-	//enable clock for port A
-	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
-	//alternate 10
-	GPIOA->MODER &= ~(GPIO_MODER_MODE6);//clear to 00
-	GPIOA->MODER |= GPIO_MODER_MODE6_1;
-	//Datasheet Pinouts and pin description
-	//AF2 Datasheet Alternate functino 0 - 7
-
-	//RM 8.5.10 GPIO alternate function low register (AFSEL6)
-	//AF2 = 0010
-	//GPIOA->AFR[0] &= ~(GPIO_AFRL_AFSEL6_0);//0 by default anyway
-	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL6_1;
-	//GPIOA->AFR[0] |= GPIO_AFRL_AFSEL6_2;
-	//GPIOA->AFR[0] &= ~(GPIO_AFRL_AFSEL6_3);//0 by default anyway
-}
-
 
 //RM EXTI
 //RM External iterrupt/event GPIO Mapping (multiplexer)
@@ -218,6 +128,7 @@ extern "C" void USART2_IRQHandler(void)
 
 extern "C" void TIM3_IRQHandler(void)
 {
-	pwmTIM3_CH1.InterruptHandler();
+	pwmTim3.InterruptHandler();
+	channel1.InterruptHandler();
 }
 
