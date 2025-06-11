@@ -135,7 +135,7 @@ static constexpr std::array<uint32_t, 8> AFRL_AFSEL_3_MASKS = {
 };
 
 //structured in way: bit_0, bit_1, bit_2, bit_3, full mask 1111
-static constexpr std::array<std::array<uint32_t, 5>, 16> GPIO_AFRL_AFSEL_MASKS = {{
+static constexpr std::array<std::array<uint32_t, 5>, 16> GPIO_AFR_AFSEL_MASKS = {{
 	{GPIO_AFRL_AFSEL0_0,  GPIO_AFRL_AFSEL0_1,  GPIO_AFRL_AFSEL0_2,  GPIO_AFRL_AFSEL0_3,  GPIO_AFRL_AFSEL0},
 	{GPIO_AFRL_AFSEL1_0,  GPIO_AFRL_AFSEL1_1,  GPIO_AFRL_AFSEL1_2,  GPIO_AFRL_AFSEL1_3,  GPIO_AFRL_AFSEL1},
 	{GPIO_AFRL_AFSEL2_0,  GPIO_AFRL_AFSEL2_1,  GPIO_AFRL_AFSEL2_2,  GPIO_AFRL_AFSEL2_3,  GPIO_AFRL_AFSEL2},

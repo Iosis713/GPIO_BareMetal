@@ -57,6 +57,28 @@ enum class OptionsOSPEEDR
 	//and the power supply and load conditions for each speed...
 };
 
+//Datasheet Pinouts and pin description
+//AF2 Datasheet Alternate functino 0 - 7
+enum class AlternateFunction
+{
+	AF0,
+	AF1,
+	AF2,
+	AF3,
+	AF4,
+	AF5,
+	AF6,
+	AF7,
+	AF8,
+	AF9,
+	AF10,
+	AF11,
+	AF12,
+	AF13,
+	AF14,
+	AF15
+};
+
 template<typename Derived>
 class IGpio
 {
@@ -130,6 +152,81 @@ public:
 		else if constexpr (ospeedrOption == VeryHighSpeed)
 			port->OSPEEDR |= OSPEEDR_MASKS[Derived::pin];
 	}
+
+	//Datasheet Pinouts and pin description
+	//AF2 Datasheet Alternate functino 0 - 7 / 8 -15
+	//RM 8.5.10 GPIO alternate function low/high register
+	void ConfigureAlternateFunction(const AlternateFunction af)
+	{
+		uint8_t LowOrHigh = Derived::pin <= 7 ? 0 : 1;
+		Port()->AFR[LowOrHigh] &= ~GPIO_AFR_AFSEL_MASKS[Derived::pin][4]; //clearing bits
+
+		using enum AlternateFunction;
+		switch (af)
+		{
+		case AF0:
+			break; //0000 (reset value)
+		case AF1:
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][0]; //0001
+			break;
+		case AF2:
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][1]; //0010
+			break;
+		case AF3:
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][0]; //0011
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][1];
+			break;
+		case AF4:
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][2]; //0100
+			break;
+		case AF5:
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][0]; //0101
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][2];
+			break;
+		case AF6:
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][1]; //0110
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][2];
+			break;
+		case AF7:
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][4]; //0111
+			Port()->AFR[LowOrHigh] &= ~GPIO_AFR_AFSEL_MASKS[Derived::pin][3];
+			break;
+		case AF8:
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][3]; //1000
+			break;
+		case AF9:
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][0]; //1001
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][3];
+			break;
+		case AF10:
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][1]; //1010
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][3];
+			break;
+		case AF11:
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][4]; //1011
+			Port()->AFR[LowOrHigh] &= ~GPIO_AFR_AFSEL_MASKS[Derived::pin][2];
+			break;
+		case AF12:
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][2];
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][3];
+			break;
+		case AF13:
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][4];
+			Port()->AFR[LowOrHigh] &= ~GPIO_AFR_AFSEL_MASKS[Derived::pin][1];
+			break;
+		case AF14:
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][4];
+			Port()->AFR[LowOrHigh] &= ~GPIO_AFR_AFSEL_MASKS[Derived::pin][0];
+			break;
+		case AF15:
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][4];
+			break;
+		default:
+			break;
+		}
+	}
+	//GPIOA->AFR[0] |= GPIO_AFRL_AFSEL6_1; //to be refactored
+
 
 };
 

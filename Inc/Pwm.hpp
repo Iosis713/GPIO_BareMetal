@@ -12,28 +12,7 @@
 #include "Config.hpp"
 #include "Gpio.hpp"
 
-enum class AlternateFunction
-{
-	AF0,
-	AF1,
-	AF2,
-	AF3,
-	AF4,
-	AF5,
-	AF6,
-	AF7,
-	AF8,
-	AF9,
-	AF10,
-	AF11,
-	AF12,
-	AF13,
-	AF14,
-	AF15
-};
-
 //temporarly just for TIM3
-
 template<std::uintptr_t timerAddr_
 		, uint32_t prescalerPSC_ //0 - 15
 		, uint32_t ARR_ /*auto-reload register*/>
@@ -135,22 +114,21 @@ private:
 	static constexpr uint8_t channel = channel_;
 	TIM_TypeDef* const timer = nullptr;
 
-	void ConfigurePWM()
+	void ConfigurePWMChannel(const AlternateFunction af)
 	{
 		static_assert(pin >= 0 && pin <= 15, "Invalid pin number: needs to be in range of 0 - 15!");
 		static_assert(channel >= 1 && channel <= 4, "Invalid channel number: needs to be in range of 1 - 4!");
 
 		this->template ConfigureMODER<OptionsMODER::Alternate>();
-		//Datasheet Pinouts and pin description
-		//AF2 Datasheet Alternate functino 0 - 7
-		//RM 8.5.10 GPIO alternate function low register (AFSEL6) because pin PA6
-		GPIOA->AFR[0] |= GPIO_AFRL_AFSEL6_1; //to be refactored
-
 		this->template ConfigureOTYPER<otyperOption>();
 		this->template ConfigureOSPEEDR<ospeedrOption>();
 		this->template ConfigurePUPDR<pupdrOption>();
 		ConfigureCaptureCompare();
-
+		//Datasheet Pinouts and pin description
+		//AF2 Datasheet Alternate functino 0 - 7
+		//RM 8.5.10 GPIO alternate function low register (AFSEL6) because pin PA6
+		//To be checked in datasheet Pinouts and pin description / alternate function
+		this->template ConfigureAlternateFunction(af);
 	}
 
 	void ConfigureCaptureCompare()
@@ -211,10 +189,10 @@ public:
 	PWMChannel& operator=(const PWMChannel& source) = delete;
 	PWMChannel& operator=(PWMChannel&& source) = delete;
 	PWMChannel() = delete;
-	PWMChannel(TIM_TypeDef*  const timer_) : timer(timer_)
+	PWMChannel(TIM_TypeDef* const timer_, const AlternateFunction af) : timer(timer_)
 	{
 		this->EnableClock();
-		ConfigurePWM();
+		ConfigurePWMChannel(af);
 	}
 
 	//CCR1 - capture compare register 1 (CH1)
@@ -240,7 +218,5 @@ public:
 			timer->SR &= ~(TIM_SR_CC1IF); //capture compare event
 	}
 };
-
-
 
 #endif /* PWM_HPP_ */
