@@ -12,6 +12,26 @@
 #include "Config.hpp"
 #include "Gpio.hpp"
 
+enum class AlternateFunction
+{
+	AF0,
+	AF1,
+	AF2,
+	AF3,
+	AF4,
+	AF5,
+	AF6,
+	AF7,
+	AF8,
+	AF9,
+	AF10,
+	AF11,
+	AF12,
+	AF13,
+	AF14,
+	AF15
+};
+
 //temporarly just for TIM3
 
 template<std::uintptr_t portAddr_
@@ -25,13 +45,16 @@ template<std::uintptr_t portAddr_
 class PWM : public IGpio<PWM<portAddr_, pin_, timerAddr_, prescalerPSC_, ARR_, otyperOption, ospeedrOption, pupdrOption>>
 {
 private:
-	std::uintptr_t timerAddr = timerAddr_;
+	static constexpr std::uintptr_t timerAddr = timerAddr_;
 	TIM_TypeDef* Tim() const { return reinterpret_cast<TIM_TypeDef*>(this->timerAddr); }
 
 	void ConfigurePWM()
 	{
 		static_assert(pin >= 0 && pin < 16, "Invalid pin number: needs to be in range of 0 - 15!");
 		this->template ConfigureMODER<OptionsMODER::Alternate>();
+		//Datasheet Pinouts and pin description
+		//AF2 Datasheet Alternate functino 0 - 7
+		//RM 8.5.10 GPIO alternate function low register (AFSEL6) because pin PA6
 		GPIOA->AFR[0] |= GPIO_AFRL_AFSEL6_1; //to be refactored
 
 		this->template ConfigureOTYPER<otyperOption>();
@@ -51,9 +74,24 @@ private:
 		tim->CCR1 = 0;// just for initialization clearing the counter
 		//capture/compare output enable bit
 		tim->CCER |= TIM_CCER_CC1E; //Capture/compare enable register (TIMx_CCER1) RM 31.4.11
-
-
 	}
+
+	void EnableTimerClock()
+	{
+		if constexpr (timerAddr == TIM2_BASE)
+			RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
+		else if constexpr (timerAddr == TIM3_BASE)
+			RCC->APB1ENR1 |= RCC_APB1ENR1_TIM3EN;
+		else if constexpr (timerAddr == TIM4_BASE)
+			RCC->APB1ENR1 |= RCC_APB1ENR1_TIM4EN;
+		else if constexpr (timerAddr == TIM5_BASE)
+			RCC->APB1ENR1 |= RCC_APB1ENR1_TIM5EN;
+		else if constexpr (timerAddr == TIM6_BASE)
+			RCC->APB1ENR1 |= RCC_APB1ENR1_TIM6EN;
+		else if constexpr (timerAddr == TIM7_BASE)
+			RCC->APB1ENR1 |= RCC_APB1ENR1_TIM7EN;
+	}
+
 public:
 	static constexpr std::uintptr_t portAddr = portAddr_;
 	static constexpr uint8_t pin = pin_;
@@ -69,7 +107,7 @@ public:
 		//HPRE = 0x00 --> div 1
 		//PPRE1 = 0x00 --> div 1 (APB1PRE)
 		//RM 6.4.19 APB1ENR -- 1 enabled, 0 - disabled
-		RCC->APB1ENR1 |= RCC_APB1ENR1_TIM3EN;
+		EnableTimerClock();
 		auto tim = Tim();
 		//TIMx_prescaler 16bit; RM 31.4.14 TIMx prescaler
 		tim->PSC = prescalerPSC_; //should be 1 less, than divider
@@ -124,7 +162,6 @@ public:
 		else
 			tim->CCR1 = pulse;
 	}
-
 };
 
 
