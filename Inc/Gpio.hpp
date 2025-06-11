@@ -207,19 +207,19 @@ public:
 			Port()->AFR[LowOrHigh] &= ~GPIO_AFR_AFSEL_MASKS[Derived::pin][2];
 			break;
 		case AF12:
-			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][2];
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][2]; //1100
 			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][3];
 			break;
 		case AF13:
-			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][4];
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][4]; //1101
 			Port()->AFR[LowOrHigh] &= ~GPIO_AFR_AFSEL_MASKS[Derived::pin][1];
 			break;
 		case AF14:
-			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][4];
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][4]; //1110
 			Port()->AFR[LowOrHigh] &= ~GPIO_AFR_AFSEL_MASKS[Derived::pin][0];
 			break;
 		case AF15:
-			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][4];
+			Port()->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][4]; //1111
 			break;
 		default:
 			break;
