@@ -111,7 +111,7 @@ class PWMChannel : public IGpio<PWMChannel<portAddr_, pin_, channel_, otyperOpti
 {
 private:
 	static constexpr uint8_t channel = channel_;
-	TIM_TypeDef* const timer = nullptr;
+	volatile TIM_TypeDef* const timer = nullptr;
 
 	void ConfigurePWMChannel(const AlternateFunction af)
 	{
@@ -198,14 +198,31 @@ public:
 	//RM 31.4.16 Capture/compare register 1
 	//Capture compare register (to which value counter will be compared to set high state
 	//its pulse value in other words: 0% --> CCR1 = 0, 100% --> CCR1 = ARR
-	uint32_t GetPulse_CH1() const { return timer->CCR1; };
+	uint32_t GetPulse() const
+	{
+		if constexpr (channel == 1) return timer->CCR1; //CCR1 is already defined with volatile
+		else if constexpr (channel == 2) return timer->CCR2;
+		else if constexpr (channel == 3) return timer->CCR3;
+		else if constexpr (channel == 4) return timer->CCR4;
+		else static_assert(false, "Only channels numbers 1 - 4 are available!");
+	};
 
-	void SetPulse_CH1(const uint32_t pulse)
+	void SetPulse(const uint32_t pulse)
 	{
 		if (pulse > timer->ARR)
-			timer->CCR1 = timer->ARR;
+		{
+			if constexpr (channel == 1) timer->CCR1 = timer->ARR;
+			else if constexpr (channel == 2) timer->CCR2 = timer->ARR;
+			else if constexpr (channel == 3) timer->CCR3 = timer->ARR;
+			else if constexpr (channel == 4) timer->CCR4 = timer->ARR;
+		}
 		else
-			timer->CCR1 = pulse;
+		{
+			if constexpr (channel == 1) timer->CCR1 = pulse;
+			else if constexpr (channel == 2) timer->CCR2 = pulse;
+			else if constexpr (channel == 3) timer->CCR3 = pulse;
+			else if constexpr (channel == 4) timer->CCR4 = pulse;
+		}
 	}
 
 	void InterruptHandler()

@@ -64,10 +64,10 @@ int main(void)
 
 		if (timerPWM.IsExpired())
 		{
-			if (channel1.GetPulse_CH1() < pwmTim3.GetMaxWidth() - 1)
-				channel1.SetPulse_CH1(channel1.GetPulse_CH1() + 5);
+			if (channel1.GetPulse() < pwmTim3.GetMaxWidth() - 1)
+				channel1.SetPulse(channel1.GetPulse() + 5);
 			else
-				channel1.SetPulse_CH1(0);
+				channel1.SetPulse(0);
 		}
 	}
 }
