@@ -1,0 +1,15 @@
+!SESSION 2025-06-12 18:29:28.293 -----------------------------------------------
+eclipse.buildId=Version 1.18.0
+java.version=21.0.3
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=pl_PL
+Command-line arguments:  -os linux -ws gtk -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2025-06-12 18:29:48.669
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2025-06-12 18:29:48.670
+!MESSAGE Log4j2 initialized with config file /home/bartoszlozinski/Programming/Embedded/BareMetalSTM32/GPIO_BareMetal/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2025-06-12 18:29:50.888
+!MESSAGE Started RMI Server, listening on port 41337

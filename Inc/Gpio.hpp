@@ -225,9 +225,6 @@ public:
 			break;
 		}
 	}
-	//GPIOA->AFR[0] |= GPIO_AFRL_AFSEL6_1; //to be refactored
-
-
 };
 
 template<std::uintptr_t portAddr_

@@ -12,7 +12,6 @@
 #include "Config.hpp"
 #include "Gpio.hpp"
 
-//temporarly just for TIM3
 template<std::uintptr_t timerAddr_
 		, uint32_t prescalerPSC_ //0 - 15
 		, uint32_t ARR_ /*auto-reload register*/>
