@@ -35,7 +35,7 @@ extern "C" void TIM3_IRQHandler(void);
 GpioOutput<GPIOA_BASE, 5> ld2;
 UART2<115200, 80> uart2;
 PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3(1);
-PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Tim(), AlternateFunction::AF2);
+PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
 
 int main(void)
 {

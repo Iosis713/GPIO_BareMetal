@@ -22,8 +22,8 @@ private:
 	void EnableTimerClockAndInterruptsConfig(const uint8_t priority)
 	{
 		//RM 31.4.4 DMA/Interrupt enable register (DIER)
-		auto tim = Tim(); //Update interrupt enable UIE (on/off - 1/0)
-		tim->DIER |= TIM_DIER_UIE; //update interrupt is enabled
+		auto timer = Timer(); //Update interrupt enable UIE (on/off - 1/0)
+		timer->DIER |= TIM_DIER_UIE; //update interrupt is enabled
 
 		if constexpr (timerAddr == TIM2_BASE)
 		{
@@ -64,7 +64,7 @@ private:
 	}
 
 public:
-	TIM_TypeDef* Tim() const { return reinterpret_cast<TIM_TypeDef*>(this->timerAddr); }
+	TIM_TypeDef* Timer() const { return reinterpret_cast<TIM_TypeDef*>(this->timerAddr); }
 	PWM(const PWM& source) = delete;
 	PWM(PWM&& source) = delete;
 	PWM& operator=(const PWM& source) = delete;
@@ -78,26 +78,26 @@ public:
 		//PPRE1 = 0x00 --> div 1 (APB1PRE)
 		//RM 6.4.19 APB1ENR -- 1 enabled, 0 - disabled
 		EnableTimerClockAndInterruptsConfig(priority);
-		auto tim = Tim();
+		auto timer = Timer();
 		//TIMx_prescaler 16bit; RM 31.4.14 TIMx prescaler
-		tim->PSC = prescalerPSC_; //should be 1 less, than divider
-		tim->ARR = ARR_; //should be 1 less than divider
+		timer->PSC = prescalerPSC_; //should be 1 less, than divider
+		timer->ARR = ARR_; //should be 1 less than divider
 		//TIMER counter register
-		tim->CNT = 0;//reset if it had different value
+		timer->CNT = 0;//reset if it had different value
 		//RM 31.4.1 CEN bit (Counter enable)
-		tim->CR1 |= TIM_CR1_CEN;
+		timer->CR1 |= TIM_CR1_CEN;
 	}
 
 	void InterruptHandler()
 	{
 		//RM 31.4.6 TIMx Status register (TIMx_SR) -- UIF (update interrupt flag) rc_w0 readClear_with0
 		//0 No update occure; 1 update interrupt pending. This bit is set by hardware when the registers are updated
-		auto tim = Tim();
-		if (tim->SR & TIM_SR_UIF)
-			tim->SR &= ~(TIM_SR_UIF); //update event
+		auto timer = Timer();
+		if (timer->SR & TIM_SR_UIF)
+			timer->SR &= ~(TIM_SR_UIF); //update event
 	}
 
-	uint32_t GetMaxWidth() const { return this->Tim()->ARR; };
+	uint32_t GetMaxWidth() const { return this->Timer()->ARR; };
 };
 
 
