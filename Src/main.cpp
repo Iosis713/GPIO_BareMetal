@@ -35,7 +35,7 @@ extern "C" void TIM3_IRQHandler(void);
 GpioOutput<GPIOA_BASE, 5> ld2;
 UART2<115200, 80> uart2;
 PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3(1);
-PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Tim(), AlternateFunction::AF2);
+PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
 
 int main(void)
 {
@@ -64,10 +64,10 @@ int main(void)
 
 		if (timerPWM.IsExpired())
 		{
-			if (channel1.GetPulse_CH1() < pwmTim3.GetMaxWidth() - 1)
-				channel1.SetPulse_CH1(channel1.GetPulse_CH1() + 5);
+			if (channel1.GetPulse() < pwmTim3.GetMaxWidth() - 1)
+				channel1.SetPulse(channel1.GetPulse() + 5);
 			else
-				channel1.SetPulse_CH1(0);
+				channel1.SetPulse(0);
 		}
 	}
 }

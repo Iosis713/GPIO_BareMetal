@@ -26,10 +26,7 @@ public:
 	}
 	bool IsButtonPressed() const
 	{
-		if (this->ReadPin())
-			return false; //normally opened button
-		else
-			return true;
+		return !this->ReadPin(); //ReadPin returns true for high state. This button is normally opened
 	}
 };
 
