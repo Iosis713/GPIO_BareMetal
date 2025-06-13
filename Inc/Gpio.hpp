@@ -295,6 +295,32 @@ public:
 		ConfigureAsInput();
 	}
 
+	void ConfigureEXTI()
+	{
+		//JUST FOR PC13 right now. TO be developed for other pins and ports
+
+		//RM 9 System configuration controller SYSCFG:
+		//Manages among the others external interrupt line connection to GPIOs (EXTI)
+		//RM 6.4.21 - (APB2 peripheral clock enable register [lookup for SYSCFG bit]
+		RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+		//EXTI enable SYSCFG_EXTICR* bit)
+		SYSCFG->EXTICR[3] &= ~SYSCFG_EXTICR4_EXTI13; //reset to 0000 (defualt value);
+		SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI13_PC; //for port C and pin 13
+
+		//falling edge -> button normally opened -> high state
+		//falls frop high state to low, when button is pressed
+		EXTI->FTSR1 |= EXTI_FTSR1_FT13; //reference manual 14.5.3 Rising trigger selection register
+
+		EXTI->IMR1 |= EXTI_IMR1_IM13;//unmasked
+		//Interrupt mask register IMR
+		//masked thing is treated as it does not exist
+
+		//interrupt priority
+		//enum from stm32l476xx.h (CMSIS file) - Interrupt number definition
+		NVIC_SetPriority(EXTI15_10_IRQn, 1); //set priority (for exti 10 - 15, priotity = 1
+		NVIC_EnableIRQ(EXTI15_10_IRQn);//enable interrupt
+	}
+
 	bool ReadPin() const
 	{
 		//true - high state, false - low state
