@@ -359,13 +359,9 @@ public:
 	//RM External iterrupt/event (EXTI) GPIO Mapping (multiplexer)
 	//For single exti only single port
 	//I.e interrupt for PC13 cannot be set for PA13 at the same time
-
 	template<uint8_t priority>
 	void ConfigureEXTI(const Trigger trigger)
 	{
-		//enable priority only in proper range (SFINAE or template parameter and static_assert_
-		//JUST FOR PC13 right now. TO be developed for other pins and ports
-
 		//RM 9 System configuration controller SYSCFG:
 		//Manages among the others external interrupt line connection to GPIOs (EXTI)
 		//RM 6.4.21 - (APB2 peripheral clock enable register [lookup for SYSCFG bit]
