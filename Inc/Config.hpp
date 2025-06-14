@@ -229,6 +229,12 @@ static constexpr std::array<uint32_t, 16> EXTI_IMR1 = {
 	EXTI_IMR1_IM8, EXTI_IMR1_IM9, EXTI_IMR1_IM10, EXTI_IMR1_IM11, EXTI_IMR1_IM12, EXTI_IMR1_IM13, EXTI_IMR1_IM14, EXTI_IMR1_IM15
 };
 
+//which interrupt: status registers in RM 14.5.6 Pending register
+//PIFx --> rc_w1 - read/clear with 1 - used 1 to read and clear interrupt state
+static constexpr std::array<uint32_t, 16> EXTI_PR1_PIF = {
+	EXTI_PR1_PIF0, EXTI_PR1_PIF1, EXTI_PR1_PIF2, EXTI_PR1_PIF3, EXTI_PR1_PIF4, EXTI_PR1_PIF5,EXTI_PR1_PIF6, EXTI_PR1_PIF7,
+	EXTI_PR1_PIF8, EXTI_PR1_PIF9, EXTI_PR1_PIF10, EXTI_PR1_PIF11, EXTI_PR1_PIF12, EXTI_PR1_PIF13, EXTI_PR1_PIF14, EXTI_PR1_PIF15
+};
 
 /*
 namespace ClockUtils

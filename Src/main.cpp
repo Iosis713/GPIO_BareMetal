@@ -36,12 +36,11 @@ GpioOutput<GPIOA_BASE, 5> ld2;
 UART2<115200, 80> uart2;
 PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3(1);
 PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
+Button<GPIOC_BASE, 13, OptionsPUPDR::PullUp> userButton;
 
 int main(void)
 {
 	SystemTimer::Init(4000);
-	Button<GPIOC_BASE, 13, OptionsPUPDR::PullUp> userButton;
-	//ConfigurationButtonEXTI();
 	userButton.ConfigureEXTI<2>(Trigger::Falling);
 	Timer timerPWM(10);
 
@@ -70,6 +69,12 @@ int main(void)
 			else
 				channel1.SetPulse(0);
 		}
+
+		if (userButton.InterruptOccured())
+		{
+			ld2.Toggle();
+			userButton.ClearInterruptFlag();
+		}
 	}
 }
 
@@ -78,14 +83,7 @@ int main(void)
 //EXTI15_10_IRQHandler
 extern "C" void EXTI15_10_IRQHandler(void)
 {
-	//which interrupt: status registers in RM 14.5.6 Pending register
-	//PIFx --> PIF13
-	//rc_w1 means - read, clear with 1
-	if (EXTI->PR1 & EXTI_PR1_PIF13)
-	{
-		EXTI->PR1 |= EXTI_PR1_PIF13; //cleared by '1'
-		ld2.Toggle();
-	}
+	userButton.IrqHandler();
 }
 
 //startup_stm32l476rgtx.s

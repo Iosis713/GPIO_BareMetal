@@ -283,6 +283,8 @@ template<std::uintptr_t portAddr_
 class GpioInput : public IGpio<GpioInput<portAddr_, pin_, otyperOption, ospeedrOption, pupdrOption>>
 {
 protected:
+	volatile bool interruptOccured = false;
+
 	void ConfigureAsInput()
 	{
 		static_assert(pin >= 0 && pin < 16, "Invalid pin number: needs to be in range of 0 - 15!");
@@ -381,11 +383,18 @@ public:
 		ConfigureExtiPriority<priority>();
 	}
 
-	bool ReadPin() const
+	bool ReadPin() const {return this->Port()->IDR & PinMask<pin>();} //true - high state, false - low state
+	void ClearInterruptFlag() { this->interruptOccured = false; };
+	void IrqHandler()
 	{
-		//true - high state, false - low state
-		return this->Port()->IDR & PinMask<pin>() ;
-	};
+		if (EXTI->PR1 & EXTI_PR1_PIF[pin])
+		{
+			EXTI->PR1 |= EXTI_PR1_PIF[pin];
+			interruptOccured = true;
+		}
+	}
+	bool InterruptOccured() const { return this->interruptOccured; }
+
 };
 
 #endif /* INC_GPIO_HPP_ */
