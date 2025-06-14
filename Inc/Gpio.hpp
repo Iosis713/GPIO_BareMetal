@@ -389,7 +389,8 @@ public:
 	{
 		if (EXTI->PR1 & EXTI_PR1_PIF[pin])
 		{
-			EXTI->PR1 |= EXTI_PR1_PIF[pin];
+			EXTI->PR1 |= EXTI_PR1_PIF[pin]; //PIFx --> rc_w1 - read/clear with 1 - used 1 to read and clear interrupt state
+
 			interruptOccured = true;
 		}
 	}
