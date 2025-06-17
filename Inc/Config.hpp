@@ -236,20 +236,6 @@ static constexpr std::array<uint32_t, 16> EXTI_PR1_PIF = {
 	EXTI_PR1_PIF8, EXTI_PR1_PIF9, EXTI_PR1_PIF10, EXTI_PR1_PIF11, EXTI_PR1_PIF12, EXTI_PR1_PIF13, EXTI_PR1_PIF14, EXTI_PR1_PIF15
 };
 
-/*
-namespace ClockUtils
-{
-	inline uint32_t GetSystemCoreClock() { return SystemCoreClock; };
-	inline uint32_t GetPLCK1Freq()
-	{
-		const uint32_t hpre = (RCC->CFGR >> 4) & 0xF;
-		const uint32_t ahb_div = (hpre < 8) ? 1 : (1U << (hpre - 7) & 0x7);
-		const uint32_t ppre1 = (RCC->CFGR >> 8) & 0x7;
-		const uint32_t apb1_div = (ppre1 < 4) ? 1 : (1U << ((ppre1 - 3) + 1));
-		return GetSystemCoreClock() / ahb_div / apb1_div;
-	}
-}*/
-
 template<int pin>
 constexpr uint32_t PinMask()
 {

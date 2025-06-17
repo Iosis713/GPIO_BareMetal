@@ -8,13 +8,8 @@
 #ifndef ADC_HPP_
 #define ADC_HPP_
 
-#include "Timer.hpp"
-
-//UDEMY
-
-
 /*
- * adc configured with 3 cahnnels
+ * adc configured with 3 channels
  * let it be
  * ch2, ch3, ch5
  * first = ch5
@@ -28,51 +23,6 @@
  *
  * */
 
-void PC0_ADC_INIT()
-{
-	/*		CONFIGURE THE ADC GPIO pin	*/
-	//Enable clock access to PC0
-	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
-	//Set the mode of PC0 to analog
-	GPIOC->MODER |= GPIO_MODER_MODE0_0; // Clear mode bits
-	GPIOC->MODER |= GPIO_MODER_MODE0_1; //analog (by default anyway)
-
-	/*		CONFIGURE THE ADC MODULE	*/
-	//Enable clock access to adc
-	RCC->AHB2ENR |= RCC_AHB2ENR_ADCEN;
-
-	//conversion sequence start
-	ADC1->SQR1 |= ADC_SQR1_SQ1_0;
-	//configure conversion sequence length
-	ADC1->SQR1 &= ~ADC_SQR1_L;
-	//enable ADC module
-	ADC1->CR |= ADC_CR_ADEN;
-	ADC1->CR &= ~ADC_CR_DEEPPWD;
-}
-
-void Start_Conversion()
-{
-	/*		START ADC CONVERSION		*/
-
-	while (ADC1->CR & ADC_CR_ADSTART) {};
-	ADC1->CR |= ADC_CR_ADSTART;
-
-}
-
-uint32_t ADC_Read()
-{
-	//wait for conversion to be completed
-	//Status register
-	ADC1->ISR |= ADC_ISR_EOC;
-	while (!(ADC1->ISR & ADC_ISR_EOC)) {}
-
-	//read converted result
-	return ADC1->DR;
-}
-
-
-
-//SALAMON
 
 void ADCConfig()
 {
@@ -93,8 +43,6 @@ void ADCConfig()
 	//I.e PA0 ADC12_IN5 means it's available for ADC1 and ADC2, channel 5
 	ADC1->CR &= ~ADC_CR_DEEPPWD;
 	ADC1->CR |= ADC_CR_ADVREGEN; //ADC1
-	const uint32_t startTime = SystemTimer::Now();
-	while(SystemTimer::Now() < startTime + 10){}
 
 	//Sampling time (for how many ADC cycles measurement is being done)
 	ADC1->SMPR1 &= ~ADC_SMPR1_SMP1_Msk;
@@ -117,19 +65,20 @@ void ADCInputGPIOConfigure()
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
 
 	GPIOC->MODER &= ~GPIO_MODER_MODE0; // Clear mode bits
-	GPIOC->MODER |= GPIO_MODER_MODE0_0; //analog (by default anyway)
-	GPIOC->MODER |= GPIO_MODER_MODE0_1;
+	GPIOC->MODER |= GPIO_MODER_MODE0; //analog (by default anyway)
 	GPIOC->AFR[0] &= ~GPIO_AFRL_AFSEL0; // Clear AF
 	GPIOC->PUPDR &= ~(GPIO_PUPDR_PUPD0);
+	GPIOC->ASCR |= GPIO_ASCR_ASC0; //RM 8.5.12 GPIO port analog switch control register: 0 - disconnect analog switch to the adc input (reset state), 1 - connect
 }
 
 void ADCConversion()
 {
 	//RM 18.7.3 Control register
-	while (ADC1->CR & ADC_CR_ADSTART) {}; //wait until it's done :(
 	ADC1->CR |= ADC_CR_ADSTART;
+	while (ADC1->CR & ADC_CR_ADSTART) {}; //wait until it's done :(
+	//ADC1->CR |= ADC_CR_ADSTART;
 
-    ADC1->ISR |= ADC_ISR_EOC; // clear EOC flag
+    //ADC1->ISR |= ADC_ISR_EOC; // clear EOC flag
 
 	while (!(ADC1->ISR & ADC_ISR_EOC)) {}; // wait until end of conversion
 
