@@ -22,6 +22,7 @@
 #include "../Inc/Uart.hpp"
 #include "../Inc/Config.hpp"
 #include "../Inc/Pwm.hpp"
+#include "../Inc/Adc.hpp"
 #include <stdio.h>
 #include <cstring>
 
@@ -32,10 +33,6 @@
 //from startup file
 extern "C" void TIM3_IRQHandler(void);
 void Delay(const uint32_t delay);
-void ADCConfig();
-void ADCInputGPIOConfigure(); //ADC12_IN5 for PA0
-void ADCConversion();
-uint32_t ADCReadData();
 
 GpioOutput<GPIOA_BASE, 5> ld2;
 UART2<115200, 80> uart2;
@@ -50,12 +47,10 @@ int main(void)
 	SystemTimer::Init(4000);
 	userButton.ConfigureEXTI<2>(Trigger::Falling);
 	Timer timerPWM(10);
-	Timer timerADCPrint(500);
+	Timer timerADCPrint(100);
 
 	ADCInputGPIOConfigure();
 	ADCConfig();
-
-	//Channel selection? maybe in C0 it works in other way
 
 	uart2.ConfigureExtiReceive();
 
@@ -101,83 +96,7 @@ int main(void)
 	}
 }
 
-void ADCConfig()
-{
-	//RM 6.4.17 AHB peripheral clock enable register (AHB2ENR)
-	RCC->AHB2ENR |= RCC_AHB2ENR_ADCEN;
 
-	RCC->CCIPR |= RCC_CCIPR_ADCSEL_0 | RCC_CCIPR_ADCSEL_1; //system clock RM 6.4.28 Peripherals independent clock configuration register
-
-	//proper voltage regulator enable:
-	//RM 18.7.3 ADC volate regulator enable (ADVREGEN)
-	//Check which ADC you're using In Datasheet pinouts and pin description
-	//I.e PA0 ADC12_IN5 means it's available for ADC1 and ADC2, channel 5
-	ADC1->CR &= ~ADC_CR_DEEPPWD;
-	ADC1->CR |= ADC_CR_ADVREGEN; //ADC1
-	//Delay(10); // 10 ms
-	//Continous conversion mode for DMA and ADC cooperation
-	//Sampling time (for how many ADC cycles measurement is being done)
-	ADC1->SMPR1 |= ADC_SMPR1_SMP5_Msk; //RM 18.7.7 SMPx, 640.5 ADC cycles
-
-	// Select HSI16 (16 MHz) as ADC clock source
-	//RCC->CCIPR &= ~RCC_CCIPR_ADCSEL_Msk;
-	//RCC->CCIPR |= (0b01 << RCC_CCIPR_ADCSEL_Pos); // 01: HSI16
-
-
-	//prescaler for ADC -- lok for something like "common configuration register"
-	//For stm32L476RG it's probably RM1 18.8.2 common control register (ADC_CCR) -- PRESC
-
-	ADC1->CFGR |= ADC_CFGR_RES; //by default 12 bit resolution
-
-	//Sequence for channel 5 in sequence 1
-	ADC1->SQR1 &= ~ADC_SQR1_SQ1_Msk;
-	ADC1->SQR1 |= ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_2;
-	//ADC1->SQR1 |= (5 << ADC_SQR1_SQ1_Pos);
-
-	//Auto-calibration of ADC
-	//RM 18.7.3 ADC Control rgister (CR)
-	ADC1->CR |= ADC_CR_ADCAL;
-	while (ADC1->CR & ADC_CR_ADCAL) {}; //need to wait until calibration is done
-	ADC1->CR |= ADC_CR_ADEN;
-	while (!(ADC1->ISR & ADC_ISR_ADRDY)) {}
-}
-
-//ADC12_IN5 for PA0
-void ADCInputGPIOConfigure()
-{
-	//Enable clock for PA0
-	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
-
-	//GPIOA->MODER &= ~GPIO_MODER_MODE0; // Clear mode bits
-	//GPIOA->MODER |= GPIO_MODER_MODE0; //analog (by default anyway)
-	//OTYPER = 0 (pushPull by default)
-	//OSPEEDR = 00 (Low speed by defualt)
-	//PUPDR = 00 (no pullUp, no pullDown by default)
-}
-
-void ADCConversion()
-{
-	//RM 18.7.3 Control register
-	while (ADC1->CR & ADC_CR_ADSTART) {}; //wait until it's done :(
-	ADC1->CR |= ADC_CR_ADSTART;
-	//uart2.SendString("ADSTART set");
-	//but can be done better
-
-	while (!(ADC1->ISR & ADC_ISR_EOC))
-	{
-		//uart2.SendString("waiting EOC...");
-		Delay(50); // avoid flooding
-	}; // wait until end of conversion
-
-	//RM 18.7.1 Interrupt and status register (ISR)
-	//EOC End of conversion flag - 0 - conversion not completed; 1 - regular channel conversion complete
-	//cleared by writing 1 manually or reading ADC_DR
-}
-
-uint32_t ADCReadData()
-{
-	return ADC1->DR;
-}
 
 //interrupt handling function from start-up
 //startup_stm32l476rgtx.s
@@ -196,7 +115,7 @@ extern "C" void USART2_IRQHandler(void)
 	 * flag can be enabled (data is ready to send/receive)
 	 * uart can rise interrupt when data is ready to receive
 	 * then add to buffer
-	 * when the sign is  '\0' it can be send
+	 * when the sign is  '\0' it can be sendd
 	 */
 }
 
