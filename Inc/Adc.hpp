@@ -24,6 +24,92 @@
  * */
 
 
+//right now only for adc1
+template<std::uintptr_t adcAddr_>
+class Adc
+{
+private:
+	static constexpr std::uintptr_t adcAddr = adcAddr_;
+
+	void ClockEnable()
+	{
+		RCC->AHB2ENR |= RCC_AHB2ENR_ADCEN; //RM 6.4.17 AHB peripheral clock enable register (AHB2ENR)
+		//To be customized
+		RCC->CCIPR |= RCC_CCIPR_ADCSEL; //RM 6.4.28 Clock configuration register (11 for system clock) (01 PLLSAI1, 10 PLLSAI2)
+	}
+
+	void RegulateVoltage()
+	{
+		//proper voltage regulator enable:
+		//RM 18.7.3 ADC volate regulator enable (ADVREGEN)
+		//Check which ADC you're using In Datasheet pinouts and pin description
+		//I.e PA0 ADC12_IN5 means it's available for ADC1 and ADC2, channel 5
+		ADC()->CR &= ~ADC_CR_DEEPPWD; //Deep Power Down enable (0 - ADC not in Deep-power down, 1 - in DPD)
+		ADC()->CR |= ADC_CR_ADVREGEN; //Voltage regulator enabled
+	}
+
+	void SetResolution()
+	{
+		//RM 18.7.4 Configuration register - RES (Data resolution)
+		ADC()->CFGR &= ~ADC_CFGR_RES_Msk; //00 - 12-bit (reset state); 01 - 10-bit; 10 - 8-bit; 11 - 6-bit
+	}
+
+	void Calibrate()
+	{
+		//Auto-calibration of ADC
+		//RM 18.7.3 ADC Control register (CR)
+		auto adc = ADC();
+		adc->CR |= ADC_CR_ADCAL;
+		while (adc->CR & ADC_CR_ADCAL) {}; //need to wait until calibration is done
+		adc->CR |= ADC_CR_ADEN; //ADC enable
+		while (!(adc->ISR & ADC_ISR_ADRDY)) {}
+	}
+
+
+
+public:
+	ADC_TypeDef* ADC() const { return reinterpret_cast<ADC_TypeDef*>(this->adcAddr); }
+	Adc(const Adc& source) = delete;
+	Adc(Adc&& source) = delete;
+	Adc& operator=(const Adc& source) = delete;
+	Adc& operator=(Adc&& source) = delete;
+	Adc()
+	{
+		ClockEnable();
+		RegulateVoltage();
+		SetResolution();
+		Calibrate();
+	}
+
+	void ChannelInit()
+	{
+		//Sequence for channel 1 in sequence 1
+		//ADC1->SQR1 &= ~ADC_SQR1_SQ1_Msk;
+		//ADC1->SQR1 |= ADC_SQR1_SQ1_0; //ADC123_IN1 for PC0 sequence 1 for channel 1 (and value 1)
+		ADC1->SQR1 = ADC_SQR1_SQ1_0;
+		ADC1->SQR1 &= ~ADC_SQR1_L;
+		//Sampling time (for how many ADC cycles measurement is being done)
+		ADC1->SMPR1 &= ~ADC_SMPR1_SMP1_Msk;
+		ADC1->SMPR1 |= (0b111 << ADC_SMPR1_SMP1_Pos); //RM 18.7.7 SMPx, 640.5 ADC cycles
+	}
+
+	void StartConversion()
+	{
+		auto adc = ADC();
+		//RM 18.7.3 Control register
+		adc->CR |= ADC_CR_ADSTART;
+		//while (adc->CR & ADC_CR_ADSTART) {}; //wait until it's done
+		while (!(adc->ISR & ADC_ISR_EOC)) {}; // wait until end of conversion
+		//RM 18.7.1 Interrupt and status register (ISR)
+		//EOC End of conversion flag - 0 - conversion not completed; 1 - regular channel conversion complete
+		//cleared by writing 1 manually or reading ADC_DR
+	}
+
+	uint32_t ReadData() { return ADC()->DR; }
+
+};
+
+
 void ADCConfig()
 {
 	//RM 6.4.17 AHB peripheral clock enable register (AHB2ENR)

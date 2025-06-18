@@ -50,7 +50,9 @@ int main(void)
 	Timer timerADCPrint(100);
 
 	ADCInputGPIOConfigure();
-	ADCConfig();
+	//ADCConfig();
+	Adc<ADC1_BASE> adc1;
+	adc1.ChannelInit();
 
 	uart2.ConfigureExtiReceive();
 
@@ -69,8 +71,8 @@ int main(void)
 
 			uart2.ClearBuffer();
 		}*/
-		ADCConversion();
-		adcSample = ADCReadData();
+		adc1.StartConversion();
+		adcSample = adc1.ReadData();
 
 
 		if (timerADCPrint.IsExpired())
