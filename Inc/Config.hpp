@@ -113,6 +113,12 @@ static constexpr std::array<uint16_t, 16> ODR_OD_MASKS = {
 	GPIO_ODR_OD12, GPIO_ODR_OD13, GPIO_ODR_OD14, GPIO_ODR_OD15
 };
 
+//RM 8.5.12 GPIO port analog switch control register: 0 - disconnect analog switch to the adc input (reset state), 1 - connect
+static constexpr std::array<uint32_t, 16> GPIO_ASCR_ASC = {
+	GPIO_ASCR_ASC0, GPIO_ASCR_ASC1, GPIO_ASCR_ASC2, GPIO_ASCR_ASC3, GPIO_ASCR_ASC4, GPIO_ASCR_ASC5, GPIO_ASCR_ASC6, GPIO_ASCR_ASC7,
+	GPIO_ASCR_ASC8, GPIO_ASCR_ASC9, GPIO_ASCR_ASC10, GPIO_ASCR_ASC11, GPIO_ASCR_ASC12, GPIO_ASCR_ASC13, GPIO_ASCR_ASC14, GPIO_ASCR_ASC15
+};
+
 //Alternate function low register - reference manual 8.5.9
 static constexpr std::array<uint32_t, 8> AFRL_AFSEL_0_MASKS = {
 	GPIO_AFRL_AFSEL0_0, GPIO_AFRL_AFSEL1_0, GPIO_AFRL_AFSEL2_0, GPIO_AFRL_AFSEL3_0,
@@ -234,6 +240,13 @@ static constexpr std::array<uint32_t, 16> EXTI_IMR1 = {
 static constexpr std::array<uint32_t, 16> EXTI_PR1_PIF = {
 	EXTI_PR1_PIF0, EXTI_PR1_PIF1, EXTI_PR1_PIF2, EXTI_PR1_PIF3, EXTI_PR1_PIF4, EXTI_PR1_PIF5,EXTI_PR1_PIF6, EXTI_PR1_PIF7,
 	EXTI_PR1_PIF8, EXTI_PR1_PIF9, EXTI_PR1_PIF10, EXTI_PR1_PIF11, EXTI_PR1_PIF12, EXTI_PR1_PIF13, EXTI_PR1_PIF14, EXTI_PR1_PIF15
+};
+
+static constexpr std::array<uint16_t, 16> ADC_SQR_SQ = {
+	ADC_SQR1_SQ1_Pos, ADC_SQR1_SQ2_Pos, ADC_SQR1_SQ3_Pos, ADC_SQR1_SQ4_Pos,
+	ADC_SQR2_SQ5_Pos, ADC_SQR2_SQ6_Pos, ADC_SQR2_SQ7_Pos, ADC_SQR2_SQ8_Pos, ADC_SQR2_SQ9_Pos,
+	ADC_SQR3_SQ10_Pos, ADC_SQR3_SQ11_Pos, ADC_SQR3_SQ12_Pos, ADC_SQR3_SQ13_Pos, ADC_SQR3_SQ14_Pos,
+	ADC_SQR4_SQ15_Pos, ADC_SQR4_SQ16_Pos
 };
 
 template<int pin>

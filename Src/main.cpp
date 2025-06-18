@@ -52,13 +52,13 @@ int main(void)
 	ADCInputGPIOConfigure();
 	//ADCConfig();
 	Adc<ADC1_BASE> adc1;
-	adc1.ChannelInit();
+	AdcChannel<GPIOC_BASE, 0> adcChannel1(adc1.ADC(), 1, 1);
 
 	uart2.ConfigureExtiReceive();
 
 	while (true)
 	{
-		/*if (uart2.GetStringIT() == ERROR_CODE::OK)
+		if (uart2.GetStringIT() == ERROR_CODE::OK)
 		{
 			uart2.SendString(uart2.GetBuffer().data());
 
@@ -70,14 +70,14 @@ int main(void)
 				ld2.Toggle();
 
 			uart2.ClearBuffer();
-		}*/
+		}
+
+
 		adc1.StartConversion();
-		adcSample = adc1.ReadData();
-
-
+		adcSample = adcChannel1.ReadData();
 		if (timerADCPrint.IsExpired())
 		{
-			char buffer[64];
+			char buffer[32];
 			snprintf(buffer, sizeof(buffer), "ADC read: %lu", static_cast<unsigned long>(adcSample));
 			uart2.SendString(buffer);
 		}
