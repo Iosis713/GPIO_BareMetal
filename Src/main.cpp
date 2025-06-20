@@ -50,7 +50,7 @@ int main(void)
 	Timer timerADCPrint(100);
 
 	Adc<ADC1_BASE, 1> adc1;
-	AdcChannel<GPIOC_BASE, 0> adcChannel1(adc1.ADC(), 1, 1);
+	AdcChannel<GPIOC_BASE, 0, 1> adcChannel1(adc1.ADC(), 1);
 
 	uart2.ConfigureExtiReceive();
 

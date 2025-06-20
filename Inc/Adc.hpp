@@ -107,12 +107,12 @@ public:
 
 };
 
-template<std::uintptr_t portAddr_, uint8_t pin_>
-class AdcChannel : public IGpio<AdcChannel<portAddr_, pin_>>
+template<std::uintptr_t portAddr_, uint8_t pin_, uint8_t channel_>
+class AdcChannel : public IGpio<AdcChannel<portAddr_, pin_, channel_>>
 {
 protected:
 	ADC_TypeDef* const adc = nullptr;
-	const uint8_t channel = 1;
+	static constexpr uint8_t channel = channel_;
 
 	void ConfigureGPIO()
 	{
@@ -126,20 +126,16 @@ protected:
 	//just for channel 1 and only 1 right now
 	void ConfigureSequence(const uint8_t sequence)
 	{
-		adc->SQR1 &= ~ADC_SQR1_L; //currently length only for 1 sequence and channel
-
+		static_assert(channel >= 1 && channel <= 16, "Channel number shall be in range of 1 - 16!");
 		//ADC123_IN1 for PC0 sequence 1 for channel 1 (and value 1), but SQ1 with value 3 for channel 3
-		if (channel >= 1 && channel <= 16)
-		{
-			if (sequence <= 4 )
-				adc->SQR1 |= (channel << ADC_SQR_SQ[sequence - 1]);
-			else if (sequence >= 5 && sequence <= 9)
-				adc->SQR2 |= (channel << ADC_SQR_SQ[sequence - 1]);
-			else if (sequence >= 10 && sequence <= 14)
-				adc->SQR3 |= (channel << ADC_SQR_SQ[sequence - 1]);
-			else if (sequence >= 115 && sequence <= 16)
-				adc->SQR4 |= (channel << ADC_SQR_SQ[sequence - 1]);
-		}
+		if (sequence <= 4 )
+			adc->SQR1 |= (channel << ADC_SQR_SQ[sequence - 1]);
+		else if (sequence >= 5 && sequence <= 9)
+			adc->SQR2 |= (channel << ADC_SQR_SQ[sequence - 1]);
+		else if (sequence >= 10 && sequence <= 14)
+			adc->SQR3 |= (channel << ADC_SQR_SQ[sequence - 1]);
+		else if (sequence >= 115 && sequence <= 16)
+			adc->SQR4 |= (channel << ADC_SQR_SQ[sequence - 1]);
 	}
 
 
@@ -151,9 +147,8 @@ public:
 	AdcChannel(AdcChannel&& source) = delete;
 	AdcChannel& operator=(const AdcChannel& source) = delete;
 	AdcChannel& operator=(AdcChannel&& source) = delete;
-	AdcChannel(ADC_TypeDef* const adc_, const uint8_t channel_, const uint8_t sequence)
+	AdcChannel(ADC_TypeDef* const adc_, const uint8_t sequence)
 		: adc(adc_)
-		, channel(channel_)
 	{
 		this->EnableClock();
 		ConfigureGPIO();
