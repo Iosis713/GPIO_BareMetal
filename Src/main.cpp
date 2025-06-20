@@ -40,17 +40,16 @@ PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3(1);
 PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
 Button<GPIOC_BASE, 13, OptionsPUPDR::PullUp> userButton;
 
-static volatile uint32_t adcSample = 0;
-
 int main(void)
 {
 	SystemTimer::Init(4000);
 	userButton.ConfigureEXTI<2>(Trigger::Falling);
 	Timer timerPWM(10);
-	Timer timerADCPrint(100);
+	Timer timerADCPrint(250);
 
-	Adc<ADC1_BASE, 1> adc1;
+	Adc<ADC1_BASE, 2> adc1;
 	AdcChannel<GPIOC_BASE, 0, 1> adcChannel1(adc1.ADC(), 1);
+	AdcChannel<GPIOC_BASE, 1, 2> adcChannel2(adc1.ADC(), 2);
 
 	uart2.ConfigureExtiReceive();
 
@@ -72,11 +71,14 @@ int main(void)
 
 
 		adc1.StartConversion();
-		adcSample = adcChannel1.ReadData();
+		adcChannel1.Read();
+		adc1.StartConversion();
+		adcChannel2.Read();
+
 		if (timerADCPrint.IsExpired())
 		{
-			char buffer[32];
-			snprintf(buffer, sizeof(buffer), "ADC read: %lu", static_cast<unsigned long>(adcSample));
+			char buffer[64];
+			snprintf(buffer, sizeof(buffer), "ADC channel 1: %lu, ADC channel 2: %lu\n", static_cast<unsigned long>(adcChannel1.Get()), static_cast<unsigned long>(adcChannel2.Get()));
 			uart2.SendString(buffer);
 		}
 

@@ -249,6 +249,11 @@ static constexpr std::array<uint16_t, 16> ADC_SQR_SQ = {
 	ADC_SQR4_SQ15_Pos, ADC_SQR4_SQ16_Pos
 };
 
+static constexpr std::array<uint16_t, 18> ADC_SMPR_SMP = {
+	ADC_SMPR1_SMP1_Pos, ADC_SMPR1_SMP2_Pos, ADC_SMPR1_SMP3_Pos, ADC_SMPR1_SMP4_Pos, ADC_SMPR1_SMP5_Pos, ADC_SMPR1_SMP6_Pos, ADC_SMPR1_SMP7_Pos, ADC_SMPR1_SMP8_Pos, ADC_SMPR1_SMP9_Pos,
+	ADC_SMPR2_SMP10_Pos, ADC_SMPR2_SMP11_Pos, ADC_SMPR2_SMP12_Pos, ADC_SMPR2_SMP13_Pos, ADC_SMPR2_SMP14_Pos, ADC_SMPR2_SMP15_Pos, ADC_SMPR2_SMP16_Pos, ADC_SMPR2_SMP17_Pos, ADC_SMPR2_SMP18_Pos
+};
+
 template<int pin>
 constexpr uint32_t PinMask()
 {

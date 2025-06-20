@@ -27,6 +27,19 @@
  *
  * */
 
+enum class SamplingTime : uint16_t
+{
+	//RM 18.7.7 SMPx
+	Cycles_2_5 = 0,
+	Cycles_6_5 = 1,
+	Cycles_12_5 = 2,
+	Cycles_24_5 = 3,
+	Cycles_47_5 = 4,
+	Cycles_92_5 = 5,
+	Cycles_247_5 = 6,
+	Cycles_640_5 = 7
+};
+
 
 //right now only for adc1
 template<std::uintptr_t adcAddr_, uint8_t sequenceLength_>
@@ -113,6 +126,7 @@ class AdcChannel : public IGpio<AdcChannel<portAddr_, pin_, channel_>>
 protected:
 	ADC_TypeDef* const adc = nullptr;
 	static constexpr uint8_t channel = channel_;
+	uint32_t value = 0;
 
 	void ConfigureGPIO()
 	{
@@ -147,24 +161,25 @@ public:
 	AdcChannel(AdcChannel&& source) = delete;
 	AdcChannel& operator=(const AdcChannel& source) = delete;
 	AdcChannel& operator=(AdcChannel&& source) = delete;
-	AdcChannel(ADC_TypeDef* const adc_, const uint8_t sequence)
+	AdcChannel(ADC_TypeDef* const adc_, const uint8_t sequence, const SamplingTime samplingTime = SamplingTime::Cycles_640_5)
 		: adc(adc_)
 	{
 		this->EnableClock();
 		ConfigureGPIO();
 		ConfigureSequence(sequence);
-		ConfigureSamplingTime();
+		ConfigureSamplingTime(samplingTime);
 	}
 
 	//max right now
-	void ConfigureSamplingTime()
+	void ConfigureSamplingTime(const SamplingTime samplingTime)
 	{
 		//Sampling time (for how many ADC cycles measurement is being done)
-		adc->SMPR1 &= ~ADC_SMPR1_SMP1_Msk;
-		adc->SMPR1 |= (0b111 << ADC_SMPR1_SMP1_Pos); //RM 18.7.7 SMPx, 640.5 ADC cycles
+		auto& SMPRx = channel < 10 ? adc->SMPR1 : adc->SMPR2;
+		SMPRx |= (static_cast<uint16_t>(samplingTime) << ADC_SMPR_SMP[channel - 1]);
 	}
 
-	uint32_t ReadData() { return adc->DR; }
+	uint32_t Get() { return this->value; }
+	void Read() { value = adc->DR; }
 
 };
 
