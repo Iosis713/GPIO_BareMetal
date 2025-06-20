@@ -49,9 +49,7 @@ int main(void)
 	Timer timerPWM(10);
 	Timer timerADCPrint(100);
 
-	ADCInputGPIOConfigure();
-	//ADCConfig();
-	Adc<ADC1_BASE> adc1;
+	Adc<ADC1_BASE, 1> adc1;
 	AdcChannel<GPIOC_BASE, 0> adcChannel1(adc1.ADC(), 1, 1);
 
 	uart2.ConfigureExtiReceive();

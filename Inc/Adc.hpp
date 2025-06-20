@@ -29,11 +29,12 @@
 
 
 //right now only for adc1
-template<std::uintptr_t adcAddr_>
+template<std::uintptr_t adcAddr_, uint8_t sequenceLength_>
 class Adc
 {
 private:
 	static constexpr std::uintptr_t adcAddr = adcAddr_;
+	static constexpr uint8_t sequenceLength = sequenceLength_;
 
 	void ClockEnable()
 	{
@@ -69,6 +70,14 @@ private:
 		while (!(adc->ISR & ADC_ISR_ADRDY)) {}
 	}
 
+	void SetSequenceLength()
+	{
+		static_assert(sequenceLength >= 1 && sequenceLength <= 16, "Number of channel conversions shall be in range 1 - 16!");
+		//RM 18.7.11 Reqular sequence register 1
+		//0000 for 1 conversions, 0001 for 2, 0010 for 3 .... 1111 for 16 conversions
+		ADC()->SQR1 |= ((sequenceLength - 1) << ADC_SQR1_L_Pos);
+	}
+
 public:
 	ADC_TypeDef* ADC() const { return reinterpret_cast<ADC_TypeDef*>(this->adcAddr); }
 	Adc(const Adc& source) = delete;
@@ -81,18 +90,7 @@ public:
 		RegulateVoltage();
 		SetResolution();
 		Calibrate();
-	}
-
-	void ChannelInit()
-	{
-		//Sequence for channel 1 in sequence 1
-		//ADC1->SQR1 &= ~ADC_SQR1_SQ1_Msk;
-		//ADC1->SQR1 |= ADC_SQR1_SQ1_0; //ADC123_IN1 for PC0 sequence 1 for channel 1 (and value 1)
-		ADC1->SQR1 = ADC_SQR1_SQ1_0;
-		ADC1->SQR1 &= ~ADC_SQR1_L;
-		//Sampling time (for how many ADC cycles measurement is being done)
-		ADC1->SMPR1 &= ~ADC_SMPR1_SMP1_Msk;
-		ADC1->SMPR1 |= (0b111 << ADC_SMPR1_SMP1_Pos); //RM 18.7.7 SMPx, 640.5 ADC cycles
+		SetSequenceLength();
 	}
 
 	void StartConversion()
@@ -128,8 +126,6 @@ protected:
 	//just for channel 1 and only 1 right now
 	void ConfigureSequence(const uint8_t sequence)
 	{
-		//Sequence for channel 1 in sequence 1
-		ADC1->SQR1 &= ~ADC_SQR1_SQ1_Msk; //clear
 		adc->SQR1 &= ~ADC_SQR1_L; //currently length only for 1 sequence and channel
 
 		//ADC123_IN1 for PC0 sequence 1 for channel 1 (and value 1), but SQ1 with value 3 for channel 3
