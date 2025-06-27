@@ -237,7 +237,7 @@ public:
 template<std::uintptr_t portAddr_
         , uint8_t pin_
 		, OptionsOTYPER otyperOption = OptionsOTYPER::PushPull
-		, OptionsOSPEEDR ospeedrOption = OptionsOSPEEDR::LowSpeed
+		, OptionsOSPEEDR ospeedrOption = OptionsOSPEEDR::HighSpeed
 		, OptionsPUPDR pupdrOption = OptionsPUPDR::None>
 class GpioOutput : public IGpio<GpioOutput<portAddr_, pin_, otyperOption, ospeedrOption, pupdrOption>>
 {
@@ -278,7 +278,7 @@ public:
 template<std::uintptr_t portAddr_
         , uint8_t pin_
 		, OptionsOTYPER otyperOption = OptionsOTYPER::PushPull
-		, OptionsOSPEEDR ospeedrOption = OptionsOSPEEDR::LowSpeed
+		, OptionsOSPEEDR ospeedrOption = OptionsOSPEEDR::HighSpeed
 		, OptionsPUPDR pupdrOption = OptionsPUPDR::None>
 class GpioInput : public IGpio<GpioInput<portAddr_, pin_, otyperOption, ospeedrOption, pupdrOption>>
 {
@@ -395,6 +395,36 @@ public:
 		}
 	}
 	bool InterruptOccured() const { return this->interruptOccured; }
+
+};
+
+template<std::uintptr_t portAddr_
+        , uint8_t pin_
+		, AlternateFunction alternateFunction
+		, OptionsOTYPER otyperOption = OptionsOTYPER::PushPull
+		, OptionsOSPEEDR ospeedrOption = OptionsOSPEEDR::HighSpeed
+		, OptionsPUPDR pupdrOption = OptionsPUPDR::None>
+class GpioAlternate : public IGpio<GpioAlternate<portAddr_, pin_, alternateFunction, otyperOption, ospeedrOption, pupdrOption>>
+{
+protected:
+
+
+public:
+	static constexpr std::uintptr_t portAddr = portAddr_;
+	static constexpr uint8_t pin = pin_;
+	GpioAlternate(const GpioAlternate& source) = delete;
+	GpioAlternate(GpioAlternate&& source) = delete;
+	GpioAlternate& operator=(const GpioAlternate& source) = delete;
+	GpioAlternate& operator=(GpioAlternate&& source) = delete;
+	GpioAlternate()
+	{
+		this->EnableClock();
+		this->template ConfigureMODER<OptionsMODER::Alternate>();
+		this->template ConfigureOTYPER<otyperOption>();
+		this->template ConfigureOSPEEDR<ospeedrOption>();
+		this->template ConfigurePUPDR<pupdrOption>();
+		this->template ConfigureAlternateFunction(alternateFunction);
+	}
 
 };
 

@@ -23,6 +23,7 @@
 #include "../Inc/Config.hpp"
 #include "../Inc/Pwm.hpp"
 #include "../Inc/Adc.hpp"
+#include "../Inc/Spi.hpp"
 #include <stdio.h>
 #include <cstring>
 
@@ -36,65 +37,59 @@ void Delay(const uint32_t delay);
 
 GpioOutput<GPIOA_BASE, 5> ld2;
 UART2<115200, 80> uart2;
-PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3(1);
-PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
-Button<GPIOC_BASE, 13, OptionsPUPDR::PullUp> userButton;
 
 int main(void)
 {
 	SystemTimer::Init(4000);
-	userButton.ConfigureEXTI<2>(Trigger::Falling);
-	Timer timerPWM(10);
-	Timer timerADCPrint(250);
 
-	Adc<ADC1_BASE, 2> adc1;
-	AdcChannel<GPIOC_BASE, 0, 1> adcChannel1(adc1.ADC(), 1);
-	AdcChannel<GPIOC_BASE, 1, 2> adcChannel2(adc1.ADC(), 2);
 
-	uart2.ConfigureExtiReceive();
+	/////////////////////////////////////////////
+	/////_______________SPI_______________///////
+	EnableSpiClocks();
+
+	GpioOutput<GPIOA_BASE, 6> ioexp_cs;
+	ioexp_cs.Set(); //high by defualt;
+	//Datasheet 4 - Pinouts and pin description, table 17
+	GpioAlternate<GPIOC_BASE, 2, AlternateFunction::AF5> spi2MISO;
+	GpioAlternate<GPIOC_BASE, 3, AlternateFunction::AF5> spi2MOSI;
+	GpioAlternate<GPIOB_BASE, 10, AlternateFunction::AF5> spi2SCK;
+	SpiConfig();
+
+	Delay(10);
+
+	//enable GP0 as output
+	McpWriteRegister(ioexp_cs, MCP_IOCON, 0x00);
+	McpWriteRegister(ioexp_cs, MCP_IODIR, 0xFE);
+	//McpWriteRegister(ioexp_cs, MCP_GPIO, 0x00);
+	char buffer[64] = "Program starts here:";
+	uart2.SendString(buffer);
+	//uint8_t iodir = McpReadRegister(ioexp_cs, MCP_IODIR);
+	//uint8_t gpio = McpReadRegister(ioexp_cs, MCP_GPIO);
+	//snprintf(buffer, sizeof(buffer), "IODIR = %u, GPIO = %u", static_cast<unsigned>(iodir), static_cast<unsigned>(gpio));
+	//uart2.SendString(buffer);
 
 	while (true)
 	{
-		if (uart2.GetStringIT() == ERROR_CODE::OK)
-		{
-			uart2.SendString(uart2.GetBuffer().data());
+		//jak daje iodir przed gpio to swieci na chwile, ale wpisanie czegos do MCP_GPIO od razu wylacza
+		//iodir = McpReadRegister(ioexp_cs, MCP_IODIR);
+		//gpio = McpReadRegister(ioexp_cs, MCP_GPIO);
+		//snprintf(buffer, sizeof(buffer), "IODIR = %u, GPIO = %u", static_cast<unsigned>(iodir), static_cast<unsigned>(gpio));
+		//uart2.SendString(buffer);
 
-			if (strcmp(uart2.GetBuffer().data(), "set") == 0)
-				ld2.Set();
-			else if (strcmp(uart2.GetBuffer().data(), "clear") == 0)
-				ld2.Clear();
-			else if (strcmp(uart2.GetBuffer().data(), "toggle") == 0)
-				ld2.Toggle();
+		McpWriteRegister(ioexp_cs, MCP_OLAT, 0x01);
+		uint8_t olat = McpReadRegister(ioexp_cs, MCP_OLAT);
+		snprintf(buffer, sizeof(buffer), "OLAT = 0x%02X", olat);
+		uart2.SendString(buffer);
 
-			uart2.ClearBuffer();
-		}
+		Delay(500);
 
+		McpWriteRegister(ioexp_cs, MCP_OLAT, 0x00);
+		olat = McpReadRegister(ioexp_cs, MCP_OLAT);
+		snprintf(buffer, sizeof(buffer), "OLAT = 0x%02X", olat);
+		uart2.SendString(buffer);
 
-		adc1.StartConversion();
-		adcChannel1.Read();
-		adc1.StartConversion();
-		adcChannel2.Read();
+		Delay(500);
 
-		if (timerADCPrint.IsExpired())
-		{
-			char buffer[64];
-			snprintf(buffer, sizeof(buffer), "ADC channel 1: %lu, ADC channel 2: %lu\n", static_cast<unsigned long>(adcChannel1.Get()), static_cast<unsigned long>(adcChannel2.Get()));
-			uart2.SendString(buffer);
-		}
-
-		if (timerPWM.IsExpired())
-		{
-			if (channel1.GetPulse() < pwmTim3.GetMaxWidth() - 1)
-				channel1.SetPulse(channel1.GetPulse() + 5);
-			else
-				channel1.SetPulse(0);
-		}
-
-		if (userButton.InterruptOccured())
-		{
-			ld2.Toggle();
-			userButton.ClearInterruptFlag();
-		}
 	}
 }
 
@@ -105,7 +100,6 @@ int main(void)
 //EXTI15_10_IRQHandler
 extern "C" void EXTI15_10_IRQHandler(void)
 {
-	userButton.IrqHandler();
 }
 
 //startup_stm32l476rgtx.s
@@ -124,8 +118,8 @@ extern "C" void USART2_IRQHandler(void)
 
 extern "C" void TIM3_IRQHandler(void)
 {
-	pwmTim3.InterruptHandler();
-	channel1.InterruptHandler();
+	//pwmTim3.InterruptHandler();
+	//channel1.InterruptHandler();
 }
 
 void Delay(const uint32_t delay)
