@@ -39,10 +39,22 @@ void Delay(const uint32_t delay);
 GpioOutput<GPIOA_BASE, 5> ld2;
 UART2<115200, 80> uart2;
 
+PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3(1);
+PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
+Button<GPIOC_BASE, 13, OptionsPUPDR::PullUp> userButton;
+
 int main(void)
 {
 	SystemTimer::Init(4000);
 
+	userButton.ConfigureEXTI<2>(Trigger::Falling);
+	Timer timerPWM(10);
+	Timer timerADCPrint(250);
+
+	Adc<ADC1_BASE, 2> adc1;
+	AdcChannel<GPIOC_BASE, 0, 1> adcChannel1(adc1.ADC(), 1);
+	AdcChannel<GPIOC_BASE, 1, 2> adcChannel2(adc1.ADC(), 2);
+	uart2.ConfigureExtiReceive();
 
 	/////////////////////////////////////////////
 	/////_______________SPI_______________///////
@@ -64,25 +76,64 @@ int main(void)
 	McpWriteRegister(ioexp_cs, MCP23S08::GPPU, MCP23S08::GP1); //pull-up for GP1 - button
 	char buffer[64] = "Program starts here:";
 	uart2.SendString(buffer);
+	/////_______________SPI_______________///////
+	/////////////////////////////////////////////
 
 	while (true)
 	{
+
+		////////////////_____SPI_____////////////////
 		if ((McpReadRegister(ioexp_cs, MCP23S08::GPIO) & MCP23S08::GP1) == 0)
 			McpWriteRegister(ioexp_cs, MCP23S08::OLAT, 0x01);
 		else
 			McpWriteRegister(ioexp_cs, MCP23S08::OLAT, 0x00);
-		/*
-		McpWriteRegister(ioexp_cs, MCP_OLAT, 0x01);
-		uint8_t olat = McpReadRegister(ioexp_cs, MCP_OLAT);
-		snprintf(buffer, sizeof(buffer), "OLAT = 0x%02X", olat);
-		uart2.SendString(buffer);
-		Delay(500);
+		////////////////_____SPI_____////////////////
 
-		McpWriteRegister(ioexp_cs, MCP_OLAT, 0x00);
-		olat = McpReadRegister(ioexp_cs, MCP_OLAT);
-		snprintf(buffer, sizeof(buffer), "OLAT = 0x%02X", olat);
-		uart2.SendString(buffer);
-		Delay(500);*/
+		////////////////_____UART/GPIO EXTI_____////////////////
+		if (uart2.GetStringIT() == ERROR_CODE::OK)
+		{
+			uart2.SendString(uart2.GetBuffer().data());
+
+			if (strcmp(uart2.GetBuffer().data(), "set") == 0)
+				ld2.Set();
+			else if (strcmp(uart2.GetBuffer().data(), "clear") == 0)
+				ld2.Clear();
+			else if (strcmp(uart2.GetBuffer().data(), "toggle") == 0)
+				ld2.Toggle();
+
+			uart2.ClearBuffer();
+		}
+		////////////////_____UART/GPIO EXTI_____////////////////
+
+		////////////////_____ADC_____////////////////
+		adc1.StartConversion();
+		adcChannel1.Read();
+		adc1.StartConversion();
+		adcChannel2.Read();
+
+		if (timerADCPrint.IsExpired())
+		{
+			char buffer[64];
+			snprintf(buffer, sizeof(buffer), "ADC channel 1: %lu, ADC channel 2: %lu\n", static_cast<unsigned long>(adcChannel1.Get()), static_cast<unsigned long>(adcChannel2.Get()));
+			uart2.SendString(buffer);
+		}
+
+		if (timerPWM.IsExpired())
+		{
+			if (channel1.GetPulse() < pwmTim3.GetMaxWidth() - 1)
+				channel1.SetPulse(channel1.GetPulse() + 5);
+			else
+				channel1.SetPulse(0);
+		}
+		////////////////_____ADC_____////////////////
+
+		////////////////_____GPIO EXTI_____////////////////
+		if (userButton.InterruptOccured())
+		{
+			ld2.Toggle();
+			userButton.ClearInterruptFlag();
+		}
+		////////////////_____GPIO EXTI_____////////////////
 	}
 }
 
@@ -93,6 +144,7 @@ int main(void)
 //EXTI15_10_IRQHandler
 extern "C" void EXTI15_10_IRQHandler(void)
 {
+	userButton.IrqHandler();
 }
 
 //startup_stm32l476rgtx.s
@@ -111,8 +163,8 @@ extern "C" void USART2_IRQHandler(void)
 
 extern "C" void TIM3_IRQHandler(void)
 {
-	//pwmTim3.InterruptHandler();
-	//channel1.InterruptHandler();
+	pwmTim3.InterruptHandler();
+	channel1.InterruptHandler();
 }
 
 void Delay(const uint32_t delay)
