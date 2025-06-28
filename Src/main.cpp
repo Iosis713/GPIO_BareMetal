@@ -24,6 +24,7 @@
 #include "../Inc/Pwm.hpp"
 #include "../Inc/Adc.hpp"
 #include "../Inc/Spi.hpp"
+#include "../Inc/Mcp23S08.hpp"
 #include <stdio.h>
 #include <cstring>
 
@@ -60,27 +61,17 @@ int main(void)
 	//enable GP0 as output
 	McpWriteRegister(ioexp_cs, MCP_IOCON, 0x00);
 	McpWriteRegister(ioexp_cs, MCP_IODIR, 0xFE);
-	//McpWriteRegister(ioexp_cs, MCP_GPIO, 0x00);
+	McpWriteRegister(ioexp_cs, MCP_GPPU, 0x02); //pull-up for GP1 - button
 	char buffer[64] = "Program starts here:";
 	uart2.SendString(buffer);
-	//uint8_t iodir = McpReadRegister(ioexp_cs, MCP_IODIR);
-	//uint8_t gpio = McpReadRegister(ioexp_cs, MCP_GPIO);
-	//snprintf(buffer, sizeof(buffer), "IODIR = %u, GPIO = %u", static_cast<unsigned>(iodir), static_cast<unsigned>(gpio));
-	//uart2.SendString(buffer);
 
 	while (true)
 	{
-
-		//jak daje iodir przed gpio to swieci na chwile, ale wpisanie czegos do MCP_GPIO od razu wylacza
-		//iodir = McpReadRegister(ioexp_cs, MCP_IODIR);
-		//gpio = McpReadRegister(ioexp_cs, MCP_GPIO);
-		//snprintf(buffer, sizeof(buffer), "IODIR = %u, GPIO = %u", static_cast<unsigned>(iodir), static_cast<unsigned>(gpio));
-		//uart2.SendString(buffer);
-		//spi clock polairy/phase (mode) mismatch?
-		//spi speed too high
-		//spi peripehrial or transmission logic issue
-
-
+		if ((McpReadRegister(ioexp_cs, MCP_GPIO) & 0x02) == 0)
+			McpWriteRegister(ioexp_cs, MCP_OLAT, 0x01);
+		else
+			McpWriteRegister(ioexp_cs, MCP_OLAT, 0x00);
+		/*
 		McpWriteRegister(ioexp_cs, MCP_OLAT, 0x01);
 		uint8_t olat = McpReadRegister(ioexp_cs, MCP_OLAT);
 		snprintf(buffer, sizeof(buffer), "OLAT = 0x%02X", olat);
@@ -91,8 +82,7 @@ int main(void)
 		olat = McpReadRegister(ioexp_cs, MCP_OLAT);
 		snprintf(buffer, sizeof(buffer), "OLAT = 0x%02X", olat);
 		uart2.SendString(buffer);
-		Delay(500);
-
+		Delay(500);*/
 	}
 }
 
