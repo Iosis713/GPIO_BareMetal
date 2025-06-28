@@ -47,7 +47,7 @@ void SpiConfig()
 {
 	//Reference manual 42.6.1
 
-	//SPI2->CR1 &= ~(SPI_CR1_SPE); //disable before configuration
+	SPI2->CR1 &= ~(SPI_CR1_SPE); //disable before configuration
 	//SPI2->CR1 |= SPI_CR1_SPE;
 	//these two should be seen in MCP23S08 documentation
 	SPI2->CR1 &= ~SPI_CR1_CPOL;      // CPOL = 0 (clock idle low)
@@ -71,7 +71,9 @@ void SpiConfig()
 	SPI2->CR2 &= ~SPI_CR2_DS; //clear all bits
 	SPI2->CR2 |= (0b0111 << SPI_CR2_DS_Pos); //0111 for 8 bit
 	SPI2->CR2 |= SPI_CR2_FRXTH; //RXNE event on 8-bit
-	//SPI2->CR2 |= SPI_CR2_NSSP;
+	SPI2->CR2 &= ~(SPI_CR2_FRF);
+	SPI2->CR2 &= ~(SPI_CR2_SSOE);
+	SPI2->CR2 &= ~(SPI_CR2_NSSP);
 	SPI2->CR1 |= SPI_CR1_SPE; //spi enabled
 }
 
@@ -82,7 +84,7 @@ void EnableSpiClocks()
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN; // PC2, PC3 for MOSI and MISO
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
 }
-
+/*
 void Spi2Transmit(const uint8_t data)
 {
 	//wait unitl TXE (Transmit buffer Empty)
@@ -91,10 +93,15 @@ void Spi2Transmit(const uint8_t data)
 	//Write data to SPI data register
 	SPI2->DR = data;
 
-	while (!(SPI2->SR & SPI_SR_TXE));
+	//wait until data is received (even if we discard it)
+	while (!(SPI2->SR & SPI_SR_RXNE));
+
+	[[maybe_unused]] volatile uint8_t dummy = SPI2->DR;
+
 	while (SPI2->SR & SPI_SR_BSY);
 }
-
+*/
+/*
 uint8_t Spi2Receive()
 {
 	SPI2->DR = 0xFF; //dummy write
@@ -102,12 +109,45 @@ uint8_t Spi2Receive()
 	while (!(SPI2->SR & SPI_SR_RXNE));
 	while (SPI2->SR & SPI_SR_BSY);
 	return SPI2->DR;
+}*/
+
+void Spi2Transmit(const uint8_t data)
+{
+    // Wait until TXE (Transmit buffer empty)
+    while (!(SPI2->SR & SPI_SR_TXE));
+
+    // Write data to DR (this starts transmission)
+    *(volatile uint8_t *)&SPI2->DR = data;
+
+    // Wait until RXNE (Receive buffer not empty)
+    while (!(SPI2->SR & SPI_SR_RXNE));
+
+    // Read to clear RXNE (discard if you don't need it)
+    (void)*(volatile uint8_t *)&SPI2->DR;
+}
+
+uint8_t Spi2Receive()
+{
+    // Wait until TXE (Transmit buffer empty)
+    while (!(SPI2->SR & SPI_SR_TXE));
+
+    // Write data to DR
+    *(volatile uint8_t *)&SPI2->DR = 0x00;
+
+    // Wait until RXNE (Receive buffer not empty)
+    while (!(SPI2->SR & SPI_SR_RXNE));
+
+    // Return received byte
+    return *(volatile uint8_t *)&SPI2->DR;
 }
 
 void McpWriteRegister(auto& CSline /*GpioOutput*/, const uint8_t reg, const uint8_t value)
 {
 	CSline.Clear(); // select MCP
 	__NOP(); __NOP(); __NOP(); // ~ short delay (~50-100ns)
+	//SPI2_SendByte(0x40);
+	//SPI2_SendByte(reg);
+	//SPI2_SendByte(value);
 	Spi2Transmit(0x40); //opcode for write to MCP23S08 (A2:A0 = 000);
 	Spi2Transmit(reg); //register address
 	Spi2Transmit(value); //data

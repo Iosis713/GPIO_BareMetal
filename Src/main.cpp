@@ -70,24 +70,27 @@ int main(void)
 
 	while (true)
 	{
+
 		//jak daje iodir przed gpio to swieci na chwile, ale wpisanie czegos do MCP_GPIO od razu wylacza
 		//iodir = McpReadRegister(ioexp_cs, MCP_IODIR);
 		//gpio = McpReadRegister(ioexp_cs, MCP_GPIO);
 		//snprintf(buffer, sizeof(buffer), "IODIR = %u, GPIO = %u", static_cast<unsigned>(iodir), static_cast<unsigned>(gpio));
 		//uart2.SendString(buffer);
+		//spi clock polairy/phase (mode) mismatch?
+		//spi speed too high
+		//spi peripehrial or transmission logic issue
+
 
 		McpWriteRegister(ioexp_cs, MCP_OLAT, 0x01);
 		uint8_t olat = McpReadRegister(ioexp_cs, MCP_OLAT);
 		snprintf(buffer, sizeof(buffer), "OLAT = 0x%02X", olat);
 		uart2.SendString(buffer);
-
 		Delay(500);
 
 		McpWriteRegister(ioexp_cs, MCP_OLAT, 0x00);
 		olat = McpReadRegister(ioexp_cs, MCP_OLAT);
 		snprintf(buffer, sizeof(buffer), "OLAT = 0x%02X", olat);
 		uart2.SendString(buffer);
-
 		Delay(500);
 
 	}
