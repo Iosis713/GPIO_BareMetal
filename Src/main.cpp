@@ -59,18 +59,18 @@ int main(void)
 	Delay(10);
 
 	//enable GP0 as output
-	McpWriteRegister(ioexp_cs, MCP_IOCON, 0x00);
-	McpWriteRegister(ioexp_cs, MCP_IODIR, 0xFE);
-	McpWriteRegister(ioexp_cs, MCP_GPPU, 0x02); //pull-up for GP1 - button
+	McpWriteRegister(ioexp_cs, MCP23S08::IOCON, 0x00);
+	McpWriteRegister(ioexp_cs, MCP23S08::IODIR, 0xFE);
+	McpWriteRegister(ioexp_cs, MCP23S08::GPPU, MCP23S08::GP1); //pull-up for GP1 - button
 	char buffer[64] = "Program starts here:";
 	uart2.SendString(buffer);
 
 	while (true)
 	{
-		if ((McpReadRegister(ioexp_cs, MCP_GPIO) & 0x02) == 0)
-			McpWriteRegister(ioexp_cs, MCP_OLAT, 0x01);
+		if ((McpReadRegister(ioexp_cs, MCP23S08::GPIO) & MCP23S08::GP1) == 0)
+			McpWriteRegister(ioexp_cs, MCP23S08::OLAT, 0x01);
 		else
-			McpWriteRegister(ioexp_cs, MCP_OLAT, 0x00);
+			McpWriteRegister(ioexp_cs, MCP23S08::OLAT, 0x00);
 		/*
 		McpWriteRegister(ioexp_cs, MCP_OLAT, 0x01);
 		uint8_t olat = McpReadRegister(ioexp_cs, MCP_OLAT);
