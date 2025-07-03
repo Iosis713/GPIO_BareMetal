@@ -22,7 +22,16 @@ bool Timer::IsExpired()
 	return false;
 }
 
-extern "C" void SysTick_Handler(void)
+extern "C" [[gnu::used]] void SysTick_Handler(void)
 {
 	SystemTimer::Inc();
+}
+
+void Delay(const uint32_t delay)
+{
+	const uint32_t startTime = SystemTimer::Now();
+	while(SystemTimer::Now() < startTime + delay)
+	{
+		//just wait
+	}
 }

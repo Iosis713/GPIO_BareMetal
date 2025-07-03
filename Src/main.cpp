@@ -25,6 +25,7 @@
 #include "../Inc/Adc.hpp"
 #include "../Inc/Spi.hpp"
 #include "../Inc/Mcp23S08.hpp"
+#include "../Inc/LCD_TFT_ST7735S.hpp"
 #include <stdio.h>
 #include <cstring>
 
@@ -34,7 +35,6 @@
 //void ConfigurationButtonEXTI();
 //from startup file
 extern "C" void TIM3_IRQHandler(void);
-void Delay(const uint32_t delay);
 
 GpioOutput<GPIOA_BASE, 5> ld2;
 UART2<115200, 80> uart2;
@@ -42,47 +42,43 @@ UART2<115200, 80> uart2;
 int main(void)
 {
 	SystemTimer::Init(4000);
-
-
 	/////////////////////////////////////////////
 	/////_______________SPI_______________///////
 	EnableSpiClocks();
 
-	GpioOutput<GPIOA_BASE, 6> ioexp_cs;
-	ioexp_cs.Set(); //high by defualt;
+	GpioOutput<GPIOB_BASE, 12> LCD_CS;
+	GpioOutput<GPIOB_BASE, 2> LCD_RST;
+	GpioOutput<GPIOB_BASE, 11> LCD_DC; //command (0) /data (1) transmit
 	//Datasheet 4 - Pinouts and pin description, table 17
-	GpioAlternate<GPIOC_BASE, 2, AlternateFunction::AF5> spi2MISO;
+	//GpioAlternate<GPIOC_BASE, 2, AlternateFunction::AF5> spi2MISO;
 	GpioAlternate<GPIOC_BASE, 3, AlternateFunction::AF5> spi2MOSI;
 	GpioAlternate<GPIOB_BASE, 10, AlternateFunction::AF5> spi2SCK;
-	SpiConfig();
+	LCD_CS.Set();
+	SpiConfigHalfDuplex();
 
-	Delay(10);
+	[[maybe_unused]] volatile auto keepTimer = Timer(1).IsExpired(); // Force linking
+
 
 	//enable GP0 as output
-	McpWriteRegister(ioexp_cs, MCP23S08::IOCON, 0x00);
-	McpWriteRegister(ioexp_cs, MCP23S08::IODIR, 0xFE);
-	McpWriteRegister(ioexp_cs, MCP23S08::GPPU, MCP23S08::GP1); //pull-up for GP1 - button
-	char buffer[64] = "Program starts here:";
-	uart2.SendString(buffer);
+	//McpWriteRegister(LCD_CS, MCP23S08::IOCON, 0x00);
+	//McpWriteRegister(LCD_CS, MCP23S08::IODIR, 0xFE);
+	//McpWriteRegister(LCD_CS, MCP23S08::GPPU, MCP23S08::GP1); //pull-up for GP1 - button
+	//char buffer[64] = "Program starts here:";
+	//uart2.SendString(buffer);
 
+	LCDInit(LCD_RST, LCD_DC, LCD_CS);
+
+	Timer ld2Timer(200);
 	while (true)
 	{
+		if (ld2Timer.IsExpired())
+			ld2.Toggle();
+		/*
 		if ((McpReadRegister(ioexp_cs, MCP23S08::GPIO) & MCP23S08::GP1) == 0)
 			McpWriteRegister(ioexp_cs, MCP23S08::OLAT, 0x01);
 		else
 			McpWriteRegister(ioexp_cs, MCP23S08::OLAT, 0x00);
-		/*
-		McpWriteRegister(ioexp_cs, MCP_OLAT, 0x01);
-		uint8_t olat = McpReadRegister(ioexp_cs, MCP_OLAT);
-		snprintf(buffer, sizeof(buffer), "OLAT = 0x%02X", olat);
-		uart2.SendString(buffer);
-		Delay(500);
-
-		McpWriteRegister(ioexp_cs, MCP_OLAT, 0x00);
-		olat = McpReadRegister(ioexp_cs, MCP_OLAT);
-		snprintf(buffer, sizeof(buffer), "OLAT = 0x%02X", olat);
-		uart2.SendString(buffer);
-		Delay(500);*/
+		*/
 	}
 }
 
@@ -115,12 +111,4 @@ extern "C" void TIM3_IRQHandler(void)
 	//channel1.InterruptHandler();
 }
 
-void Delay(const uint32_t delay)
-{
-	const uint32_t startTime = SystemTimer::Now();
-	while(SystemTimer::Now() < startTime + delay)
-	{
-		//just wait
-	}
-}
 

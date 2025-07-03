@@ -44,4 +44,8 @@ public:
 	bool IsExpired();
 };
 
+void Delay(const uint32_t delay);
+
+
+
 #endif /* TIMER_HPP_ */

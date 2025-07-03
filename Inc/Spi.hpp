@@ -17,10 +17,11 @@
 //PC3 - MOSI
 //PC2 - MISO
 //PB
-
-void SpiConfig();
+void SpiConfigHalfDuplex();
+void SpiConfigFullDuplex();
 void EnableSpiClocks();
 void Spi2Transmit(const uint8_t data);
+void Spi2TransmitHalfDuplex(const uint8_t data);
 uint8_t Spi2Receive();
 
 #endif /* SPI_HPP_ */
