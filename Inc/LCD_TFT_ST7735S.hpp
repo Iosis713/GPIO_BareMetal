@@ -62,40 +62,19 @@ static constexpr auto initTable = std::to_array<uint16_t>({
 void LCDInit(auto& RST, auto& DC, auto& CS)
 {
 	RST.Clear();
-	//Delay(100);
-	volatile uint32_t i = 0;
-	while (i < 99999)
-	{
-	    i = i + 1;
-	}
+	Delay(100);
 
 	RST.Set();
-	//Delay(100);
-	i = 0;
-	while (i < 99999)
-	{
-	    i = i + 1;
-	}
-
+	Delay(100);
 
 	for (const auto& element : initTable)
 	{
 		LCDSend(DC, CS, element);
 	}
-	//Delay(200);
-	i = 0;
-	while (i < 99999)
-	{
-	    i = i + 1;
-	}
+	Delay(200);
 
 	LCDCmd(DC, CS, ST7735S_SLPOUT);
-	//Delay(120);
-	i = 0;
-	while (i < 99999)
-	{
-	    i = i + 1;
-	}
+	Delay(120);
 
 	LCDCmd(DC, CS, ST7735S_DISPON);
 };
