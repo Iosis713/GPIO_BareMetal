@@ -15,6 +15,7 @@
 #include "../Inc/Spi.hpp"
 #include "../Inc/Timer.hpp"
 #include <array>
+#include <span>
 
 static constexpr uint8_t ST7735S_SLPOUT			=	0x11;
 static constexpr uint8_t ST7735S_DISPOFF		=	0x28;
@@ -67,6 +68,11 @@ static constexpr  uint16_t YELLOW  =  0xffe0;
 static constexpr  uint16_t MAGENTA =  0xf81f;
 static constexpr  uint16_t CYAN    =  0x07ff;
 static constexpr  uint16_t WHITE   =  0xffff;
+
+static constexpr uint8_t LCD_WIDTH = 160;
+static constexpr uint8_t LCD_HEIGHT = 128;
+
+static std::array<uint16_t, LCD_WIDTH * LCD_HEIGHT> frameBuffer;
 
 void LCDFillBox(const int x, const int y, const int width, const int height, const uint16_t color);
 
@@ -143,6 +149,44 @@ void LCDFillBox(auto& DC, auto& CS, const int x, const int y, const int width, c
 	LCDCmd(DC, CS, ST7735S_RAMWR);// starts sendign data to defined region (window)
 	for (int i = 0; i < width * height; i++)
 		LCDData16(DC, CS, color);
+}
+
+void LCDPutPixel(const int x, const int y, const uint16_t color)
+{
+	frameBuffer[x + y * LCD_WIDTH] = color;
+}
+
+void LCDDrawImage(auto& DC, auto& CS, const int x, const int y, const int width, const int height, std::span<const uint16_t> data)
+{
+	LCDSetWindow(DC, CS, x, y, width, height);
+	LCDCmd(DC, CS, ST7735S_RAMWR);
+	DC.Set();
+	CS.Clear();
+
+	for (const auto& element : data)
+	{
+		Spi2TransmitHalfDuplex(element >> 8); //High byte first
+		Spi2TransmitHalfDuplex(element & 0xFF); //low byte
+
+	}
+
+	CS.Set();
+}
+
+void LCDCopy(auto& DC, auto& CS)
+{
+	LCDSetWindow(DC, CS, 0, 0, LCD_WIDTH, LCD_HEIGHT);
+	LCDCmd(DC, CS, ST7735S_RAMWR);
+	DC.Set();
+	CS.Clear();
+
+	for (const auto& element : frameBuffer)
+	{
+		Spi2TransmitHalfDuplex(element >> 8); //High byte first
+		Spi2TransmitHalfDuplex(element & 0xFF); //low byte
+	}
+
+	CS.Set();
 }
 
 

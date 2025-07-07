@@ -63,7 +63,9 @@ int main(void)
 	//char buffer[64] = "Program starts here:";
 	//uart2.SendString(buffer);
 
+
 	LCDInit(LCD_RST, LCD_DC, LCD_CS);
+	/*d
 	LCDFillBox(LCD_DC, LCD_CS, 0, 0, 160, 16, RED);
 	LCDFillBox(LCD_DC, LCD_CS, 0, 16, 160, 16, GREEN);
 	LCDFillBox(LCD_DC, LCD_CS, 0, 32, 160, 16, BLUE);
@@ -73,6 +75,32 @@ int main(void)
 	LCDFillBox(LCD_DC, LCD_CS, 0, 96, 160, 16, WHITE);
 	LCDFillBox(LCD_DC, LCD_CS, 0, 112, 160, 16, BLACK);
 
+	std::array<uint16_t, 64 *64> testImage;
+	for (auto& pixel : testImage)
+		pixel = BLUE;
+
+	LCDDrawImage(LCD_DC, LCD_CS, 0, 0, 64, 64, testImage);
+	LCDDrawImage(LCD_DC, LCD_CS, 16, 16, 64, 64, testImage);
+	LCDDrawImage(LCD_DC, LCD_CS, 32, 32, 64, 64, testImage);
+	LCDDrawImage(LCD_DC, LCD_CS, 48, 48, 64, 64, testImage);
+	LCDDrawImage(LCD_DC, LCD_CS, 64, 64, 64, 64, testImage);
+
+	for (int i = 0; i < 128; i++)
+	{
+		LCDPutPixel(i, i, RED);
+		LCDPutPixel(127 - i, i, RED);
+	}
+	*/
+
+	for (int y = 0; y < LCD_HEIGHT; y++)
+	{
+	  for (int x = 0; x < LCD_WIDTH; x++)
+	  {
+		  LCDPutPixel(x, y, (x / 10 + y * 16));
+	  }
+	}
+
+	LCDCopy(LCD_DC, LCD_CS);
 
 	Timer ld2Timer(200);
 	while (true)
