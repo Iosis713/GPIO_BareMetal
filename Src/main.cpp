@@ -56,9 +56,6 @@ int main(void)
 	LCD_CS.Set();
 	SpiConfigHalfDuplex();
 
-	[[maybe_unused]] volatile auto keepTimer = Timer(1).IsExpired(); // Force linking
-
-
 	//enable GP0 as output
 	//McpWriteRegister(LCD_CS, MCP23S08::IOCON, 0x00);
 	//McpWriteRegister(LCD_CS, MCP23S08::IODIR, 0xFE);
@@ -67,6 +64,15 @@ int main(void)
 	//uart2.SendString(buffer);
 
 	LCDInit(LCD_RST, LCD_DC, LCD_CS);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 0, 160, 16, RED);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 16, 160, 16, GREEN);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 32, 160, 16, BLUE);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 48, 160, 16, YELLOW);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 64, 160, 16, MAGENTA);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 80, 160, 16, CYAN);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 96, 160, 16, WHITE);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 112, 160, 16, BLACK);
+
 
 	Timer ld2Timer(200);
 	while (true)

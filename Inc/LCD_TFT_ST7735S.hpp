@@ -59,6 +59,17 @@ static constexpr auto initTable = std::to_array<uint16_t>({
   CMD(ST7735S_MADCTL), 0xa0,
 });
 
+static constexpr  uint16_t BLACK   =  0x0000;
+static constexpr  uint16_t RED     =  0xf800;
+static constexpr  uint16_t GREEN   =  0x07e0;
+static constexpr  uint16_t BLUE    =  0x001f;
+static constexpr  uint16_t YELLOW  =  0xffe0;
+static constexpr  uint16_t MAGENTA =  0xf81f;
+static constexpr  uint16_t CYAN    =  0x07ff;
+static constexpr  uint16_t WHITE   =  0xffff;
+
+void LCDFillBox(const int x, const int y, const int width, const int height, const uint16_t color);
+
 void LCDInit(auto& RST, auto& DC, auto& CS)
 {
 	RST.Clear();
@@ -97,6 +108,13 @@ static void LCDData(auto& DC, auto& CS, const uint8_t data)
 	CS.Set();
 }
 
+static void LCDData16(auto& DC, auto& CS, const uint16_t data)
+{
+	LCDData(DC, CS, data >> 8);
+	LCDData(DC, CS, data);
+}
+
+
 static void LCDSend(auto& DC, auto& CS, const uint16_t value)
 {
 	if (value & 0x100)
@@ -105,6 +123,27 @@ static void LCDSend(auto& DC, auto& CS, const uint16_t value)
 		LCDData(DC, CS, value);
 }
 
+void LCDSetWindow(auto& DC, auto& CS, const int x, const int y, const int width, const int height)
+{
+	static constexpr uint16_t LCD_OFFSET_X = 1;//to fit view to the display
+	static constexpr uint16_t LCD_OFFSET_Y = 2;
+
+	LCDCmd(DC, CS, ST7735S_CASET); //set initial and last column
+	LCDData16(DC, CS, LCD_OFFSET_X + x); //x position
+	LCDData16(DC, CS, LCD_OFFSET_X + x + width - 1);// last column
+
+	LCDCmd(DC, CS, ST7735S_RASET);// set initial and last row
+	LCDData16(DC, CS, LCD_OFFSET_Y + y);
+	LCDData16(DC, CS, LCD_OFFSET_Y + y + height - 1);//last column
+}
+
+void LCDFillBox(auto& DC, auto& CS, const int x, const int y, const int width, const int height, const uint16_t color)
+{
+	LCDSetWindow(DC, CS, x, y, width, height);
+	LCDCmd(DC, CS, ST7735S_RAMWR);// starts sendign data to defined region (window)
+	for (int i = 0; i < width * height; i++)
+		LCDData16(DC, CS, color);
+}
 
 
 #endif /* LCD_TFT_ST7735S_HPP_ */
