@@ -44,7 +44,7 @@ int main(void)
 	SystemTimer::Init(4000);
 	/////////////////////////////////////////////
 	/////_______________SPI_______________///////
-	EnableSpiClocks();
+	//EnableSpiClocks();
 
 	GpioOutput<GPIOB_BASE, 12> LCD_CS;
 	GpioOutput<GPIOB_BASE, 2> LCD_RST;
@@ -54,7 +54,8 @@ int main(void)
 	GpioAlternate<GPIOC_BASE, 3, AlternateFunction::AF5> spi2MOSI;
 	GpioAlternate<GPIOB_BASE, 10, AlternateFunction::AF5> spi2SCK;
 	LCD_CS.Set();
-	SpiConfigHalfDuplex();
+	//SpiConfigHalfDuplex();
+	Spi<SPI2_BASE, SpiMode::HalfDuplex> spi2;
 
 	//enable GP0 as output
 	//McpWriteRegister(LCD_CS, MCP23S08::IOCON, 0x00);
@@ -65,7 +66,7 @@ int main(void)
 
 
 	LCDInit(LCD_RST, LCD_DC, LCD_CS);
-	/*d
+
 	LCDFillBox(LCD_DC, LCD_CS, 0, 0, 160, 16, RED);
 	LCDFillBox(LCD_DC, LCD_CS, 0, 16, 160, 16, GREEN);
 	LCDFillBox(LCD_DC, LCD_CS, 0, 32, 160, 16, BLUE);
@@ -90,7 +91,7 @@ int main(void)
 		LCDPutPixel(i, i, RED);
 		LCDPutPixel(127 - i, i, RED);
 	}
-	*/
+
 
 	for (int y = 0; y < LCD_HEIGHT; y++)
 	{

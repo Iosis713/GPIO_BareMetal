@@ -167,7 +167,6 @@ void LCDDrawImage(auto& DC, auto& CS, const int x, const int y, const int width,
 	{
 		Spi2TransmitHalfDuplex(element >> 8); //High byte first
 		Spi2TransmitHalfDuplex(element & 0xFF); //low byte
-
 	}
 
 	CS.Set();
