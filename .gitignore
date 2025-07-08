@@ -1,6 +1,10 @@
 GPIO_BareMetal Debug.launch
 GPIO_BareMetal.launch
 Debug/*
+<<<<<<< HEAD
 .metadata/
 .settings/
 
+=======
+.metadata
+>>>>>>> TFTDisplay_ST7735S

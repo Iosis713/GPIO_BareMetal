@@ -25,6 +25,7 @@
 #include "../Inc/Adc.hpp"
 #include "../Inc/Spi.hpp"
 #include "../Inc/Mcp23S08.hpp"
+#include "../Inc/LCD_TFT_ST7735S.hpp"
 #include <stdio.h>
 #include <cstring>
 
@@ -34,7 +35,6 @@
 //void ConfigurationButtonEXTI();
 //from startup file
 extern "C" void TIM3_IRQHandler(void);
-void Delay(const uint32_t delay);
 
 GpioOutput<GPIOA_BASE, 5> ld2;
 UART2<115200, 80> uart2;
@@ -47,6 +47,7 @@ int main(void)
 {
 	SystemTimer::Init(4000);
 
+	/*
 	userButton.ConfigureEXTI<2>(Trigger::Falling);
 	Timer timerPWM(10);
 	Timer timerADCPrint(250);
@@ -55,21 +56,24 @@ int main(void)
 	AdcChannel<GPIOC_BASE, 0, 1> adcChannel1(adc1.ADC(), 1);
 	AdcChannel<GPIOC_BASE, 1, 2> adcChannel2(adc1.ADC(), 2);
 	uart2.ConfigureExtiReceive();
+	*/
 
 	/////////////////////////////////////////////
 	/////_______________SPI_______________///////
-	EnableSpiClocks();
+	//EnableSpiClocks();
 
-	GpioOutput<GPIOA_BASE, 6> ioexp_cs;
-	ioexp_cs.Set(); //high by defualt;
+	GpioOutput<GPIOB_BASE, 12> LCD_CS;
+	GpioOutput<GPIOB_BASE, 2> LCD_RST;
+	GpioOutput<GPIOB_BASE, 11> LCD_DC; //command (0) /data (1) transmit
 	//Datasheet 4 - Pinouts and pin description, table 17
-	GpioAlternate<GPIOC_BASE, 2, AlternateFunction::AF5> spi2MISO;
+	//GpioAlternate<GPIOC_BASE, 2, AlternateFunction::AF5> spi2MISO;
 	GpioAlternate<GPIOC_BASE, 3, AlternateFunction::AF5> spi2MOSI;
 	GpioAlternate<GPIOB_BASE, 10, AlternateFunction::AF5> spi2SCK;
-	SpiConfig();
+	LCD_CS.Set();
+	//SpiConfigHalfDuplex();
+	Spi<SPI2_BASE, SpiMode::HalfDuplex> spi2;
 
-	Delay(10);
-
+	/* MCP23S08
 	//enable GP0 as output
 	McpWriteRegister(ioexp_cs, MCP23S08::IOCON, 0x00);
 	McpWriteRegister(ioexp_cs, MCP23S08::IODIR, 0xFE);
@@ -79,17 +83,71 @@ int main(void)
 	/////_______________SPI_______________///////
 	/////////////////////////////////////////////
 
+	//McpWriteRegister(LCD_CS, MCP23S08::IOCON, 0x00);
+	//McpWriteRegister(LCD_CS, MCP23S08::IODIR, 0xFE);
+	//McpWriteRegister(LCD_CS, MCP23S08::GPPU, MCP23S08::GP1); //pull-up for GP1 - button
+	//char buffer[64] = "Program starts here:";
+	//uart2.SendString(buffer);
+	 */
+
+
+	//TFTDisplay_ST7735S
+	LCDInit(LCD_RST, LCD_DC, LCD_CS);
+
+	LCDFillBox(LCD_DC, LCD_CS, 0, 0, 160, 16, RED);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 16, 160, 16, GREEN);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 32, 160, 16, BLUE);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 48, 160, 16, YELLOW);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 64, 160, 16, MAGENTA);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 80, 160, 16, CYAN);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 96, 160, 16, WHITE);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 112, 160, 16, BLACK);
+
+	std::array<uint16_t, 64 *64> testImage;
+	for (auto& pixel : testImage)
+		pixel = BLUE;
+
+	LCDDrawImage(LCD_DC, LCD_CS, 0, 0, 64, 64, testImage);
+	LCDDrawImage(LCD_DC, LCD_CS, 16, 16, 64, 64, testImage);
+	LCDDrawImage(LCD_DC, LCD_CS, 32, 32, 64, 64, testImage);
+	LCDDrawImage(LCD_DC, LCD_CS, 48, 48, 64, 64, testImage);
+	LCDDrawImage(LCD_DC, LCD_CS, 64, 64, 64, 64, testImage);
+
+	for (int i = 0; i < 128; i++)
+	{
+		LCDPutPixel(i, i, RED);
+		LCDPutPixel(127 - i, i, RED);
+	}
+
+
+	for (int y = 0; y < LCD_HEIGHT; y++)
+	{
+	  for (int x = 0; x < LCD_WIDTH; x++)
+	  {
+		  LCDPutPixel(x, y, (x / 10 + y * 16));
+	  }
+	}
+
+	LCDCopy(LCD_DC, LCD_CS);
+
+	Timer ld2Timer(200);
 	while (true)
 	{
+		if (ld2Timer.IsExpired())
+			ld2.Toggle();
 
 		////////////////_____SPI_____////////////////
+		/*
+		// MCP23S08
 		if ((McpReadRegister(ioexp_cs, MCP23S08::GPIO) & MCP23S08::GP1) == 0)
 			McpWriteRegister(ioexp_cs, MCP23S08::OLAT, 0x01);
 		else
 			McpWriteRegister(ioexp_cs, MCP23S08::OLAT, 0x00);
+		*/
 		////////////////_____SPI_____////////////////
 
 		////////////////_____UART/GPIO EXTI_____////////////////
+		/*
 		if (uart2.GetStringIT() == ERROR_CODE::OK)
 		{
 			uart2.SendString(uart2.GetBuffer().data());
@@ -103,9 +161,11 @@ int main(void)
 
 			uart2.ClearBuffer();
 		}
+		*/
 		////////////////_____UART/GPIO EXTI_____////////////////
 
 		////////////////_____ADC_____////////////////
+		/*
 		adc1.StartConversion();
 		adcChannel1.Read();
 		adc1.StartConversion();
@@ -125,14 +185,17 @@ int main(void)
 			else
 				channel1.SetPulse(0);
 		}
+		*/
 		////////////////_____ADC_____////////////////
 
 		////////////////_____GPIO EXTI_____////////////////
+		/*
 		if (userButton.InterruptOccured())
 		{
 			ld2.Toggle();
 			userButton.ClearInterruptFlag();
 		}
+		*/
 		////////////////_____GPIO EXTI_____////////////////
 	}
 }
@@ -167,12 +230,4 @@ extern "C" void TIM3_IRQHandler(void)
 	channel1.InterruptHandler();
 }
 
-void Delay(const uint32_t delay)
-{
-	const uint32_t startTime = SystemTimer::Now();
-	while(SystemTimer::Now() < startTime + delay)
-	{
-		//just wait
-	}
-}
 
