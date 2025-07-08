@@ -30,6 +30,12 @@ enum class SpiMode
 	FullDuplex
 };
 
+enum class HalfDuplexDirection
+{
+	Receive,
+	Transmit
+};
+
 template<typename Derived>
 class ISpi
 {
@@ -39,6 +45,24 @@ protected:
 	inline void WriteData(const uint8_t data) { *reinterpret_cast<volatile uint8_t*>(&SPI()->DR) = data; }
 	inline void WaitUntilRXNEIsNotEmpty() { while(!(SPI()->SR & SPI_SR_RXNE)); }
 	inline uint8_t ReadData() { return *reinterpret_cast<volatile uint8_t*>(&SPI()->DR); }
+
+	HalfDuplexDirection GetTransmissionDirection()
+	{
+		if (SPI()->CR1 & SPI_CR1_BIDIOE)
+			return HalfDuplexDirection::Transmit;
+		return HalfDuplexDirection::Receive;
+	}
+
+	void SetHalfDuplexDirection(const HalfDuplexDirection direction)
+	{
+		auto spi = SPI();
+		spi->CR1 &= ~(SPI_CR1_SPE);
+		if (direction == HalfDuplexDirection::Receive)
+			spi->CR1 &= SPI_CR1_BIDIOE;
+		else if (direction == HalfDuplexDirection::Transmit)
+			spi->CR1 |= SPI_CR1_BIDIOE;
+		spi->CR1 |= SPI_CR1_SPE;
+	}
 
 public:
 	void EnableClock()
@@ -104,9 +128,15 @@ public:
 		[[maybe_unused]] volatile uint8_t dummyRead = ReadData();
 	}
 
-	uint8_t Receive()
+	[[nodiscard]] uint8_t Receive()
 	{
 		//not configured for switching mode for half duplex yet
+		if constexpr (Derived::spiMode == SpiMode::HalfDuplex)
+		{
+			if (GetTransmissionDirection() != HalfDuplexDirection::Receive)
+				SetHalfDuplexDirection(HalfDuplexDirection::Receive);
+		}
+
 		WaitUntilTXEIsEmpty();
 		WriteData(0x00); //dummy write to generate clock for receiving
 		WaitUntilRXNEIsNotEmpty();

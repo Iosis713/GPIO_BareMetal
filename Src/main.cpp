@@ -90,7 +90,6 @@ int main(void)
 	//uart2.SendString(buffer);
 	 */
 
-
 	//TFTDisplay_ST7735S
 	LCDInit(LCD_RST, LCD_DC, LCD_CS);
 
@@ -199,7 +198,6 @@ int main(void)
 		////////////////_____GPIO EXTI_____////////////////
 	}
 }
-
 
 
 //interrupt handling function from start-up
