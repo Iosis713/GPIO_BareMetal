@@ -76,7 +76,7 @@ static std::array<uint16_t, LCD_WIDTH * LCD_HEIGHT> frameBuffer;
 
 void LCDFillBox(const int x, const int y, const int width, const int height, const uint16_t color);
 
-void LCDInit(auto& RST, auto& DC, auto& CS)
+void LCDInit(auto& RST, auto& DC, auto& CS, auto& spi)
 {
 	RST.Clear();
 	Delay(100);
@@ -86,69 +86,69 @@ void LCDInit(auto& RST, auto& DC, auto& CS)
 
 	for (const auto& element : initTable)
 	{
-		LCDSend(DC, CS, element);
+		LCDSend(DC, CS, spi, element);
 	}
 	Delay(200);
 
-	LCDCmd(DC, CS, ST7735S_SLPOUT);
+	LCDCmd(DC, CS, spi, ST7735S_SLPOUT);
 	Delay(120);
 
-	LCDCmd(DC, CS, ST7735S_DISPON);
+	LCDCmd(DC, CS, spi, ST7735S_DISPON);
 };
 
 //static so it wont we used out of the file
 //private in class
-static void LCDCmd(auto& DC, auto& CS, const uint8_t cmd)
+static void LCDCmd(auto& DC, auto& CS, auto& spi, const uint8_t cmd)
 {
 	DC.Clear();
 	CS.Clear();
-	Spi2TransmitHalfDuplex(cmd);
+	spi.Transmit(cmd);
 	CS.Set();
 }
 
-static void LCDData(auto& DC, auto& CS, const uint8_t data)
+static void LCDData(auto& DC, auto& CS, auto& spi, const uint8_t data)
 {
 	DC.Set();
 	CS.Clear();
-	Spi2TransmitHalfDuplex(data);
+	spi.Transmit(data);
 	CS.Set();
 }
 
-static void LCDData16(auto& DC, auto& CS, const uint16_t data)
+static void LCDData16(auto& DC, auto& CS, auto& spi, const uint16_t data)
 {
-	LCDData(DC, CS, data >> 8);
-	LCDData(DC, CS, data);
+	LCDData(DC, CS, spi, data >> 8);
+	LCDData(DC, CS, spi, data);
 }
 
 
-static void LCDSend(auto& DC, auto& CS, const uint16_t value)
+static void LCDSend(auto& DC, auto& CS, auto& spi, const uint16_t value)
 {
 	if (value & 0x100)
-		LCDCmd(DC, CS, value);
+		LCDCmd(DC, CS, spi, value);
 	else
-		LCDData(DC, CS, value);
+		LCDData(DC, CS, spi, value);
 }
 
-void LCDSetWindow(auto& DC, auto& CS, const int x, const int y, const int width, const int height)
+void LCDSetWindow(auto& DC, auto& CS, auto& spi, const int x, const int y, const int width, const int height)
 {
 	static constexpr uint16_t LCD_OFFSET_X = 1;//to fit view to the display
 	static constexpr uint16_t LCD_OFFSET_Y = 2;
 
-	LCDCmd(DC, CS, ST7735S_CASET); //set initial and last column
-	LCDData16(DC, CS, LCD_OFFSET_X + x); //x position
-	LCDData16(DC, CS, LCD_OFFSET_X + x + width - 1);// last column
+	LCDCmd(DC, CS, spi, ST7735S_CASET); //set initial and last column
+	LCDData16(DC, CS, spi, LCD_OFFSET_X + x); //x position
+	LCDData16(DC, CS, spi, LCD_OFFSET_X + x + width - 1);// last column
 
-	LCDCmd(DC, CS, ST7735S_RASET);// set initial and last row
-	LCDData16(DC, CS, LCD_OFFSET_Y + y);
-	LCDData16(DC, CS, LCD_OFFSET_Y + y + height - 1);//last column
+	LCDCmd(DC, CS, spi, ST7735S_RASET);// set initial and last row
+	LCDData16(DC, CS, spi, LCD_OFFSET_Y + y);
+	LCDData16(DC, CS, spi, LCD_OFFSET_Y + y + height - 1);//last column
 }
 
-void LCDFillBox(auto& DC, auto& CS, const int x, const int y, const int width, const int height, const uint16_t color)
+void LCDFillBox(auto& DC, auto& CS, auto& spi, const int x, const int y, const int width, const int height, const uint16_t color)
 {
-	LCDSetWindow(DC, CS, x, y, width, height);
-	LCDCmd(DC, CS, ST7735S_RAMWR);// starts sendign data to defined region (window)
+	LCDSetWindow(DC, CS, spi, x, y, width, height);
+	LCDCmd(DC, CS, spi, ST7735S_RAMWR);// starts sendign data to defined region (window)
 	for (int i = 0; i < width * height; i++)
-		LCDData16(DC, CS, color);
+		LCDData16(DC, CS, spi, color);
 }
 
 void LCDPutPixel(const int x, const int y, const uint16_t color)
@@ -156,33 +156,35 @@ void LCDPutPixel(const int x, const int y, const uint16_t color)
 	frameBuffer[x + y * LCD_WIDTH] = color;
 }
 
-void LCDDrawImage(auto& DC, auto& CS, const int x, const int y, const int width, const int height, std::span<const uint16_t> data)
+void LCDDrawImage(auto& DC, auto& CS, auto& spi, const int x, const int y, const int width, const int height, std::span<const uint16_t> data)
 {
-	LCDSetWindow(DC, CS, x, y, width, height);
-	LCDCmd(DC, CS, ST7735S_RAMWR);
+	LCDSetWindow(DC, CS, spi, x, y, width, height);
+	LCDCmd(DC, CS, spi, ST7735S_RAMWR);
 	DC.Set();
 	CS.Clear();
 
 	for (const auto& element : data)
 	{
-		Spi2TransmitHalfDuplex(element >> 8); //High byte first
-		Spi2TransmitHalfDuplex(element & 0xFF); //low byte
+		spi.Transmit(element >> 8); //High byte first
+		spi.Transmit(element & 0xFF); //low byte
 	}
 
 	CS.Set();
 }
 
-void LCDCopy(auto& DC, auto& CS)
+void LCDCopy(auto& DC, auto& CS, auto& spi)
 {
-	LCDSetWindow(DC, CS, 0, 0, LCD_WIDTH, LCD_HEIGHT);
-	LCDCmd(DC, CS, ST7735S_RAMWR);
+	LCDSetWindow(DC, CS, spi, 0, 0, LCD_WIDTH, LCD_HEIGHT);
+	LCDCmd(DC, CS, spi, ST7735S_RAMWR);
 	DC.Set();
 	CS.Clear();
 
 	for (const auto& element : frameBuffer)
 	{
-		Spi2TransmitHalfDuplex(element >> 8); //High byte first
-		Spi2TransmitHalfDuplex(element & 0xFF); //low byte
+		//Spi2TransmitHalfDuplex(element >> 8); //High byte first
+		//Spi2TransmitHalfDuplex(element & 0xFF); //low byte
+		spi.Transmit(element >> 8); //High byte first
+		spi.Transmit(element & 0xFF); //low byte
 	}
 
 	CS.Set();

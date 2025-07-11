@@ -14,9 +14,6 @@
 //just for spi 2 right now, according to:
 //https://forbot.pl/blog/kurs-stm32l4-ekspander-portow-spi-quiz-id47763
 
-//PC3 - MOSI
-//PC2 - MISO
-//PB
 void SpiConfigHalfDuplex();
 void SpiConfigFullDuplex();
 void EnableSpiClocks();
@@ -196,7 +193,7 @@ template<typename Derived>
 class ISpi
 {
 protected:
-	SPI_TypeDef* SPI() const { return reinterpret_cast<SPI_TypeDef*>(Derived::spiAddr); }
+	inline volatile SPI_TypeDef* SPI() const { return reinterpret_cast<SPI_TypeDef*>(Derived::spiAddr); }
 	inline void WaitUntilTXEIsEmpty() { while(!(SPI()->SR & SPI_SR_TXE));}
 	inline void WriteData(const uint8_t data) { *reinterpret_cast<volatile uint8_t*>(&SPI()->DR) = data; }
 	inline void WaitUntilRXNEIsNotEmpty() { while(!(SPI()->SR & SPI_SR_RXNE)); }

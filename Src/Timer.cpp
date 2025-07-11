@@ -30,7 +30,7 @@ extern "C" [[gnu::used]] void SysTick_Handler(void)
 void Delay(const uint32_t delay)
 {
 	const uint32_t startTime = SystemTimer::Now();
-	while(SystemTimer::Now() < startTime + delay)
+	while((SystemTimer::Now() - startTime) < delay)
 	{
 		//just wait
 	}
