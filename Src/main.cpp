@@ -36,6 +36,8 @@
 //from startup file
 extern "C" void TIM3_IRQHandler(void);
 
+void ExampleUseOfTFTDisplayST7735S(auto& LCD_CS, auto& LCD_RST, auto& LCD_DC);
+
 GpioOutput<GPIOA_BASE, 5> ld2;
 UART2<115200, 80> uart2;
 
@@ -60,18 +62,17 @@ int main(void)
 
 	/////////////////////////////////////////////
 	/////_______________SPI_______________///////
-	//EnableSpiClocks();
-
 	GpioOutput<GPIOB_BASE, 12> LCD_CS;
 	GpioOutput<GPIOB_BASE, 2> LCD_RST;
 	GpioOutput<GPIOB_BASE, 11> LCD_DC; //command (0) /data (1) transmit
+
 	//Datasheet 4 - Pinouts and pin description, table 17
 	//GpioAlternate<GPIOC_BASE, 2, AlternateFunction::AF5> spi2MISO;
-	GpioAlternate<GPIOC_BASE, 3, AlternateFunction::AF5> spi2MOSI;
-	GpioAlternate<GPIOB_BASE, 10, AlternateFunction::AF5> spi2SCK;
+	[[maybe_unused]] SpiPinsHalfDuplexTX<SpiSCK::SPI2_PB10_AF5, SpiMOSI::SPI2_PC3_AF5> spi2HalfDuplexTXPins;
 	LCD_CS.Set();
-	//SpiConfigHalfDuplex();
+
 	Spi<SPI2_BASE, SpiMode::HalfDuplex> spi2;
+	ExampleUseOfTFTDisplayST7735S(LCD_CS, LCD_RST, LCD_DC);
 
 	/* MCP23S08
 	//enable GP0 as output
@@ -90,44 +91,7 @@ int main(void)
 	//uart2.SendString(buffer);
 	 */
 
-	//TFTDisplay_ST7735S
-	LCDInit(LCD_RST, LCD_DC, LCD_CS);
 
-	LCDFillBox(LCD_DC, LCD_CS, 0, 0, 160, 16, RED);
-	LCDFillBox(LCD_DC, LCD_CS, 0, 16, 160, 16, GREEN);
-	LCDFillBox(LCD_DC, LCD_CS, 0, 32, 160, 16, BLUE);
-	LCDFillBox(LCD_DC, LCD_CS, 0, 48, 160, 16, YELLOW);
-	LCDFillBox(LCD_DC, LCD_CS, 0, 64, 160, 16, MAGENTA);
-	LCDFillBox(LCD_DC, LCD_CS, 0, 80, 160, 16, CYAN);
-	LCDFillBox(LCD_DC, LCD_CS, 0, 96, 160, 16, WHITE);
-	LCDFillBox(LCD_DC, LCD_CS, 0, 112, 160, 16, BLACK);
-
-	std::array<uint16_t, 64 *64> testImage;
-	for (auto& pixel : testImage)
-		pixel = BLUE;
-
-	LCDDrawImage(LCD_DC, LCD_CS, 0, 0, 64, 64, testImage);
-	LCDDrawImage(LCD_DC, LCD_CS, 16, 16, 64, 64, testImage);
-	LCDDrawImage(LCD_DC, LCD_CS, 32, 32, 64, 64, testImage);
-	LCDDrawImage(LCD_DC, LCD_CS, 48, 48, 64, 64, testImage);
-	LCDDrawImage(LCD_DC, LCD_CS, 64, 64, 64, 64, testImage);
-
-	for (int i = 0; i < 128; i++)
-	{
-		LCDPutPixel(i, i, RED);
-		LCDPutPixel(127 - i, i, RED);
-	}
-
-
-	for (int y = 0; y < LCD_HEIGHT; y++)
-	{
-	  for (int x = 0; x < LCD_WIDTH; x++)
-	  {
-		  LCDPutPixel(x, y, (x / 10 + y * 16));
-	  }
-	}
-
-	LCDCopy(LCD_DC, LCD_CS);
 
 	Timer ld2Timer(200);
 	while (true)
@@ -228,4 +192,46 @@ extern "C" void TIM3_IRQHandler(void)
 	channel1.InterruptHandler();
 }
 
+
+void ExampleUseOfTFTDisplayST7735S(auto& LCD_CS, auto& LCD_RST, auto& LCD_DC)
+{
+	//TFTDisplay_ST7735S
+	LCDInit(LCD_RST, LCD_DC, LCD_CS);
+
+	LCDFillBox(LCD_DC, LCD_CS, 0, 0, 160, 16, RED);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 16, 160, 16, GREEN);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 32, 160, 16, BLUE);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 48, 160, 16, YELLOW);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 64, 160, 16, MAGENTA);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 80, 160, 16, CYAN);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 96, 160, 16, WHITE);
+	LCDFillBox(LCD_DC, LCD_CS, 0, 112, 160, 16, BLACK);
+
+	std::array<uint16_t, 64 *64> testImage;
+	for (auto& pixel : testImage)
+		pixel = BLUE;
+
+	LCDDrawImage(LCD_DC, LCD_CS, 0, 0, 64, 64, testImage);
+	LCDDrawImage(LCD_DC, LCD_CS, 16, 16, 64, 64, testImage);
+	LCDDrawImage(LCD_DC, LCD_CS, 32, 32, 64, 64, testImage);
+	LCDDrawImage(LCD_DC, LCD_CS, 48, 48, 64, 64, testImage);
+	LCDDrawImage(LCD_DC, LCD_CS, 64, 64, 64, 64, testImage);
+
+	for (int i = 0; i < 128; i++)
+	{
+		LCDPutPixel(i, i, RED);
+		LCDPutPixel(127 - i, i, RED);
+	}
+
+
+	for (int y = 0; y < LCD_HEIGHT; y++)
+	{
+	  for (int x = 0; x < LCD_WIDTH; x++)
+	  {
+		  LCDPutPixel(x, y, (x / 10 + y * 16));
+	  }
+	}
+
+	LCDCopy(LCD_DC, LCD_CS);
+}
 

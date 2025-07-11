@@ -36,6 +36,162 @@ enum class HalfDuplexDirection
 	Transmit
 };
 
+enum class SpiMOSI
+{
+	SPI1_PA7_AF5,
+	SPI1_PB5_AF5,
+	//SPI1_PE15_AF5,
+
+	SPI2_PB15_AF5,
+	SPI2_PC3_AF5,
+	SPI2_PD4_AF5,
+
+	SPI3_PB5_AF6,
+	SPI3_PC12_AF6,
+};
+
+enum class SpiMISO
+{
+	SPI1_PA6_AF5,
+	SPI1_PB4_AF5,
+	//SPI1_PE14_AF5,
+
+	SPI2_PB14_AF5,
+	SPI2_PC2_AF5,
+	SPI2_PD3_AF5,
+
+	SPI3_PB4_AF6,
+	SPI3_PC11_AF6,
+};
+
+
+enum class SpiSCK
+{
+	SPI1_PA5_AF5,
+	SPI1_PB3_AF5,
+	//SPI1_PE13_AF5,
+
+	SPI2_PB10_AF5,
+	SPI2_PD1_AF5,
+
+	SPI3_PB3_AF6,
+	SPI3_PC10_AF6
+};
+
+
+class ISpiPins
+{
+protected:
+	template<SpiSCK spiSCK_>
+	static constexpr auto /*GpioAlternate<T1, T2, T3>*/ ConfigureSCK()
+	{
+		using enum SpiSCK;
+		if constexpr (spiSCK_ == SPI1_PA5_AF5)
+			return GpioAlternate<GPIOA_BASE, 5, AlternateFunction::AF5>{};
+		else if constexpr (spiSCK_ == SPI1_PB3_AF5)
+			return GpioAlternate<GPIOB_BASE, 3, AlternateFunction::AF5>{};
+		else if constexpr (spiSCK_ == SPI2_PB10_AF5)
+			return GpioAlternate<GPIOB_BASE, 10, AlternateFunction::AF5>{};
+		else if constexpr (spiSCK_ == SPI2_PD1_AF5)
+			return GpioAlternate<GPIOD_BASE, 1, AlternateFunction::AF5>{};
+		else if constexpr (spiSCK_ == SPI3_PB3_AF6)
+			return GpioAlternate<GPIOB_BASE, 3, AlternateFunction::AF6>{};
+		else
+			return GpioAlternate<GPIOC_BASE, 10, AlternateFunction::AF6>{};
+	}
+
+	template<SpiMISO spiMISO_>
+	static constexpr auto ConfigureMISO()
+	{
+		using enum SpiMISO;
+		if constexpr (spiMISO_ == SPI1_PA6_AF5)
+			return GpioAlternate<GPIOA_BASE, 6, AlternateFunction::AF5>{};
+		else if constexpr (spiMISO_ == SPI1_PB4_AF5)
+			return GpioAlternate<GPIOB_BASE, 4, AlternateFunction::AF5>{};
+		else if constexpr (spiMISO_ == SPI2_PB14_AF5)
+			return GpioAlternate<GPIOB_BASE, 14, AlternateFunction::AF5>{};
+		else if constexpr (spiMISO_ == SPI2_PC2_AF5)
+			return GpioAlternate<GPIOC_BASE, 2, AlternateFunction::AF5>{};
+		else if constexpr (spiMISO_ == SPI2_PD3_AF5)
+			return GpioAlternate<GPIOD_BASE, 3, AlternateFunction::AF5>{};
+		else if constexpr (spiMISO_ == SPI3_PB4_AF6)
+			return GpioAlternate<GPIOB_BASE, 4, AlternateFunction::AF6>{};
+		else
+			return GpioAlternate<GPIOC_BASE, 11, AlternateFunction::AF6>{};
+	}
+
+	template<SpiMOSI spiMOSI_>
+	static constexpr auto ConfigureMOSI()
+	{
+		using enum SpiMOSI;
+		if constexpr (spiMOSI_ == SPI1_PA7_AF5)
+			return GpioAlternate<GPIOA_BASE, 7, AlternateFunction::AF5>{};
+		else if constexpr (spiMOSI_ == SPI1_PB5_AF5)
+			return GpioAlternate<GPIOB_BASE, 5, AlternateFunction::AF5>{};
+		else if constexpr (spiMOSI_ == SPI2_PB15_AF5)
+			return GpioAlternate<GPIOB_BASE, 15, AlternateFunction::AF5>{};
+		else if constexpr (spiMOSI_ == SPI2_PC3_AF5)
+			return GpioAlternate<GPIOC_BASE, 3, AlternateFunction::AF5>{};
+		else if constexpr (spiMOSI_ == SPI2_PD4_AF5)
+			return GpioAlternate<GPIOD_BASE, 4, AlternateFunction::AF5>{};
+		else if constexpr (spiMOSI_ == SPI3_PB5_AF6)
+			return GpioAlternate<GPIOB_BASE, 5, AlternateFunction::AF6>{};
+		else
+			return GpioAlternate<GPIOC_BASE, 12, AlternateFunction::AF6>{};
+	}
+public:
+	//ISpiPins(const ISpiPins& source) = delete;
+	//ISpiPins(ISpiPins&& source) = delete;
+	ISpiPins& operator=(const ISpiPins& source) = delete;
+	ISpiPins& operator=(ISpiPins&& source) = delete;
+};
+
+template<SpiSCK spiSCK_, SpiMISO spiMISO_, SpiMOSI spiMOSI_>
+class SpiPinsFullDuplex : public ISpiPins
+{
+protected:
+public:
+	SpiPinsFullDuplex(const SpiPinsFullDuplex& source) = delete;
+	SpiPinsFullDuplex(SpiPinsFullDuplex&& source) = delete;
+	SpiPinsFullDuplex& operator=(const SpiPinsFullDuplex& source) = delete;
+	SpiPinsFullDuplex& operator=(SpiPinsFullDuplex&& source) = delete;
+	SpiPinsFullDuplex() = default;
+
+	static constexpr auto sck = ConfigureSCK<spiSCK_>();
+	static constexpr auto miso = ConfigureMISO<spiMISO_>();
+	static constexpr auto mosi = ConfigureMOSI<spiMOSI_>();
+};
+
+template<SpiSCK spiSCK_, SpiMOSI spiMOSI_>
+class SpiPinsHalfDuplexTX : public ISpiPins
+{
+protected:
+public:
+	SpiPinsHalfDuplexTX(const SpiPinsHalfDuplexTX& source) = delete;
+	SpiPinsHalfDuplexTX(SpiPinsHalfDuplexTX&& source) = delete;
+	SpiPinsHalfDuplexTX& operator=(const SpiPinsHalfDuplexTX& source) = delete;
+	SpiPinsHalfDuplexTX& operator=(SpiPinsHalfDuplexTX&& source) = delete;
+	SpiPinsHalfDuplexTX() = default;
+
+	static const inline auto sck = ConfigureSCK<spiSCK_>();
+	static const inline auto mosi = ConfigureMOSI<spiMOSI_>();
+};
+
+template<SpiSCK spiSCK_, SpiMOSI spiMISO_>
+class SpiPinsHalfDuplexRX : public ISpiPins
+{
+protected:
+public:
+	SpiPinsHalfDuplexRX(const SpiPinsHalfDuplexRX& source) = delete;
+	SpiPinsHalfDuplexRX(SpiPinsHalfDuplexRX&& source) = delete;
+	SpiPinsHalfDuplexRX& operator=(const SpiPinsHalfDuplexRX& source) = delete;
+	SpiPinsHalfDuplexRX& operator=(SpiPinsHalfDuplexRX&& source) = delete;
+	SpiPinsHalfDuplexRX() = default;
+
+	static constexpr auto sck = ConfigureSCK<spiSCK_>();
+	static constexpr auto miso = ConfigureMOSI<spiMISO_>();
+};
+
 template<typename Derived>
 class ISpi
 {
@@ -78,7 +234,6 @@ public:
 	void ConfigureSPI()
 	{
 		//Reference manual 42.6.1
-
 		auto spi = this->SPI();
 		spi->CR1 &= ~(SPI_CR1_SPE); //disable before configuration
 		//SPI2->CR1 |= SPI_CR1_SPE;

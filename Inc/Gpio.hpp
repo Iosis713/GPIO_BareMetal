@@ -407,13 +407,11 @@ template<std::uintptr_t portAddr_
 class GpioAlternate : public IGpio<GpioAlternate<portAddr_, pin_, alternateFunction, otyperOption, ospeedrOption, pupdrOption>>
 {
 protected:
-
-
 public:
 	static constexpr std::uintptr_t portAddr = portAddr_;
 	static constexpr uint8_t pin = pin_;
-	GpioAlternate(const GpioAlternate& source) = delete;
-	GpioAlternate(GpioAlternate&& source) = delete;
+	GpioAlternate(const GpioAlternate& source) = default;
+	GpioAlternate(GpioAlternate&& source) = default;
 	GpioAlternate& operator=(const GpioAlternate& source) = delete;
 	GpioAlternate& operator=(GpioAlternate&& source) = delete;
 	GpioAlternate()
@@ -425,7 +423,6 @@ public:
 		this->template ConfigurePUPDR<pupdrOption>();
 		this->template ConfigureAlternateFunction(alternateFunction);
 	}
-
 };
 
 #endif /* INC_GPIO_HPP_ */
