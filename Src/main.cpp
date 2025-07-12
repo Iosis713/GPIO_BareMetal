@@ -97,7 +97,7 @@ int main(void)
 	GpioAlternate<GPIOB_BASE, 6, AlternateFunction::AF4, OptionsOTYPER::OpenDrain> i2c1SCL;
 	GpioAlternate<GPIOB_BASE, 7, AlternateFunction::AF4, OptionsOTYPER::OpenDrain> i2c1SDA;
 
-	I2c<I2C1_BASE> i2c1;
+	I2c<I2C1_BASE> i2c1{0x00100D14};
 	static constexpr uint8_t deviceAddress = 0xA0;
 	static constexpr uint8_t memoryAddress = 0x10;
 	const uint8_t testData = 90;

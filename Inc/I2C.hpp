@@ -52,7 +52,7 @@ protected:
 		}
 	}
 
-	void ConfigI2C()
+	void ConfigI2C(const uint32_t timingRegister)
 	{
 		//CR1 = 0 by default RM 39.9.1.
 		auto i2c = I2C();
@@ -65,13 +65,19 @@ protected:
 
 		//TIMINGR 0x10909CEC from CubeMX Forbot
 		//but from CubeMX for 4MH MSI setup: 0x00100D14
-		i2c->TIMINGR = 0x00100D14;
+		SetTimingRegister(timingRegister);
+		//i2c->TIMINGR = 0x00100D14;
 
 
 		i2c->OAR1 &= ~(I2C_OAR1_OA1MODE);
 		i2c->OAR1 &= ~(I2C_OAR1_OA1EN);
 		i2c->OAR2 &= ~(I2C_OAR2_OA2EN);
 		i2c->CR1 |= I2C_CR1_PE;
+	}
+
+	inline void SetTimingRegister(const uint32_t timingRegister)
+	{
+		I2C()->TIMINGR = timingRegister;
 	}
 
 	inline bool IsrBusy()
@@ -98,6 +104,11 @@ protected:
 	{
 		return (I2C()->ISR & I2C_ISR_RXNE); //true = data avaiable in RXDR
 	}
+
+	inline void StopDetectionClear()
+	{
+		I2C()->ICR |= I2C_ICR_STOPCF;
+	}
 };
 
 template<std::uintptr_t i2cAddr_>
@@ -112,10 +123,11 @@ public:
 	I2c(I2c&& source) = delete;
 	I2c& operator=(const I2c& source) = delete;
 	I2c& operator=(I2c&& source) = delete;
-	I2c()
+	I2c() = delete;
+	I2c(const uint32_t timingRegister)
 	{
 		this->template EnableClock();
-		this->template ConfigI2C();
+		this->template ConfigI2C(timingRegister);
 	}
 
 	bool WriteMemory(const uint8_t devAddr, const uint8_t memAddr, const uint8_t* const data, const std::size_t size)
@@ -148,7 +160,7 @@ public:
 		while (!this->IsrTransferCompleted()) {} //wait Until transfer complete (NBYTES sent)
 		i2c->CR2 |= I2C_CR2_STOP;			 //Send STOP condition
 		while (!this->IsrStopDetected()) {}	 //Wait for STOP to complete (optional, just to ensure bus is idle
-
+		this->StopDetectionClear();
 		return true;
 	}
 
@@ -170,7 +182,7 @@ public:
 		while (!this->IsrTransferCompleted()) {}	//wait until transfer complete
 
 		//Read: repeat start - read
-		I2C1->CR2 = (devAddr & 0xFE)				// Device address
+		i2c->CR2 = (devAddr & 0xFE)				// Device address
 				  | (size << I2C_CR2_NBYTES_Pos)	// number of bytes to read
 				  | I2C_CR2_RD_WRN					// Read mode (RM 639.9.3 Transfer direction (0 - write, 1 - read)
 				  | I2C_CR2_START;					//Generated repeated start
@@ -178,14 +190,14 @@ public:
 		//Read loop
 		for (size_t i = 0; i < size; ++i)
 		{
-			while (!(I2C1->ISR & I2C_ISR_RXNE)) {} //Wait until RX buffer not empty - RM 39.9.8 Receive data register not empty. Cleared when RXDX is read
+			while (!this->IsrReceiveDataNotEmpty()) {} //Wait until RX buffer not empty - RM 39.9.8 Receive data register not empty. Cleared when RXDX is read
 			data[i] = static_cast<uint8_t>(I2C1->RXDR);	//register is 32bit, even if data is only 8 bit
 		}
 
 		while (!this->IsrTransferCompleted()) {}		//Wait until all bytes received; CR39.9.7. - Transfer complete (master mode)
 		i2c->CR2 |= I2C_CR2_STOP;					//Send STOP condition
 		while (!this->IsrStopDetected()) {}			//Wait for STOP to complete
-
+		this->StopDetectionClear();
 		return true;
 	}
 };
