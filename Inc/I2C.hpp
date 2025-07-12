@@ -89,9 +89,9 @@ protected:
 		return (I2C()->ISR & I2C_ISR_TC); //true =TransferCompleted
 	}
 
-	inline bool CrStopCompleted()
+	inline bool IsrStopDetected()
 	{
-		return (I2C()->CR2 & I2C_CR2_STOP); // true = stop detected
+		return (I2C()->ISR & I2C_ISR_STOPF); // true = stop detected
 	}
 
 	inline bool IsrReceiveDataNotEmpty()
@@ -147,7 +147,7 @@ public:
 
 		while (!this->IsrTransferCompleted()) {} //wait Until transfer complete (NBYTES sent)
 		i2c->CR2 |= I2C_CR2_STOP;			 //Send STOP condition
-		while (this->CrStopCompleted()) {}	 //Wait for STOP to complete (optional, just to ensure bus is idle
+		while (!this->IsrStopDetected()) {}	 //Wait for STOP to complete (optional, just to ensure bus is idle
 
 		return true;
 	}
@@ -184,7 +184,7 @@ public:
 
 		while (!this->IsrTransferCompleted()) {}		//Wait until all bytes received; CR39.9.7. - Transfer complete (master mode)
 		i2c->CR2 |= I2C_CR2_STOP;					//Send STOP condition
-		while (this->CrStopCompleted()) {}			//Wait for STOP to complete
+		while (!this->IsrStopDetected()) {}			//Wait for STOP to complete
 
 		return true;
 	}
