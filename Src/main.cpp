@@ -97,19 +97,17 @@ int main(void)
 	GpioAlternate<GPIOB_BASE, 6, AlternateFunction::AF4, OptionsOTYPER::OpenDrain> i2c1SCL;
 	GpioAlternate<GPIOB_BASE, 7, AlternateFunction::AF4, OptionsOTYPER::OpenDrain> i2c1SDA;
 
-	I2C i2c1;
+	I2c<I2C1_BASE> i2c1;
 	static constexpr uint8_t deviceAddress = 0xA0;
 	static constexpr uint8_t memoryAddress = 0x10;
 	const uint8_t testData = 90;
 	uint8_t readResult = 0;
 
 	i2c1.WriteMemory(deviceAddress, memoryAddress, &testData, 1);
-	Delay(5);
+	Delay(5); //EEPROM write time
 	i2c1.ReadMemory(deviceAddress, memoryAddress, &readResult, 1);
 	//////___________________I2C__________________________//////
 	////////////////////////////////////////////////////////////
-
-
 
 	Timer ld2Timer(200);
 	while (true)
