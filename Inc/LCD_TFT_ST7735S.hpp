@@ -60,14 +60,14 @@ static constexpr auto initTable = std::to_array<uint16_t>({
   CMD(ST7735S_MADCTL), 0xa0,
 });
 
-static constexpr  uint16_t BLACK   =  0x0000;
-static constexpr  uint16_t RED     =  0xf800;
-static constexpr  uint16_t GREEN   =  0x07e0;
-static constexpr  uint16_t BLUE    =  0x001f;
-static constexpr  uint16_t YELLOW  =  0xffe0;
-static constexpr  uint16_t MAGENTA =  0xf81f;
-static constexpr  uint16_t CYAN    =  0x07ff;
-static constexpr  uint16_t WHITE   =  0xffff;
+static constexpr uint16_t BLACK   =  0x0000;
+static constexpr uint16_t RED     =  0xf800;
+static constexpr uint16_t GREEN   =  0x07e0;
+static constexpr uint16_t BLUE    =  0x001f;
+static constexpr uint16_t YELLOW  =  0xffe0;
+static constexpr uint16_t MAGENTA =  0xf81f;
+static constexpr uint16_t CYAN    =  0x07ff;
+static constexpr uint16_t WHITE   =  0xffff;
 
 static constexpr uint8_t LCD_WIDTH = 160;
 static constexpr uint8_t LCD_HEIGHT = 128;
