@@ -27,6 +27,7 @@
 #include "../Inc/Mcp23S08.hpp"
 #include "../Inc/LCD_TFT_ST7735S.hpp"
 #include "../Inc/I2C.hpp"
+#include "../Inc/LPS25HB.hpp"
 #include <stdio.h>
 #include <cstring>
 
@@ -94,18 +95,38 @@ int main(void)
 	////////////////////////////////////////////////////////////
 	//////___________________I2C__________________________//////
 
+
+	/////////////////////////////////////////////////////////////
+	/*		MOZE JAKIS REFACTOR?????						*/
+
+
+
 	GpioAlternate<GPIOB_BASE, 6, AlternateFunction::AF4, OptionsOTYPER::OpenDrain> i2c1SCL;
 	GpioAlternate<GPIOB_BASE, 7, AlternateFunction::AF4, OptionsOTYPER::OpenDrain> i2c1SDA;
 
 	I2c<I2C1_BASE> i2c1{0x00100D14};
-	static constexpr uint8_t deviceAddress = 0xA0;
+	/*
+	 *EEPROM
+	 * static constexpr uint8_t deviceAddress = 0xA0;
 	static constexpr uint8_t memoryAddress = 0x10;
 	const uint8_t testData = 90;
 	uint8_t readResult = 0;
 
-	i2c1.WriteMemory(deviceAddress, memoryAddress, &testData, 1);
+	i2c1.Write(deviceAddress, memoryAddress, &testData, 1);
 	Delay(5); //EEPROM write time
-	i2c1.ReadMemory(deviceAddress, memoryAddress, &readResult, 1);
+	i2c1.Read(deviceAddress, memoryAddress, &readResult, 1);
+	*/
+
+	LPS25HB lps25hb(i2c1);
+	uart2.SendString("Searching...\n");
+	const uint8_t whoAmI = lps25hb.ReadRegister(LPS25HB_Registers::WHO_AM_I);
+
+	uart2.SendChar(whoAmI);
+	if (whoAmI == 0xBD)
+		uart2.SendString("Found: LPS25HB\n");
+	else
+		uart2.SendString("Error: (0x%02X)\n, whoAmI");
+
 	//////___________________I2C__________________________//////
 	////////////////////////////////////////////////////////////
 

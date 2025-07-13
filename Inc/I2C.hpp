@@ -10,7 +10,6 @@
 #ifndef I2C_HPP_
 #define I2C_HPP_
 
-#include "Config.hpp"
 #include <cstdint>
 
 //right now only for I2C_1 like in forbot course:
@@ -130,7 +129,7 @@ public:
 		this->template ConfigI2C(timingRegister);
 	}
 
-	bool WriteMemory(const uint8_t devAddr, const uint8_t memAddr, const uint8_t* const data, const std::size_t size)
+	bool Write(const uint8_t devAddr, const uint8_t memAddr, const uint8_t* const data, const std::size_t size)
 	{
 		if (size == 0 || size > 8) //24AA01 has 8-byte write page limit
 			return false;
@@ -164,7 +163,7 @@ public:
 		return true;
 	}
 
-	bool ReadMemory(const uint8_t devAddr, const uint8_t memAddr, uint8_t* const data, const std::size_t size)
+	bool Read(const uint8_t devAddr, const uint8_t memAddr, uint8_t* const data, const std::size_t size)
 	{
 		if (size == 0)
 			return false;
