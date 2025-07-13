@@ -123,9 +123,17 @@ int main(void)
 
 	uart2.SendChar(whoAmI);
 	if (whoAmI == 0xBD)
-		uart2.SendString("Found: LPS25HB\n");
+		uart2.SendString("Found: LPS25HB");
 	else
-		uart2.SendString("Error: (0x%02X)\n, whoAmI");
+		uart2.SendString("Error: (0x%02X), whoAmI");
+
+	lps25hb.WriteRegister(LPS25HB_Registers::CTRL_REG1, (LPS25HB_Registers::CTRL_REG1_bits::PD
+													  | LPS25HB_Registers::CTRL_REG1_bits::ODR2));
+	Delay(100); //25Hz temp measurement frequency
+	const float temp = lps25hb.ReadTemperatureC();
+	char buffer[32];
+	snprintf(buffer, sizeof(buffer), "Temp = %.1f *C", temp);
+	uart2.SendString(buffer);
 
 	//////___________________I2C__________________________//////
 	////////////////////////////////////////////////////////////

@@ -15,6 +15,8 @@ uint32_t SystemCoreClock = 4000000U;
 void SystemInit() {
     // You can leave this empty if you're not modifying clocks or peripherals here.
     // Optionally, disable watchdogs, etc.
+	SCB->CPACR |= (0xF << 20); //enable FPU 20, 22
+	SystemCoreClockUpdate();
 }
 
 void SystemCoreClockUpdate() {
