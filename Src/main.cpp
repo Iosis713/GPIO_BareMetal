@@ -130,20 +130,49 @@ int main(void)
 	lps25hb.WriteRegister(LPS25HB_Registers::CTRL_REG1, (LPS25HB_Registers::CTRL_REG1_bits::PD
 													  | LPS25HB_Registers::CTRL_REG1_bits::ODR2));
 	Delay(100); //25Hz temp measurement frequency
-	const float temp = lps25hb.ReadTemperatureC();
+	float temp = lps25hb.ReadTemperatureC();
 	char buffer[32];
 	snprintf(buffer, sizeof(buffer), "Temp = %.1f *C", temp);
+	uart2.SendString(buffer);
+
+	float absolutePressure = lps25hb.ReadAbsolutePressure();
+	snprintf(buffer, sizeof(buffer), "Absolute pressure = %.2f hPa", absolutePressure);
+	uart2.SendString(buffer);
+
+	float relativePressure = lps25hb.ReadRelativePressure(77);
+	snprintf(buffer, sizeof(buffer), "Relative pressure = %.2f hPa", relativePressure);
+	uart2.SendString(buffer);
+
+	float height = lps25hb.MeasureHeight();
+	snprintf(buffer, sizeof(buffer), "Measured Height = %.2f m", height);
 	uart2.SendString(buffer);
 
 	//////___________________I2C__________________________//////
 	////////////////////////////////////////////////////////////
 
 	Timer ld2Timer(200);
+	Timer measurementTimer(1000);
 	while (true)
 	{
 		if (ld2Timer.IsExpired())
 			ld2.Toggle();
 
+		if (measurementTimer.IsExpired())
+		{
+			temp = lps25hb.ReadTemperatureC();
+			absolutePressure = lps25hb.ReadAbsolutePressure();
+			relativePressure = lps25hb.ReadRelativePressure(77);
+			height = lps25hb.MeasureHeight();
+
+			snprintf(buffer, sizeof(buffer), "Temperature = %.1f *C", temp);
+			uart2.SendString(buffer);
+			snprintf(buffer, sizeof(buffer), "Absolute pressure = %.2f hPa", absolutePressure);
+			uart2.SendString(buffer);
+			snprintf(buffer, sizeof(buffer), "Relative pressure = %.2f hPa", relativePressure);
+			uart2.SendString(buffer);
+			snprintf(buffer, sizeof(buffer), "Measured Height = %.2f m", height);
+			uart2.SendString(buffer);
+		}
 		////////////////_____SPI_____////////////////
 		/*
 		// MCP23S08
