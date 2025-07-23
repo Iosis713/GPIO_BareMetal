@@ -38,12 +38,13 @@
 extern "C" void TIM3_IRQHandler(void);
 
 void ExampleUseOfTFTDisplayST7735S(auto& LCD_CS, auto& LCD_RST, auto& LCD_DC, auto& spi);
+void ExampleUseOfLSB25HB_I2c(auto& lsb25hb);
 
 GpioOutput<GPIOA_BASE, 5> ld2;
 UART2<115200, 80> uart2;
 
-PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3(1);
-PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
+//PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3(1);
+//PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
 Button<GPIOC_BASE, 13, OptionsPUPDR::PullUp> userButton;
 
 int main(void)
@@ -91,88 +92,12 @@ int main(void)
 	//uart2.SendString(buffer);
 	 */
 
-
-	////////////////////////////////////////////////////////////
-	//////___________________I2C__________________________//////
-
-
-	/////////////////////////////////////////////////////////////
-	/*		MOZE JAKIS REFACTOR?????						*/
-
-
-
-	GpioAlternate<GPIOB_BASE, 6, AlternateFunction::AF4, OptionsOTYPER::OpenDrain> i2c1SCL;
-	GpioAlternate<GPIOB_BASE, 7, AlternateFunction::AF4, OptionsOTYPER::OpenDrain> i2c1SDA;
-
-	I2c<I2C1_BASE> i2c1{0x00100D14};
-	/*
-	 *EEPROM
-	 * static constexpr uint8_t deviceAddress = 0xA0;
-	static constexpr uint8_t memoryAddress = 0x10;
-	const uint8_t testData = 90;
-	uint8_t readResult = 0;
-
-	i2c1.Write(deviceAddress, memoryAddress, &testData, 1);
-	Delay(5); //EEPROM write time
-	i2c1.Read(deviceAddress, memoryAddress, &readResult, 1);
-	*/
-
-	LPS25HB lps25hb(i2c1);
-	uart2.SendString("Searching...\n");
-	const uint8_t whoAmI = lps25hb.ReadRegister(LPS25HB_Registers::WHO_AM_I);
-
-	uart2.SendChar(whoAmI);
-	if (whoAmI == 0xBD)
-		uart2.SendString("Found: LPS25HB");
-	else
-		uart2.SendString("Error: (0x%02X), whoAmI");
-
-	lps25hb.WriteRegister(LPS25HB_Registers::CTRL_REG1, (LPS25HB_Registers::CTRL_REG1_bits::PD
-													  | LPS25HB_Registers::CTRL_REG1_bits::ODR2));
-	Delay(100); //25Hz temp measurement frequency
-	float temp = lps25hb.ReadTemperatureC();
-	char buffer[32];
-	snprintf(buffer, sizeof(buffer), "Temp = %.1f *C", temp);
-	uart2.SendString(buffer);
-
-	float absolutePressure = lps25hb.ReadAbsolutePressure();
-	snprintf(buffer, sizeof(buffer), "Absolute pressure = %.2f hPa", absolutePressure);
-	uart2.SendString(buffer);
-
-	float relativePressure = lps25hb.ReadRelativePressure(77);
-	snprintf(buffer, sizeof(buffer), "Relative pressure = %.2f hPa", relativePressure);
-	uart2.SendString(buffer);
-
-	float height = lps25hb.MeasureHeight();
-	snprintf(buffer, sizeof(buffer), "Measured Height = %.2f m", height);
-	uart2.SendString(buffer);
-
-	//////___________________I2C__________________________//////
-	////////////////////////////////////////////////////////////
-
-	Timer ld2Timer(200);
-	Timer measurementTimer(1000);
 	while (true)
 	{
 		if (ld2Timer.IsExpired())
 			ld2.Toggle();
 
-		if (measurementTimer.IsExpired())
-		{
-			temp = lps25hb.ReadTemperatureC();
-			absolutePressure = lps25hb.ReadAbsolutePressure();
-			relativePressure = lps25hb.ReadRelativePressure(77);
-			height = lps25hb.MeasureHeight();
 
-			snprintf(buffer, sizeof(buffer), "Temperature = %.1f *C", temp);
-			uart2.SendString(buffer);
-			snprintf(buffer, sizeof(buffer), "Absolute pressure = %.2f hPa", absolutePressure);
-			uart2.SendString(buffer);
-			snprintf(buffer, sizeof(buffer), "Relative pressure = %.2f hPa", relativePressure);
-			uart2.SendString(buffer);
-			snprintf(buffer, sizeof(buffer), "Measured Height = %.2f m", height);
-			uart2.SendString(buffer);
-		}
 		////////////////_____SPI_____////////////////
 		/*
 		// MCP23S08
@@ -226,13 +151,13 @@ int main(void)
 		////////////////_____ADC_____////////////////
 
 		////////////////_____GPIO EXTI_____////////////////
-		/*
+
 		if (userButton.InterruptOccured())
 		{
 			ld2.Toggle();
 			userButton.ClearInterruptFlag();
 		}
-		*/
+
 		////////////////_____GPIO EXTI_____////////////////
 	}
 }
@@ -255,15 +180,15 @@ extern "C" void USART2_IRQHandler(void)
 	 * flag can be enabled (data is ready to send/receive)
 	 * uart can rise interrupt when data is ready to receive
 	 * then add to buffer
-	 * when the sign is  '\0' it can be sendd
+	 * when the sign is  '\0' it can be send
 	 */
 }
 
 
 extern "C" void TIM3_IRQHandler(void)
 {
-	pwmTim3.InterruptHandler();
-	channel1.InterruptHandler();
+	//pwmTim3.InterruptHandler();
+	//channel1.InterruptHandler();
 }
 
 
@@ -307,5 +232,62 @@ void ExampleUseOfTFTDisplayST7735S(auto& LCD_CS, auto& LCD_RST, auto& LCD_DC, au
 	}
 
 	LCDCopy(LCD_DC, LCD_CS, spi);
+}
+
+void ExampleUseOfLSB25HB_I2c(auto& lsb25hb)
+{
+	////////////////////////////////////////////////////////////
+		//////___________________I2C__________________________//////
+
+		GpioAlternate<GPIOB_BASE, 6, AlternateFunction::AF4, OptionsOTYPER::OpenDrain> i2c1SCL;
+		GpioAlternate<GPIOB_BASE, 7, AlternateFunction::AF4, OptionsOTYPER::OpenDrain> i2c1SDA;
+
+		I2c<I2C1_BASE> i2c1{0x00100D14}; //from cubemx for specifc clock
+
+		/*
+		 *EEPROM
+		 * static constexpr uint8_t deviceAddress = 0xA0;
+		static constexpr uint8_t memoryAddress = 0x10;
+		const uint8_t testData = 90;
+		uint8_t readResult = 0;
+
+		i2c1.Write(deviceAddress, memoryAddress, &testData, 1);
+		Delay(5); //EEPROM write time
+		i2c1.Read(deviceAddress, memoryAddress, &readResult, 1);
+		*/
+
+		LPS25HB lps25hb(i2c1);
+		uart2.SendString("Searching...\n");
+		const uint8_t whoAmI = lps25hb.ReadRegister(LPS25HB_Registers::WHO_AM_I);
+
+		uart2.SendChar(whoAmI);
+		if (whoAmI == 0xBD)
+			uart2.SendString("Found: LPS25HB");
+		else
+			uart2.SendString("Error: (0x%02X), whoAmI");
+
+		lps25hb.WriteRegister(LPS25HB_Registers::CTRL_REG1, (LPS25HB_Registers::CTRL_REG1_bits::PD
+														  | LPS25HB_Registers::CTRL_REG1_bits::ODR2));
+		Delay(100); //25Hz temp measurement frequency
+
+		float temp = lps25hb.ReadTemperatureC();
+		char buffer[32];
+		snprintf(buffer, sizeof(buffer), "Temp = %.1f *C", temp);
+		uart2.SendString(buffer);
+
+		float absolutePressure = lps25hb.ReadAbsolutePressure();
+		snprintf(buffer, sizeof(buffer), "Absolute pressure = %.2f hPa", absolutePressure);
+		uart2.SendString(buffer);
+
+		float relativePressure = lps25hb.ReadRelativePressure(77);
+		snprintf(buffer, sizeof(buffer), "Relative pressure = %.2f hPa", relativePressure);
+		uart2.SendString(buffer);
+
+		float height = lps25hb.MeasureHeight();
+		snprintf(buffer, sizeof(buffer), "Measured Height = %.2f m", height);
+		uart2.SendString(buffer);
+
+		//////___________________I2C__________________________//////
+		////////////////////////////////////////////////////////////
 }
 
