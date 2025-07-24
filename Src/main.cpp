@@ -47,12 +47,24 @@ UART2<115200, 80> uart2;
 //PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
 Button<GPIOC_BASE, 13, OptionsPUPDR::PullUp> userButton;
 
+/////////////////////////////////////////////
+//////			HC-SR04				   //////
+
+PWM<TIM2_BASE, (4 - 1), (1000000 - 1)> pwmTim2(2);
+PWMChannelInput<GPIOA_BASE, 0, 1> hc_sr04_echoCh1(pwmTim2.Timer(), AlternateFunction::AF1, Trigger::Rising, PWMDirection::InputDirect);
+PWMChannelInput<GPIOA_BASE, 1, 2> hc_sr04_echoCh2(pwmTim2.Timer(), AlternateFunction::AF1, Trigger::Falling, PWMDirection::InputIndirect);
+PWMChannelOutput<GPIOB_BASE, 10, 3> hc_sr04_trig(pwmTim2.Timer(), AlternateFunction::AF1);
+
+//////			HC-SR04				   //////
+/////////////////////////////////////////////
+
 int main(void)
 {
 	SystemTimer::Init(4000);
 
-	/*
 	userButton.ConfigureEXTI<2>(Trigger::Falling);
+	Timer ld2Timer(250);
+	/*
 	Timer timerPWM(10);
 	Timer timerADCPrint(250);
 
@@ -92,11 +104,33 @@ int main(void)
 	//uart2.SendString(buffer);
 	 */
 
+
+	/////////////////////////////////////////////
+	//////			HC-SR04				   //////
+	//////		Distance measurement	   //////
+
+
+	hc_sr04_trig.SetPulse(10); //us
+	uint32_t start = 0;
+	uint32_t stop = 0;
+	char buffer[64];
+	Timer timerHCSR04(250);
+	//////			HC-SR04				   //////
+	/////////////////////////////////////////////
+
 	while (true)
 	{
 		if (ld2Timer.IsExpired())
 			ld2.Toggle();
 
+		if (timerHCSR04.IsExpired())
+		{
+			start = hc_sr04_echoCh1.GetCapturedValue();
+			stop = hc_sr04_echoCh2.GetCapturedValue();
+			snprintf(buffer, sizeof(buffer), "Distance: %.1f [cm] \n", (stop - start) / 58.0f);
+
+			uart2.SendString(buffer);
+		}
 
 		////////////////_____SPI_____////////////////
 		/*
@@ -182,6 +216,14 @@ extern "C" void USART2_IRQHandler(void)
 	 * then add to buffer
 	 * when the sign is  '\0' it can be send
 	 */
+}
+
+extern "C" void TIM2_IRQHandler(void)
+{
+	pwmTim2.InterruptHandler();
+	hc_sr04_echoCh1.InterruptHandler();
+	hc_sr04_echoCh2.InterruptHandler();
+	hc_sr04_trig.InterruptHandler();
 }
 
 

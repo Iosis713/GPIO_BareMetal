@@ -83,7 +83,8 @@ enum class AlternateFunction
 enum class Trigger
 {
 	Rising,
-	Falling
+	Falling,
+	Both
 };
 
 template<typename Derived>

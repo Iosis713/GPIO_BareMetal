@@ -170,7 +170,7 @@ public:
 		RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN; //enable SYSCFG clock
 		//9.2.6 System configuration controller SYSCFG
 		SYSCFG->EXTICR[0] &= ~SYSCFG_EXTICR1_EXTI3; //0000
-		SYSCFG->EXTICR[0] |= SYSCFG_EXTICR1_EXTI3_PA; //set bit for PC13 exti route to syscfg
+		SYSCFG->EXTICR[0] |= SYSCFG_EXTICR1_EXTI3_PA; //set bit for PA3 exti route to syscfg
 
 		USART2->CR1 |= USART_CR1_RXNEIE; //Enable RX interrupt
 		NVIC_SetPriority(USART2_IRQn, 1); //set priority (for exti ,  priotity = 1
