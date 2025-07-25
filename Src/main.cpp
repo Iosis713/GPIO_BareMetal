@@ -39,6 +39,8 @@ extern "C" void TIM3_IRQHandler(void);
 
 void ExampleUseOfTFTDisplayST7735S(auto& LCD_CS, auto& LCD_RST, auto& LCD_DC, auto& spi);
 void ExampleUseOfLSB25HB_I2c(auto& lsb25hb);
+float LM35CalculateTemperatureC(const uint32_t rawTemp);
+float CalculateAirSoundSpeed(const float tempC);
 
 GpioOutput<GPIOA_BASE, 5> ld2;
 UART2<115200, 80> uart2;
@@ -50,7 +52,8 @@ Button<GPIOC_BASE, 13, OptionsPUPDR::PullUp> userButton;
 /////////////////////////////////////////////
 //////			HC-SR04				   //////
 
-PWM<TIM2_BASE, (4 - 1), (1000000 - 1)> pwmTim2(2);
+static constexpr uint32_t ticksPerSecond = 1000000;
+PWM<TIM2_BASE, (4 - 1), (ticksPerSecond - 1)> pwmTim2(2);
 PWMChannelInput<GPIOA_BASE, 0, 1> hc_sr04_echoCh1(pwmTim2.Timer(), AlternateFunction::AF1, Trigger::Rising, PWMDirection::InputDirect);
 PWMChannelInput<GPIOA_BASE, 1, 2> hc_sr04_echoCh2(pwmTim2.Timer(), AlternateFunction::AF1, Trigger::Falling, PWMDirection::InputIndirect);
 PWMChannelOutput<GPIOB_BASE, 10, 3> hc_sr04_trig(pwmTim2.Timer(), AlternateFunction::AF1);
@@ -113,8 +116,17 @@ int main(void)
 	hc_sr04_trig.SetPulse(10); //us
 	uint32_t start = 0;
 	uint32_t stop = 0;
-	char buffer[64];
-	Timer timerHCSR04(250);
+	char buffer[80];
+	Timer timerHCSR04(1000);
+
+	Adc<ADC1_BASE, 1> adc1;
+	AdcChannel<GPIOA_BASE, 6, 11> adc1Channel11(adc1.ADC(), 1);
+	uint32_t rawTemp = 0;
+	float tempC = 0.0f;
+	float airSoundSpeed = 0.0f;
+	float distance = 0.0f;
+	static constexpr uint8_t convertToCentimeters = 100;
+
 	//////			HC-SR04				   //////
 	/////////////////////////////////////////////
 
@@ -125,10 +137,18 @@ int main(void)
 
 		if (timerHCSR04.IsExpired())
 		{
+			adc1.StartConversion();
+			adc1Channel11.Read();
+			rawTemp = adc1Channel11.Get();
+			tempC = LM35CalculateTemperatureC(rawTemp);
+			airSoundSpeed = CalculateAirSoundSpeed(tempC);
+			snprintf(buffer, sizeof(buffer), "ADC = %lu [-], Temperature: %.1f [*C], AirSoundSpeed = %.1f [m/s] \n", rawTemp, tempC, airSoundSpeed);
+			uart2.SendString(buffer);
+
 			start = hc_sr04_echoCh1.GetCapturedValue();
 			stop = hc_sr04_echoCh2.GetCapturedValue();
-			snprintf(buffer, sizeof(buffer), "Distance: %.1f [cm] \n", (stop - start) / 58.0f);
-
+			distance = (stop - start) * airSoundSpeed * convertToCentimeters / (ticksPerSecond * 2);
+			snprintf(buffer, sizeof(buffer), "Distance: %.1f [cm]", distance);
 			uart2.SendString(buffer);
 		}
 
@@ -333,3 +353,15 @@ void ExampleUseOfLSB25HB_I2c(auto& lsb25hb)
 		////////////////////////////////////////////////////////////
 }
 
+float LM35CalculateTemperatureC(const uint32_t rawTemp)
+{
+	static constexpr float tempMeasurementResolution = 0.01f; //[V/C]
+	static constexpr float maxVoltage = 3.3f; // [V]
+	static constexpr float maxADCValue = 4096.f; // [-]
+	return rawTemp * maxVoltage / (tempMeasurementResolution * maxADCValue);
+}
+
+float CalculateAirSoundSpeed(const float tempC)
+{
+	return 331.8f + 0.6f * tempC;
+}

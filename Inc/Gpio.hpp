@@ -93,7 +93,6 @@ class IGpio
 protected:
 	GPIO_TypeDef* Port() const { return reinterpret_cast<GPIO_TypeDef*>(Derived::portAddr); }
 
-public:
 	void EnableClock()
 	{
 		if (Derived::portAddr == GPIOA_BASE)
@@ -161,6 +160,7 @@ public:
 			port->OSPEEDR |= OSPEEDR_MASKS[Derived::pin];
 	}
 
+public:
 	//Datasheet Pinouts and pin description
 	//AF2 Datasheet Alternate functino 0 - 7 / 8 -15
 	//RM 8.5.10 GPIO alternate function low/high register
