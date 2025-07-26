@@ -1,10 +1,8 @@
 GPIO_BareMetal Debug.launch
 GPIO_BareMetal.launch
 Debug/*
-<<<<<<< HEAD
 .metadata/
 .settings/
-
-=======
-.metadata
->>>>>>> TFTDisplay_ST7735S
+Drivers/*
+STM32L476RGTX_FLASH.ld
+STM32L476RGTX_RAM.ld

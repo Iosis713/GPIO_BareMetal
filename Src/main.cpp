@@ -41,6 +41,7 @@ void ExampleUseOfTFTDisplayST7735S(auto& LCD_CS, auto& LCD_RST, auto& LCD_DC, au
 void ExampleUseOfLSB25HB_I2c(auto& lsb25hb);
 float LM35CalculateTemperatureC(const uint32_t rawTemp);
 float CalculateAirSoundSpeed(const float tempC);
+void SetRGBSignal(const float distance);
 
 GpioOutput<GPIOA_BASE, 5> ld2;
 UART2<115200, 80> uart2;
@@ -57,6 +58,11 @@ PWM<TIM2_BASE, (4 - 1), (ticksPerSecond - 1)> pwmTim2(2);
 PWMChannelInput<GPIOA_BASE, 0, 1> hc_sr04_echoCh1(pwmTim2.Timer(), AlternateFunction::AF1, Trigger::Rising, PWMDirection::InputDirect);
 PWMChannelInput<GPIOA_BASE, 1, 2> hc_sr04_echoCh2(pwmTim2.Timer(), AlternateFunction::AF1, Trigger::Falling, PWMDirection::InputIndirect);
 PWMChannelOutput<GPIOB_BASE, 10, 3> hc_sr04_trig(pwmTim2.Timer(), AlternateFunction::AF1);
+
+static constexpr uint32_t ticksPerSecondRGB = 1000;
+PWM<TIM3_BASE, (4 - 1), (ticksPerSecondRGB - 1)> pwmTim3(3);
+PWMChannelOutput<GPIOB_BASE, 0, 3> rgbRed(pwmTim3.Timer(), AlternateFunction::AF2);
+PWMChannelOutput<GPIOB_BASE, 1, 4> rgbGreen(pwmTim3.Timer(), AlternateFunction::AF2);
 
 //////			HC-SR04				   //////
 /////////////////////////////////////////////
@@ -127,6 +133,10 @@ int main(void)
 	float distance = 0.0f;
 	static constexpr uint8_t convertToCentimeters = 100;
 
+
+	//RGB distance monitor (red - "close", green "far")
+	rgbRed.SetPulse(0);
+	rgbGreen.SetPulse(0);
 	//////			HC-SR04				   //////
 	/////////////////////////////////////////////
 
@@ -364,4 +374,9 @@ float LM35CalculateTemperatureC(const uint32_t rawTemp)
 float CalculateAirSoundSpeed(const float tempC)
 {
 	return 331.8f + 0.6f * tempC;
+}
+
+void SetRGBSignal(const float distance)
+{
+	const uint32_t maxPWMwidth = pwmTim3.GetMaxWidth();
 }
