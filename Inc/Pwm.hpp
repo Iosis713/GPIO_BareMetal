@@ -36,6 +36,12 @@ enum class PWMDirection
 	InputTRC
 };
 
+enum class PWMPolarity
+{
+	ActiveHigh,
+	ActiveLow,
+};
+
 template<std::uintptr_t timerAddr_
 		, uint32_t prescalerPSC_ //0 - 15
 		, uint32_t ARR_ /*auto-reload register*/>
@@ -137,7 +143,7 @@ private:
 	static constexpr uint8_t channel = channel_;
 	volatile TIM_TypeDef* const timer = nullptr;
 
-	void ConfigureChannel(const AlternateFunction af)
+	void ConfigureChannel(const AlternateFunction af, const PWMPolarity polarity)
 	{
 		static_assert(pin >= 0 && pin <= 15, "Invalid pin number: needs to be in range of 0 - 15!");
 		static_assert(channel >= 1 && channel <= 4, "Invalid channel number: needs to be in range of 1 - 4!");
@@ -147,6 +153,7 @@ private:
 		this->template ConfigureOSPEEDR<ospeedrOption>();
 		this->template ConfigurePUPDR<pupdrOption>();
 		ConfigureCaptureCompare();
+		ConfigurePolarity(polarity);
 		//Datasheet Pinouts and pin description
 		//AF2 Datasheet Alternate functino 0 - 7
 		//RM 8.5.10 GPIO alternate function low register (AFSEL6) because pin PA6
@@ -212,10 +219,10 @@ public:
 	PWMChannelOutput& operator=(const PWMChannelOutput& source) = delete;
 	PWMChannelOutput& operator=(PWMChannelOutput&& source) = delete;
 	PWMChannelOutput() = delete;
-	PWMChannelOutput(TIM_TypeDef* const timer_, const AlternateFunction af) : timer(timer_)
+	PWMChannelOutput(TIM_TypeDef* const timer_, const AlternateFunction af, const PWMPolarity polarity = PWMPolarity::ActiveHigh) : timer(timer_)
 	{
 		this->EnableClock();
-		ConfigureChannel(af);
+		ConfigureChannel(af, polarity);
 	}
 
 	//CCR1 - capture compare register 1 (CH1)
@@ -275,6 +282,15 @@ public:
 				timer->SR &= ~(TIM_SR_CC4IF);
 		}
 	}
+
+	void ConfigurePolarity(const PWMPolarity polarity)
+	{
+		if (polarity == PWMPolarity::ActiveHigh)
+			timer->CCER &= ~(TIM_CCER_CCxP[channel - 1]);
+		else if (polarity == PWMPolarity::ActiveLow)
+			timer->CCER |= TIM_CCER_CCxP[channel - 1];
+	}
+
 };
 
 template<std::uintptr_t portAddr_

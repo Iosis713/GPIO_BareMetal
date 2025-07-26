@@ -61,8 +61,8 @@ PWMChannelOutput<GPIOB_BASE, 10, 3> hc_sr04_trig(pwmTim2.Timer(), AlternateFunct
 
 static constexpr uint32_t ticksPerSecondRGB = 1000;
 PWM<TIM3_BASE, (4 - 1), (ticksPerSecondRGB - 1)> pwmTim3(3);
-PWMChannelOutput<GPIOB_BASE, 0, 3> rgbRed(pwmTim3.Timer(), AlternateFunction::AF2);
-PWMChannelOutput<GPIOB_BASE, 1, 4> rgbGreen(pwmTim3.Timer(), AlternateFunction::AF2);
+PWMChannelOutput<GPIOB_BASE, 0, 3> rgbRed(pwmTim3.Timer(), AlternateFunction::AF2, PWMPolarity::ActiveLow);
+PWMChannelOutput<GPIOB_BASE, 1, 4> rgbGreen(pwmTim3.Timer(), AlternateFunction::AF2, PWMPolarity::ActiveLow);
 
 //////			HC-SR04				   //////
 /////////////////////////////////////////////
@@ -123,7 +123,7 @@ int main(void)
 	uint32_t start = 0;
 	uint32_t stop = 0;
 	char buffer[80];
-	Timer timerHCSR04(1000);
+	Timer timerHCSR04(20);
 
 	Adc<ADC1_BASE, 1> adc1;
 	AdcChannel<GPIOA_BASE, 6, 11> adc1Channel11(adc1.ADC(), 1);
@@ -160,7 +160,10 @@ int main(void)
 			distance = (stop - start) * airSoundSpeed * convertToCentimeters / (ticksPerSecond * 2);
 			snprintf(buffer, sizeof(buffer), "Distance: %.1f [cm]", distance);
 			uart2.SendString(buffer);
+
+			SetRGBSignal(distance);
 		}
+
 
 		////////////////_____SPI_____////////////////
 		/*
@@ -259,8 +262,11 @@ extern "C" void TIM2_IRQHandler(void)
 
 extern "C" void TIM3_IRQHandler(void)
 {
-	//pwmTim3.InterruptHandler();
+	pwmTim3.InterruptHandler();
 	//channel1.InterruptHandler();
+
+	rgbGreen.InterruptHandler();
+	rgbRed.InterruptHandler();
 }
 
 
@@ -379,4 +385,15 @@ float CalculateAirSoundSpeed(const float tempC)
 void SetRGBSignal(const float distance)
 {
 	const uint32_t maxPWMwidth = pwmTim3.GetMaxWidth();
+	static constexpr float minDistance = 10.0f; //cm = 0%
+	static constexpr float maxDistance = 100.f; //cm = 100%
+
+	uint32_t distancePercentGreen = static_cast<uint32_t>(distance) / (maxDistance - minDistance) * 100;
+
+	if (distancePercentGreen > 100)
+		distancePercentGreen = 100;
+	//narrowing conversion of anything below 1
+
+	rgbGreen.SetPulse(distancePercentGreen * maxPWMwidth / 100);
+	rgbRed.SetPulse((100 - distancePercentGreen) * maxPWMwidth / 100);
 }
