@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug STM32",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "openocd",
+      "executable": "${workspaceFolder}/build/GPIO_BareMetal",
+      "device": "STM32L476RG",
+      "interface": "swd",
+      "runToEntryPoint": "main",
+      "gdbPath": "gdb-multiarch",
+      "openOCDPath": "/usr/bin/openocd",
+      "configFiles": [
+        "interface/stlink.cfg",
+        "target/stm32l4x.cfg"
+      ]
+    }
+  ]
+}
