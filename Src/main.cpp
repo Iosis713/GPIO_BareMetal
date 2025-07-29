@@ -53,6 +53,7 @@ Button<GPIOC_BASE, 13, OptionsPUPDR::PullUp> userButton;
 /////////////////////////////////////////////
 //////			HC-SR04				   //////
 
+/*
 static constexpr uint32_t ticksPerSecond = 1000000;
 PWM<TIM2_BASE, (4 - 1), (ticksPerSecond - 1)> pwmTim2(2);
 PWMChannelInput<GPIOA_BASE, 0, 1> hc_sr04_echoCh1(pwmTim2.Timer(), AlternateFunction::AF1, Trigger::Rising, PWMDirection::InputDirect);
@@ -64,6 +65,7 @@ PWM<TIM3_BASE, (4 - 1), (ticksPerSecondRGB - 1)> pwmTim3(3);
 PWMChannelOutput<GPIOB_BASE, 0, 3> rgbRed(pwmTim3.Timer(), AlternateFunction::AF2, PWMPolarity::ActiveLow);
 PWMChannelOutput<GPIOB_BASE, 1, 4> rgbGreen(pwmTim3.Timer(), AlternateFunction::AF2, PWMPolarity::ActiveLow);
 
+*/
 //////			HC-SR04				   //////
 /////////////////////////////////////////////
 
@@ -118,7 +120,7 @@ int main(void)
 	//////			HC-SR04				   //////
 	//////		Distance measurement	   //////
 
-
+	/*
 	hc_sr04_trig.SetPulse(10); //us
 	uint32_t start = 0;
 	uint32_t stop = 0;
@@ -137,6 +139,8 @@ int main(void)
 	//RGB distance monitor (red - "close", green "far")
 	rgbRed.SetPulse(0);
 	rgbGreen.SetPulse(0);
+	*/
+
 	//////			HC-SR04				   //////
 	/////////////////////////////////////////////
 
@@ -145,6 +149,8 @@ int main(void)
 		if (ld2Timer.IsExpired())
 			ld2.Toggle();
 
+		/*
+		//Distance mearusrement
 		if (timerHCSR04.IsExpired())
 		{
 			adc1.StartConversion();
@@ -163,7 +169,7 @@ int main(void)
 
 			SetRGBSignal(distance);
 		}
-
+		*/
 
 		////////////////_____SPI_____////////////////
 		/*
@@ -253,20 +259,20 @@ extern "C" void USART2_IRQHandler(void)
 
 extern "C" void TIM2_IRQHandler(void)
 {
-	pwmTim2.InterruptHandler();
-	hc_sr04_echoCh1.InterruptHandler();
-	hc_sr04_echoCh2.InterruptHandler();
-	hc_sr04_trig.InterruptHandler();
+	//pwmTim2.InterruptHandler();
+	//hc_sr04_echoCh1.InterruptHandler();
+	//hc_sr04_echoCh2.InterruptHandler();
+	//hc_sr04_trig.InterruptHandler();
 }
 
 
 extern "C" void TIM3_IRQHandler(void)
 {
-	pwmTim3.InterruptHandler();
+	//pwmTim3.InterruptHandler();
 	//channel1.InterruptHandler();
 
-	rgbGreen.InterruptHandler();
-	rgbRed.InterruptHandler();
+	//rgbGreen.InterruptHandler();
+	//rgbRed.InterruptHandler();
 }
 
 
@@ -382,6 +388,7 @@ float CalculateAirSoundSpeed(const float tempC)
 	return 331.8f + 0.6f * tempC;
 }
 
+/*
 void SetRGBSignal(const float distance)
 {
 	const uint32_t maxPWMwidth = pwmTim3.GetMaxWidth();
@@ -396,4 +403,4 @@ void SetRGBSignal(const float distance)
 
 	rgbGreen.SetPulse(distancePercentGreen * maxPWMwidth / 100);
 	rgbRed.SetPulse((100 - distancePercentGreen) * maxPWMwidth / 100);
-}
+}*/
