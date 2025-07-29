@@ -8,8 +8,8 @@
 #ifndef ADC_HPP_
 #define ADC_HPP_
 
-#include <Config.hpp>
-#include <Gpio.hpp>
+#include "Config.hpp"
+#include "Gpio.hpp"
 #include <cassert>
 
 /*

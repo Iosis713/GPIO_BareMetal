@@ -73,8 +73,7 @@ int main(void)
 {
 	SystemTimer::Init(4000);
 
-	userButton.ConfigureEXTI<2>(Trigger::Falling);
-	Timer ld2Timer(250);
+	userButton.ConfigureEXTI<2>(Trigger::Falling);	
 	/*
 	Timer timerPWM(10);
 	Timer timerADCPrint(250);
@@ -146,9 +145,6 @@ int main(void)
 
 	while (true)
 	{
-		if (ld2Timer.IsExpired())
-			ld2.Toggle();
-
 		/*
 		//Distance mearusrement
 		if (timerHCSR04.IsExpired())
