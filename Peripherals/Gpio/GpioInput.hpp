@@ -1,7 +1,7 @@
 #pragma once
 #include "IGpio.hpp"
 
-template<std::uintptr_t portAddr_
+template<GpioPort Port
         , uint8_t pin_
 		, OptionsOTYPER otyperOption = GpioDefaults::otyperOption
 		, OptionsOSPEEDR ospeedrOption = GpioDefaults::ospeedrOption
@@ -71,14 +71,15 @@ protected:
 	}
 
 public:
-	static constexpr std::uintptr_t portAddr = portAddr_;
+	Port* const port = nullptr;
 	static constexpr uint8_t pin = pin_;
 
 	GpioInput(const GpioInput& source) = delete;
 	GpioInput(GpioInput&& source) = delete;
 	GpioInput& operator=(const GpioInput& source) = delete;
 	GpioInput& operator=(GpioInput&& source) = delete;
-	GpioInput()
+	GpioInput(Port* const port_)
+		: port(port_)
 	{
 		this->EnableClock();
 		ConfigureAsInput();

@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "../Inc/Gpio.hpp"
+#include "../Peripherals/Gpio/IGpio.hpp"
+#include "../Peripherals/Gpio/GpioOutput.hpp"
+#include "../Peripherals/Gpio/GpioInput.hpp"
 
 const GPIO_TypeDef fakePort{};
 
@@ -26,7 +28,7 @@ inline FakeGpioRegisters fakeGPIOARegisters;
 class FakeGpio : public IGpio<FakeGpio>
 {
 public:
-    static constexpr std::uintptr_t portAddr = reinterprret_cast<std::uintptr_t>(&fakeGPIOARegisters);
+    static constexpr std::uintptr_t portAddr = reinterpret_cast<std::uintptr_t>(&fakeGPIOARegisters);
     static constexpr uint8_t pin = 5;
 };
 

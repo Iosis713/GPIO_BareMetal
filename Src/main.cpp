@@ -45,12 +45,14 @@ float LM35CalculateTemperatureC(const uint32_t rawTemp);
 float CalculateAirSoundSpeed(const float tempC);
 void SetRGBSignal(const float distance);
 
-GpioOutput<GPIOA_BASE, 5> ld2;
+GpioOutput<GPIO_TypeDef, 5> ld2(GPIOA);
 UART2<115200, 80> uart2;
+
+auto x  = GPIOA;
 
 //PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3(1);
 //PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
-Button<GPIOC_BASE, 13, OptionsPUPDR::PullUp> userButton;
+//Button<GPIOC_BASE, 13, OptionsPUPDR::PullUp> userButton;
 
 /////////////////////////////////////////////
 //////			HC-SR04				   //////
