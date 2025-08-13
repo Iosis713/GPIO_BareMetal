@@ -1,16 +1,10 @@
-/*
- * LCD_TFT_ST7735S.hpp
- *
- *  Created on: Jul 3, 2025
- *      Author: bartoszlozinski
- */
 #pragma once
 #ifndef LCD_TFT_ST7735S_HPP_
 #define LCD_TFT_ST7735S_HPP_
 
 #include <stdint.h>
 
-#include "../Inc/GpioOutput.hpp"
+#include "../Peripherals/Gpio/GpioOutput.hpp"
 #include "../Inc/LCD_TFT_ST7735S.hpp"
 #include "../Inc/Spi.hpp"
 #include "../Inc/Timer.hpp"

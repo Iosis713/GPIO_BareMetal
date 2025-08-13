@@ -16,7 +16,7 @@
  ******************************************************************************
  */
 
-#include "../Inc/GpioOutput.hpp"
+#include "../Peripherals/Gpio/GpioOutput.hpp"
 
 
 #include "../Inc/Button.hpp"

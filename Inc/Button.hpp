@@ -3,7 +3,7 @@
 #ifndef BUTTON_HPP_
 #define BUTTON_HPP_
 
-#include "GpioInput.hpp"
+#include "../Peripherals/Gpio/GpioInput.hpp"
 
 template<std::uintptr_t portAddr_, uint8_t pin_, OptionsPUPDR pupdrOption>
 class Button : public GpioInput<portAddr_, pin_, OptionsOTYPER::PushPull, OptionsOSPEEDR::LowSpeed, pupdrOption>

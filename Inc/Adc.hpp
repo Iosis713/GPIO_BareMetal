@@ -1,15 +1,9 @@
-/*
- * Adc.hpp
- *
- *  Created on: Jun 16, 2025
- *      Author: bartoszlozinski
- */
 #pragma once
 #ifndef ADC_HPP_
 #define ADC_HPP_
 
 #include "Config.hpp"
-#include "IGpio.hpp"
+#include "../Peripherals/Gpio/IGpio.hpp"
 #include <cassert>
 
 /*
