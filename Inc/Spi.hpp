@@ -4,12 +4,12 @@
  *  Created on: Jun 23, 2025
  *      Author: bartoszlozinski
  */
-
+#pragma once
 #ifndef SPI_HPP_
 #define SPI_HPP_
 
 #include "Config.hpp"
-#include "Gpio.hpp"
+#include "GpioAlternate.hpp"
 
 //just for spi 2 right now, according to:
 //https://forbot.pl/blog/kurs-stm32l4-ekspander-portow-spi-quiz-id47763

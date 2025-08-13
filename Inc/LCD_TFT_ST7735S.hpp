@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-#include "../Inc/Gpio.hpp"
+#include "../Inc/GpioOutput.hpp"
 #include "../Inc/LCD_TFT_ST7735S.hpp"
 #include "../Inc/Spi.hpp"
 #include "../Inc/Timer.hpp"

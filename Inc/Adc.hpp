@@ -9,7 +9,7 @@
 #define ADC_HPP_
 
 #include "Config.hpp"
-#include "Gpio.hpp"
+#include "IGpio.hpp"
 #include <cassert>
 
 /*

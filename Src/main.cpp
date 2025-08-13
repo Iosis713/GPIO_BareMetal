@@ -16,7 +16,9 @@
  ******************************************************************************
  */
 
-#include "../Inc/Gpio.hpp"
+#include "../Inc/GpioOutput.hpp"
+
+
 #include "../Inc/Button.hpp"
 #include "../Inc/Timer.hpp"
 #include "../Inc/Uart.hpp"
