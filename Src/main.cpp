@@ -33,7 +33,7 @@ auto x  = GPIOA;
 
 //PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3(1);
 //PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
-Button<GPIO_TypeDef, 13, OptionsPUPDR::PullUp> userButton(GPIOB);
+Button<GPIO_TypeDef, 13, OptionsPUPDR::PullUp> userButton(GPIOC);
 
 /////////////////////////////////////////////
 //////			HC-SR04				   //////
@@ -206,14 +206,11 @@ int main(void)
 
 		////////////////_____GPIO EXTI_____////////////////
 
-		/*if (userButton.InterruptOccured())
+		if (userButton.InterruptOccured())
 		{
 			ld2.Toggle();
 			userButton.ClearInterruptFlag();
-		}*/
-
-		ld2.Toggle();
-		Delay(250);
+		}
 
 		////////////////_____GPIO EXTI_____////////////////
 	}
