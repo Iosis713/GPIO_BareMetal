@@ -13,7 +13,7 @@ set(CORE_FLAGS "${CORE_FLAGS} -mfloat-abi=hard -mfpu=fpv4-sp-d16 -ffast-math")
 # -fno-exceptions - disable exception handling
 # fverbose-asm - additional comments for generated assembler code
 # -MMD - create dependency files
-set(CXX_FLAGS "-std=c++20 -g -fno-rtti -fno-exceptions -fverbose-asm -MMD")
+set(CXX_FLAGS "-std=c++20 -g -fno-rtti -fno-exceptions -fverbose-asm -MMD -Og")
 
 # Compiler flags specific for C files
 # -std - C standard: c89, c99, gnu89,gnu99, iso9899:119409

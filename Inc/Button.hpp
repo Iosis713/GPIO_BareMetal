@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef BUTTON_HPP_
-#define BUTTON_HPP_
-
 #include "../Peripherals/Gpio/GpioInput.hpp"
 
 template<GpioPort Port, uint8_t pin_, OptionsPUPDR pupdrOption>
@@ -25,7 +22,3 @@ public:
 		return !this->ReadPin(); //ReadPin returns true for high state. This button is normally opened
 	}
 };
-
-
-
-#endif /* BUTTON_HPP_ */

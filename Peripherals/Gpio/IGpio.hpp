@@ -77,10 +77,6 @@ enum class Trigger
 	Both
 };
 
-/////////////////////////////////////////////////////////////////////////////
-
-//do something like that to make it testable
-
 template<typename T>
 concept GpioPort = requires(T port) {
     { port.MODER } -> std::convertible_to<volatile uint32_t&>;
@@ -95,26 +91,6 @@ concept GpioPort = requires(T port) {
     { port.BRR } -> std::convertible_to<volatile uint32_t&>;
     { port.ASCR } -> std::convertible_to<volatile uint32_t&>;
 };
-
-/*
-template<GpioPort PortType, uint8_t pin>
-class GpioOutput {
-public:
-    explicit GpioOutput(PortType* static_cast<Derived*>(this)->port) : port_(static_cast<Derived*>(this)->port) {}
-
-    void ConfigureAsOutput() {
-        port_->MODER &= ~(0b11 << (2*pin));
-        port_->MODER |= (0b01 << (2*pin)); // Output mode
-        // configure OTYPER, OSPEEDR, PUPDR similarly
-    }
-
-private:
-    PortType* port_;
-};
-
-*/
-
-/////////////////////////////////////////////////////////////////////////////
 
 template<typename Derived>
 class IGpio

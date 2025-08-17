@@ -7,8 +7,6 @@ set(LD_SCRIPT ${CMAKE_SOURCE_DIR}/STM32L476RGTX_FLASH.ld)
 set(LINKER_FLAGS "-Wl,-Map=${MAP_FILE},--cref -T${LD_SCRIPT} -g -Wl,--gc-sections")
 set(CMAKE_EXE_LINKER_FLAGS "${LINKER_FLAGS}")
 
-#set(LINKER_FLAGS "-Wl,-Map=${MAP_FILE},--cref -T${CMAKE_SOURCE_DIR}/STM32L476RGTX_FLASH.ld -g -Wl,--gc-sections")
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_TOOLCHAIN_FILE cmake/toolchain-arm-gcc.cmake)
@@ -36,19 +34,12 @@ set(GLOBAL_DEFINES
 
 add_executable(${PROJECT_NAME} ${C_SRCS} ${ASM_SRCS})
 
-#set(LINKER_SCRIPT_PATH "${CMAKE_SOURCE_DIR}/STM32L476RGTX_FLASH.ld")
-#target_link_options(${PROJECT_NAME} PRIVATE
-#    -T${CMAKE_SOURCE_DIR}/STM32L476RGTX_FLASH.ld
-#    -Wl,--gc-sections)
-
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     STM32L476xx
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/Inc
+    ${CMAKE_SOURCE_DIR}/Peripherals/Gpio
     # Add other include directories here
 )
-
-#arm_link_libraries
-
