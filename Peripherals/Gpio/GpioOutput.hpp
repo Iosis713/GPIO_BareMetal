@@ -6,7 +6,7 @@ template<GpioPort Port
 		, OptionsOTYPER otyperOption = GpioDefaults::otyperOption
 		, OptionsOSPEEDR ospeedrOption = GpioDefaults::ospeedrOption
 		, OptionsPUPDR pupdrOption = GpioDefaults::pupdrOption>
-class GpioOutput : public IGpio<GpioOutput<portAddr_, pin_, otyperOption, ospeedrOption, pupdrOption>>
+class GpioOutput : public IGpio<GpioOutput<GPIO_TypeDef, pin_, otyperOption, ospeedrOption, pupdrOption>>
 {
 private:
 	void ConfigureAsOutput()
@@ -34,8 +34,8 @@ public:
 	}
 	~GpioOutput() = default;
 
-	bool IsPinSet() const { return this->Port()->ODR & PinMask<pin>(); }
-	void Set() { this->Port()->BSRR |= BSRR_BS_MASKS[pin]; }
-	void Clear() { this->Port()->BSRR |= BSRR_BR_MASKS[pin]; }
-	void Toggle() { this->Port()->ODR ^= ODR_OD_MASKS[pin]; /*Bitwise XOR*/}
+	bool IsPinSet() const { return port->ODR & PinMask<pin>(); }
+	void Set() { port->BSRR |= BSRR_BS_MASKS[pin]; }
+	void Clear() { port->BSRR |= BSRR_BR_MASKS[pin]; }
+	void Toggle() { port->ODR ^= ODR_OD_MASKS[pin]; /*Bitwise XOR*/}
 };

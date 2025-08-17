@@ -6,7 +6,7 @@ template<GpioPort Port
 		, OptionsOTYPER otyperOption = GpioDefaults::otyperOption
 		, OptionsOSPEEDR ospeedrOption = GpioDefaults::ospeedrOption
 		, OptionsPUPDR pupdrOption = GpioDefaults::pupdrOption>
-class GpioInput : public IGpio<GpioInput<portAddr_, pin_, otyperOption, ospeedrOption, pupdrOption>>
+class GpioInput : public IGpio<GpioInput<GPIO_TypeDef, pin_, otyperOption, ospeedrOption, pupdrOption>>
 {
 protected:
 	volatile bool interruptOccured = false;
@@ -26,19 +26,19 @@ protected:
 		//EXTICR1 (index 0): pins 0 - 3, EXTICR2 (1): pins 4 - 7; EXTICR3(2): pins 8- 11; EXTICR4(3): pins 12 - 15
 		constexpr uint8_t extiCrIndex = pin / 4;
 		SYSCFG->EXTICR[extiCrIndex] &= ~SYSCFG_EXTI[pin]; //reset to 0000 (defualt value);
-		if constexpr (this->portAddr == GPIOA_BASE)
+		if (this->port == GPIOA)
 			SYSCFG->EXTICR[extiCrIndex] |= SYSCFG_EXTI_PA[pin]; //example for pin PC13 = GPIOC_BASE, pin 13 (index is proper, as pins are 0 - 15)
-		else if constexpr (this->portAddr == GPIOB_BASE)
+		else if (this->port == GPIOB)
 			SYSCFG->EXTICR[extiCrIndex] |= SYSCFG_EXTI_PB[pin];
-		else if constexpr (this->portAddr == GPIOC_BASE)
+		else if (this->port == GPIOC)
 			SYSCFG->EXTICR[extiCrIndex] |= SYSCFG_EXTI_PC[pin];
-		else if constexpr (this->portAddr == GPIOD_BASE)
+		else if (this->port == GPIOD)
 			SYSCFG->EXTICR[extiCrIndex] |= SYSCFG_EXTI_PD[pin];
-		else if constexpr (this->portAddr == GPIOE_BASE)
+		else if (this->port == GPIOE)
 			SYSCFG->EXTICR[extiCrIndex] |= SYSCFG_EXTI_PE[pin];
-		else if constexpr (this->portAddr == GPIOF_BASE)
+		else if (this->port == GPIOF)
 			SYSCFG->EXTICR[extiCrIndex] |= SYSCFG_EXTI_PF[pin];
-		else if constexpr (this->portAddr == GPIOG_BASE)
+		else if (this->port == GPIOG)
 			SYSCFG->EXTICR[extiCrIndex] |= SYSCFG_EXTI_PG[pin];
 	}
 

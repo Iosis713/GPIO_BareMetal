@@ -7,7 +7,7 @@ template<GpioPort Port
 		, OptionsOTYPER otyperOption = GpioDefaults::otyperOption
 		, OptionsOSPEEDR ospeedrOption = GpioDefaults::ospeedrOption
 		, OptionsPUPDR pupdrOption = GpioDefaults::pupdrOption>
-class GpioAlternate : public IGpio<GpioAlternate<portAddr_, pin_, alternateFunction, otyperOption, ospeedrOption, pupdrOption>>
+class GpioAlternate : public IGpio<GpioAlternate<GPIO_TypeDef, pin_, alternateFunction, otyperOption, ospeedrOption, pupdrOption>>
 {
 protected:
 public:
