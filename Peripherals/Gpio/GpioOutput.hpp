@@ -19,7 +19,7 @@ private:
 	}
 
 public:
-	Port* const port = nullptr;
+	volatile Port* const port = nullptr;
 	static constexpr uint8_t pin = pin_;
 
 	GpioOutput(const GpioOutput& source) = delete;

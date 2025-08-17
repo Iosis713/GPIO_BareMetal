@@ -11,7 +11,7 @@ class GpioAlternate : public IGpio<GpioAlternate<GPIO_TypeDef, pin_, alternateFu
 {
 protected:
 public:
-	Port* const port = nullptr;
+	volatile Port* const port = nullptr;
 	static constexpr uint8_t pin = pin_;
 	GpioAlternate(const GpioAlternate& source) = default;
 	GpioAlternate(GpioAlternate&& source) = default;
