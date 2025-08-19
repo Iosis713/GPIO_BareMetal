@@ -95,7 +95,12 @@ concept GpioPort = requires(T port) {
 template<typename Derived>
 class IGpio
 {
+#ifdef UNIT_TESTS
+public:
+#else
 protected:
+#endif	
+
 	void EnableClock()
 	{
 		if (static_cast<Derived*>(this)->port == GPIOA)

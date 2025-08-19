@@ -43,25 +43,8 @@ class FakeGpioFixture : public testing::Test
 {
 public:
     FakeGpio<FakeGpioRegisters> fakeGpio;
-    void TearDown() override;
-};
-
-TEST_F(FakeGpioFixture, ConfigurePUPDRPullUp)
-{
-    //FakeGpio<FakeGpioRegisters> fakeGpio;
-    //this->fakeGpio.template ConfigurePUPDR<OptionsPUPDR::PullUp>();
-    ASSERT_TRUE(false);
-};
-
-
-int main(int argc, char** argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
-
-void FakeGpioFixture::TearDown()
-{
+    void TearDown() override
+    {
     fakeGPIORegisters.MODER = 0;
     fakeGPIORegisters.OTYPER = 0;
     fakeGPIORegisters.OSPEEDR = 0;
@@ -74,4 +57,20 @@ void FakeGpioFixture::TearDown()
     fakeGPIORegisters.AFR[1] = 0;
     fakeGPIORegisters.BRR  = 0;
     fakeGPIORegisters.ASCR = 0;
+    }
+};
+
+
+
+TEST_F(FakeGpioFixture, ConfigurePUPDRPullUp)
+{
+    fakeGpio.template ConfigurePUPDR<OptionsPUPDR::PullUp>();
+    ASSERT_TRUE(fakeGpio.port->PUPDR & PUPDR_MASKS_0[fakeGpio.pin]);
+};
+
+
+int main(int argc, char** argv)
+{
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
