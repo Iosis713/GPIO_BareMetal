@@ -1,0 +1,4 @@
+Archive member included to satisfy reference by file (symbol)
+
+/usr/lib/libgtest.a(gtest-all.cc.o)
+                              CMakeFiles/GPIO_BareMetal-gt.dir/GpioTests.cpp.o (testing::internal::GTestLog::GTestLog(testing::internal::GTestLogSeverity, char const*, int))

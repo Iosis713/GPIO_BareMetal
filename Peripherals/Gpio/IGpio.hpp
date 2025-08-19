@@ -9,9 +9,9 @@ enum class OptionsPUPDR
     // Reset value: 0x6400 0000 (for static_cast<Derived*>(this)->port A) - pin15 [pull-up], pin14 [pull-down], others [No pull-up/pull-down]
 	// Reset value: 0x0000 0100 (for static_cast<Derived*>(this)->port B) - pin4 [pull-up]
 	// Reset value: 0x0000 0000 (for other ports)
-    None, // 00 = No pull-up, no pull-down
-    PullUp, // 01 = Pull-up
-    PullDown,// 10 = Pull-down
+    None = 0b00, // 00 = No pull-up, no pull-down
+    PullUp = 0b01, // 01 = Pull-up
+    PullDown = 0b10,// 10 = Pull-down
     /*Reserved,// 11 = Reserved - but you shouldn't use reserved pin*/
 };
 

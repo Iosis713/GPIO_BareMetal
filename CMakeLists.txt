@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.28)
 enable_language(ASM)
 project(GPIO_BareMetal C CXX ASM)
 

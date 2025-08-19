@@ -9,4 +9,11 @@ cmake .. -GNinja -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-arm-gcc.cmake -DCMAKE_EX
 ninja
 
 cd ..
+if [ ! -d buildTests ]; then
+    mkdir buildTests
+fi
 
+cd buildTests
+cmake ../UnitTests -G Ninja -DCMAKE_CXX_COMPILER=g++-13
+ninja
+cd ..

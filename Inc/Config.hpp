@@ -6,8 +6,15 @@
  */
 
 #pragma once
+
+#ifdef UNIT_TESTS
+#include "../UnitTests/Fake_stm32l476xx.h"
+#include "../UnitTests/Fake_stm32l4xx.h"
+#else
 #include <stm32l4xx.h>
 #include "stm32l476xx.h"
+#endif
+
 #include <array>
 #include <cstdint>
 #include <atomic>
