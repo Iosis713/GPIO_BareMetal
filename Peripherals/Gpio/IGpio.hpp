@@ -170,72 +170,13 @@ public:
 	//RM 8.5.10 GPIO alternate function low/high register
 	void ConfigureAlternateFunction(const AlternateFunction af)
 	{
-		uint8_t LowOrHigh = Derived::pin <= 7 ? 0 : 1;
-		static_cast<Derived*>(this)->port->AFR[LowOrHigh] &= ~GPIO_AFR_AFSEL_MASKS[Derived::pin][4]; //clearing bits
-
 		using enum AlternateFunction;
-		switch (af)
-		{
-		case AF0:
-			break; //0000 (reset value)
-		case AF1:
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][0]; //0001
-			break;
-		case AF2:
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][1]; //0010
-			break;
-		case AF3:
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][0]; //0011
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][1];
-			break;
-		case AF4:
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][2]; //0100
-			break;
-		case AF5:
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][0]; //0101
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][2];
-			break;
-		case AF6:
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][1]; //0110
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][2];
-			break;
-		case AF7:
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][4]; //0111
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] &= ~GPIO_AFR_AFSEL_MASKS[Derived::pin][3];
-			break;
-		case AF8:
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][3]; //1000
-			break;
-		case AF9:
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][0]; //1001
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][3];
-			break;
-		case AF10:
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][1]; //1010
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][3];
-			break;
-		case AF11:
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][4]; //1011
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] &= ~GPIO_AFR_AFSEL_MASKS[Derived::pin][2];
-			break;
-		case AF12:
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][2]; //1100
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][3];
-			break;
-		case AF13:
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][4]; //1101
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] &= ~GPIO_AFR_AFSEL_MASKS[Derived::pin][1];
-			break;
-		case AF14:
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][4]; //1110
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] &= ~GPIO_AFR_AFSEL_MASKS[Derived::pin][0];
-			break;
-		case AF15:
-			static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= GPIO_AFR_AFSEL_MASKS[Derived::pin][4]; //1111
-			break;
-		default:
-			break;
-		}
+
+		uint8_t LowOrHigh = Derived::pin <= 7 ? 0 : 1;
+		static constexpr uint32_t AFMask = 0b1111;
+		static constexpr uint32_t bitShift = 4 * Derived::pin; //AF is 4 bits wide
+		static_cast<Derived*>(this)->port->AFR[LowOrHigh] &= ~(AFMask << bitShift);
+		static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= (static_cast<uint32_t>(af) << bitShift);
 	}
 };
 
