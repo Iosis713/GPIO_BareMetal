@@ -19,8 +19,8 @@ enum class OptionsOTYPER
 {
 	// GPIOx_OTYPER (GPIO static_cast<Derived*>(this)->port output type register):
 	//reset value 0x0000 0000
-	PushPull, // 0 = Output push-pull (reset state)
-	OpenDrain,// 1 = Output open-drain
+	PushPull = 0b0, // 0 = Output push-pull (reset state)
+	OpenDrain = 0b1,// 1 = Output open-drain
 };
 
 enum class OptionsMODER
@@ -29,10 +29,10 @@ enum class OptionsMODER
 	// GPIOx_MODER (GPIO static_cast<Derived*>(this)->port mode register) controls the mode of each pin
 	//Reset value: 0xABFF FFFF (static_cast<Derived*>(this)->port A) - 1010 1011 1111 1111 1111 1111 1111 1111
 	//Reset value: 0xFFFF FEBF (static_cast<Derived*>(this)->port B) - 1111 1111 1111 1111 1111 1110 1011 1111
-	Input, // 00 = Input mode
-	Output, // 01 = General purpose output mode
-	Alternate, // 10 = Alternate function mode
-	Analog, // 11 = Analog mode (reset state for most cases)
+	Input = 0b00, // 00 = Input mode
+	Output = 0b01, // 01 = General purpose output mode
+	Alternate = 0b10, // 10 = Alternate function mode
+	Analog = 0b11, // 11 = Analog mode (reset state for most cases)
 };
 
 enum class OptionsOSPEEDR
@@ -40,10 +40,10 @@ enum class OptionsOSPEEDR
 	// STM32L476RGT6 RM: 8.5.3 GPIO static_cast<Derived*>(this)->port output speed register
 	// Reset value: 0x0C00 0000 for static_cast<Derived*>(this)->port A
 	// Reset value: 0x0000 0000 for other ports
-	LowSpeed, // 00
-	MediumSpeed, // 01
-	HighSpeed, // 10
-	VeryHighSpeed, //11
+	LowSpeed = 0b00, // 00
+	MediumSpeed = 0b01, // 01
+	HighSpeed = 0b10, // 10
+	VeryHighSpeed = 0b11, //11
 	//Refer to the device datasheet for the frequency specifications
 	//and the power supply and load conditions for each speed...
 };
@@ -52,22 +52,22 @@ enum class OptionsOSPEEDR
 //AF2 Datasheet Alternate functino 0 - 7
 enum class AlternateFunction
 {
-	AF0,
-	AF1,
-	AF2,
-	AF3,
-	AF4,
-	AF5,
-	AF6,
-	AF7,
-	AF8,
-	AF9,
-	AF10,
-	AF11,
-	AF12,
-	AF13,
-	AF14,
-	AF15
+	AF0 = 0b0000,
+	AF1 = 0b0001,
+	AF2 = 0b0010,
+	AF3 = 0b0011,
+	AF4 = 0b0100,
+	AF5 = 0b0101,
+	AF6 = 0b0110,
+	AF7 = 0b0111,
+	AF8 = 0b1000,
+	AF9 = 0b1001,
+	AF10 = 0b1010,
+	AF11 = 0b1011,
+	AF12 = 0b1100,
+	AF13 = 0b1101,
+	AF14 = 0b1110,
+	AF15 = 0b1111
 };
 
 enum class Trigger
