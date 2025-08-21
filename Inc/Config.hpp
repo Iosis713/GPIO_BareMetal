@@ -28,28 +28,6 @@ enum class ERROR_CODE
 	NOK = 1,
 };
 
-static constexpr std::array<uint32_t, 16> BSRR_BS_MASKS = {
-	GPIO_BSRR_BS0, GPIO_BSRR_BS1, GPIO_BSRR_BS2, GPIO_BSRR_BS3,
-	GPIO_BSRR_BS4, GPIO_BSRR_BS5, GPIO_BSRR_BS6, GPIO_BSRR_BS7,
-	GPIO_BSRR_BS8, GPIO_BSRR_BS9, GPIO_BSRR_BS10, GPIO_BSRR_BS11,
-	GPIO_BSRR_BS12, GPIO_BSRR_BS13, GPIO_BSRR_BS14, GPIO_BSRR_BS15
-};
-
-static constexpr std::array<uint32_t, 16> BSRR_BR_MASKS = {
-	GPIO_BSRR_BR0, GPIO_BSRR_BR1, GPIO_BSRR_BR2, GPIO_BSRR_BR3,
-	GPIO_BSRR_BR4, GPIO_BSRR_BR5, GPIO_BSRR_BR6, GPIO_BSRR_BR7,
-	GPIO_BSRR_BR8, GPIO_BSRR_BR9, GPIO_BSRR_BR10, GPIO_BSRR_BR11,
-	GPIO_BSRR_BR12, GPIO_BSRR_BR13, GPIO_BSRR_BS14, GPIO_BSRR_BR15
-};
-
-//Output data register ODR - reference manual 8.5.6
-static constexpr std::array<uint16_t, 16> ODR_OD_MASKS = {
-	GPIO_ODR_OD0, GPIO_ODR_OD1, GPIO_ODR_OD2, GPIO_ODR_OD3,
-	GPIO_ODR_OD4, GPIO_ODR_OD5, GPIO_ODR_OD6, GPIO_ODR_OD7,
-	GPIO_ODR_OD8, GPIO_ODR_OD9, GPIO_ODR_OD10, GPIO_ODR_OD11,
-	GPIO_ODR_OD12, GPIO_ODR_OD13, GPIO_ODR_OD14, GPIO_ODR_OD15
-};
-
 //RM 8.5.12 GPIO port analog switch control register: 0 - disconnect analog switch to the adc input (reset state), 1 - connect
 static constexpr std::array<uint32_t, 16> GPIO_ASCR_ASC = {
 	GPIO_ASCR_ASC0, GPIO_ASCR_ASC1, GPIO_ASCR_ASC2, GPIO_ASCR_ASC3, GPIO_ASCR_ASC4, GPIO_ASCR_ASC5, GPIO_ASCR_ASC6, GPIO_ASCR_ASC7,
@@ -124,7 +102,7 @@ static constexpr std::array<uint32_t, 16> EXTI_FTSR1_FT = {
 	EXTI_FTSR1_FT8, EXTI_FTSR1_FT9, EXTI_FTSR1_FT10, EXTI_FTSR1_FT11, EXTI_FTSR1_FT12, EXTI_FTSR1_FT13, EXTI_FTSR1_FT14, EXTI_FTSR1_FT15
 };
 
-//RM14.5.1 Interrupt mask register IMR - if masked, interrupt is treaded like it does not exist
+//RM14.5.1 Interrupt mask register IMR - if masked, interrupt is treated like it does not exist
 //Bits 0 - 15 are by default 0
 static constexpr std::array<uint32_t, 16> EXTI_IMR1 = {
 	EXTI_IMR1_IM0, EXTI_IMR1_IM1, EXTI_IMR1_IM2, EXTI_IMR1_IM3, EXTI_IMR1_IM4, EXTI_IMR1_IM5, EXTI_IMR1_IM6, EXTI_IMR1_IM7,

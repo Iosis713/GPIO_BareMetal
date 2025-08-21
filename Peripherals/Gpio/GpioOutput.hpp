@@ -34,8 +34,13 @@ public:
 	}
 	~GpioOutput() = default;
 
+	//Output data register ODR - reference manual 8.5.6
 	bool IsPinSet() const { return port->ODR & PinMask<pin>(); }
-	void Set() { port->BSRR |= BSRR_BS_MASKS[pin]; }
-	void Clear() { port->BSRR |= BSRR_BR_MASKS[pin]; }
-	void Toggle() { port->ODR ^= ODR_OD_MASKS[pin]; /*Bitwise XOR*/}
+	void Set() { port->BSRR |= (0b1 << pin); }
+	void Clear()
+	{
+		static constexpr uint8_t bitShift = 16 + pin; //bit resets are 16-32
+		port->BSRR |= (0b1 << bitShift);
+	}
+	void Toggle() { port->ODR ^= (0b1 << pin); /*Bitwise XOR*/} //ODR has 16 bits
 };

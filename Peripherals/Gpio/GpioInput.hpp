@@ -110,7 +110,7 @@ public:
 		ConfigureExtiPriority<priority>();
 	}
 
-	bool ReadPin() const {return this->Port()->IDR & PinMask<pin>();} //true - high state, false - low state
+	bool ReadPin() const {return this->port->IDR & PinMask<pin>();} //true - high state, false - low state
 	void ClearInterruptFlag() { this->interruptOccured = false; };
 	void IrqHandler()
 	{
