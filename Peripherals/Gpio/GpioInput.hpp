@@ -8,7 +8,11 @@ template<GpioPort Port
 		, OptionsPUPDR pupdrOption = GpioDefaults::pupdrOption>
 class GpioInput : public IGpio<GpioInput<GPIO_TypeDef, pin_, otyperOption, ospeedrOption, pupdrOption>>
 {
+#ifndef UNIT_TESTS
+public:
+#else
 protected:
+#endif
 	volatile bool interruptOccured = false;
 
 	void ConfigureAsInput()
@@ -34,12 +38,6 @@ protected:
 			SYSCFG->EXTICR[extiCrIndex] |= SYSCFG_EXTI_PC[pin];
 		else if (this->port == GPIOD)
 			SYSCFG->EXTICR[extiCrIndex] |= SYSCFG_EXTI_PD[pin];
-		else if (this->port == GPIOE)
-			SYSCFG->EXTICR[extiCrIndex] |= SYSCFG_EXTI_PE[pin];
-		else if (this->port == GPIOF)
-			SYSCFG->EXTICR[extiCrIndex] |= SYSCFG_EXTI_PF[pin];
-		else if (this->port == GPIOG)
-			SYSCFG->EXTICR[extiCrIndex] |= SYSCFG_EXTI_PG[pin];
 	}
 
 	//interrupt priority; enum from stm32l476xx.h (CMSIS file) - Interrupt number definition

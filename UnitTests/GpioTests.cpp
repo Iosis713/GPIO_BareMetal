@@ -161,15 +161,6 @@ TEST_F(FakeIGpioFixture, ConfigureAlternateFunctionTEST)
 //                                                    //
 ////////////////////////////////////////////////////////
 
-/*
-template<GpioPort Port>
-class FakeGpioOutput : public GpioOutput<FakeGpio<Port>, 5>
-{
-public:
-    Port* const port = &fakeGPIORegisters;
-};
-*/
-
 class FakeGpioOutputFixture : public testing::Test
 {
 public:
@@ -189,8 +180,6 @@ public:
     fakeGPIORegisters.BRR  = 0;
     fakeGPIORegisters.ASCR = 0;
     }
-
-    static constexpr uint32_t bitMask = 0b11;
 };
 
 TEST_F(FakeGpioOutputFixture, IsPinSetNegativeTest)
@@ -226,4 +215,44 @@ TEST_F(FakeGpioOutputFixture, ToggleTest)
     ASSERT_FALSE(fakeGpio.IsPinSet());
     fakeGpio.Toggle();
     ASSERT_TRUE(fakeGpio.IsPinSet());
+}
+
+////////////////////////////////////////////////////////
+//                                                    //
+//                   GPIO INPU TESTS                  //
+//                                                    //
+////////////////////////////////////////////////////////
+
+class FakeGpioInputFixture : public testing::Test
+{
+public:
+    GpioInput<FakeGpioRegisters, 5> fakeGpio{&fakeGPIORegisters};
+    void TearDown() override
+    {
+    fakeGPIORegisters.MODER = 0;
+    fakeGPIORegisters.OTYPER = 0;
+    fakeGPIORegisters.OSPEEDR = 0;
+    fakeGPIORegisters.PUPDR = 0;
+    fakeGPIORegisters.IDR = 0;
+    fakeGPIORegisters.ODR = 0;
+    fakeGPIORegisters.BSRR = 0;
+    fakeGPIORegisters.LCKR = 0;
+    fakeGPIORegisters.AFR[0] = 0;
+    fakeGPIORegisters.AFR[1] = 0;
+    fakeGPIORegisters.BRR  = 0;
+    fakeGPIORegisters.ASCR = 0;
+    }
+};
+
+TEST_F(FakeGpioInputFixture, ReadPinNegative)
+{
+    //0 by default
+    ASSERT_FALSE(fakeGpio.ReadPin());
+}
+
+TEST_F(FakeGpioInputFixture, ReadPinPositive)
+{
+    //0 by default
+    fakeGpio.port->IDR |= (0b1 << fakeGpio.pin);
+    ASSERT_TRUE(fakeGpio.ReadPin());
 }
