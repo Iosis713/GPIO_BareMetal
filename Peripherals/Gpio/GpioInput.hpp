@@ -8,7 +8,7 @@ template<GpioPort Port
 		, OptionsPUPDR pupdrOption = GpioDefaults::pupdrOption>
 class GpioInput : public IGpio<GpioInput<GPIO_TypeDef, pin_, otyperOption, ospeedrOption, pupdrOption>>
 {
-#ifndef UNIT_TESTS
+#ifdef UNIT_TESTS
 public:
 #else
 protected:

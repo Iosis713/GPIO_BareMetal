@@ -241,6 +241,7 @@ public:
     fakeGPIORegisters.AFR[1] = 0;
     fakeGPIORegisters.BRR  = 0;
     fakeGPIORegisters.ASCR = 0;
+    fakeGpio.interruptOccured = false;
     }
 };
 
@@ -255,4 +256,17 @@ TEST_F(FakeGpioInputFixture, ReadPinPositive)
     //0 by default
     fakeGpio.port->IDR |= (0b1 << fakeGpio.pin);
     ASSERT_TRUE(fakeGpio.ReadPin());
+}
+
+TEST_F(FakeGpioInputFixture, ClearInterruptFlagAlreadyFalse)
+{
+    fakeGpio.ClearInterruptFlag();
+    ASSERT_FALSE(fakeGpio.InterruptOccured());
+}
+
+TEST_F(FakeGpioInputFixture, ClearInterruptFlagThatWasTrue)
+{
+    fakeGpio.interruptOccured = true;
+    fakeGpio.ClearInterruptFlag();
+    ASSERT_FALSE(fakeGpio.InterruptOccured());
 }
