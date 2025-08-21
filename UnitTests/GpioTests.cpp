@@ -58,70 +58,89 @@ public:
     fakeGPIORegisters.BRR  = 0;
     fakeGPIORegisters.ASCR = 0;
     }
+
+    static constexpr uint32_t bitMask = 0b11;
 };
+
+
+//////////////////?CHANGE TESTS TO COMPARE TO APPROPRIATE BITS, NO TURE/FALSE
+
+TEST_F(FakeGpioFixture, ConfigurePUPDRNone)
+{
+    fakeGpio.template ConfigurePUPDR<OptionsPUPDR::None>();
+    ASSERT_EQ(fakeGpio.port->PUPDR & (static_cast<uint32_t>(OptionsPUPDR::None) << 2 * fakeGpio.pin), 0);
+}
 
 TEST_F(FakeGpioFixture, ConfigurePUPDRPullUp)
 {
     fakeGpio.template ConfigurePUPDR<OptionsPUPDR::PullUp>();
-    ASSERT_TRUE(fakeGpio.port->PUPDR & PUPDR_MASKS_0[fakeGpio.pin]);
+    static constexpr uint8_t bitShift = 2 * fakeGpio.pin;
+    ASSERT_EQ((fakeGpio.port->PUPDR >> bitShift) & bitMask, static_cast<uint32_t>(OptionsPUPDR::PullUp));
 };
 
 TEST_F(FakeGpioFixture, ConfigurePUPDRPullDown)
 {
     fakeGpio.template ConfigurePUPDR<OptionsPUPDR::PullDown>();
-    ASSERT_TRUE(fakeGpio.port->PUPDR & PUPDR_MASKS_1[fakeGpio.pin]);
+    static constexpr uint8_t bitShift = 2 * fakeGpio.pin;
+    ASSERT_EQ((fakeGpio.port->PUPDR >> bitShift) & bitMask , static_cast<uint32_t>(OptionsPUPDR::PullDown));
 }
 
 //MODER TESTS
-
 TEST_F(FakeGpioFixture, ConfigureMODERInput)
 {
     fakeGpio.template ConfigureMODER<OptionsMODER::Input>();
-    ASSERT_EQ(fakeGpio.port->MODER & (~MODER_MASKS[fakeGpio.pin]), 0);//00
+    static constexpr uint8_t bitShift = 2 * fakeGpio.pin;
+    ASSERT_EQ((fakeGpio.port->MODER >> bitShift) & bitMask, static_cast<uint32_t>(OptionsMODER::Input));
 }
 
 TEST_F(FakeGpioFixture, ConfigureMODEROutput)
 {
     fakeGpio.template ConfigureMODER<OptionsMODER::Output>();
-    ASSERT_TRUE(fakeGpio.port->MODER & MODER_MASKS_0[fakeGpio.pin]);//01
+    static constexpr uint8_t bitShift = 2 * fakeGpio.pin;
+    ASSERT_EQ((fakeGpio.port->MODER >> bitShift) & bitMask, static_cast<uint32_t>(OptionsMODER::Output));
 }
 
 TEST_F(FakeGpioFixture, ConfigureMODERAlternate)
 {
     fakeGpio.template ConfigureMODER<OptionsMODER::Alternate>();
-    ASSERT_TRUE(fakeGpio.port->MODER & MODER_MASKS_1[fakeGpio.pin]);//10
+    static constexpr uint8_t bitShift = 2 * fakeGpio.pin;
+    ASSERT_EQ((fakeGpio.port->MODER >> bitShift) & bitMask, static_cast<uint32_t>(OptionsMODER::Alternate));
 }
 
 TEST_F(FakeGpioFixture, ConfigureMODERAnalog)
 {
     fakeGpio.template ConfigureMODER<OptionsMODER::Analog>();
-    ASSERT_TRUE(fakeGpio.port->MODER & MODER_MASKS[fakeGpio.pin]);//11
+    static constexpr uint8_t bitShift = 2 * fakeGpio.pin;
+    ASSERT_EQ((fakeGpio.port->MODER >> bitShift) & bitMask, static_cast<uint32_t>(OptionsMODER::Analog));
 }
 
 //OSPEEDR TESTS
-
 TEST_F(FakeGpioFixture, ConfigureOSPEEDRLowSpeed)
 {
     fakeGpio.template ConfigureOSPEEDR<OptionsOSPEEDR::LowSpeed>();
-    ASSERT_EQ(fakeGpio.port->OSPEEDR & (~OSPEEDR_MASKS[fakeGpio.pin]), 0);
+    static constexpr uint8_t bitShift = 2 * fakeGpio.pin;
+    ASSERT_EQ((fakeGpio.port->OSPEEDR >> bitShift) & bitMask, static_cast<uint32_t>(OptionsOSPEEDR::LowSpeed));
 }
 
 TEST_F(FakeGpioFixture, ConfigureOSPEEDRMediumSpeed)
 {
     fakeGpio.template ConfigureOSPEEDR<OptionsOSPEEDR::MediumSpeed>();
-    ASSERT_TRUE(fakeGpio.port->OSPEEDR & OSPEEDR_MASKS_0[fakeGpio.pin]);
+    static constexpr uint8_t bitShift = 2 * fakeGpio.pin;
+    ASSERT_EQ((fakeGpio.port->OSPEEDR >> bitShift) & bitMask, static_cast<uint32_t>(OptionsOSPEEDR::MediumSpeed));
 }
 
 TEST_F(FakeGpioFixture, ConfigureOSPEEDRHighSpeed)
 {
     fakeGpio.template ConfigureOSPEEDR<OptionsOSPEEDR::HighSpeed>();
-    ASSERT_TRUE(fakeGpio.port->OSPEEDR & OSPEEDR_MASKS_1[fakeGpio.pin]);
+    static constexpr uint8_t bitShift = 2 * fakeGpio.pin;
+    ASSERT_EQ((fakeGpio.port->OSPEEDR >> bitShift) & bitMask, static_cast<uint32_t>(OptionsOSPEEDR::HighSpeed));
 }
 
 TEST_F(FakeGpioFixture, ConfigureOSPEEDRVeryHighSpeed)
 {
     fakeGpio.template ConfigureOSPEEDR<OptionsOSPEEDR::VeryHighSpeed>();
-    ASSERT_TRUE(fakeGpio.port->OSPEEDR & OSPEEDR_MASKS[fakeGpio.pin]);
+    static constexpr uint8_t bitShift = 2 * fakeGpio.pin;
+    ASSERT_EQ((fakeGpio.port->OSPEEDR >> bitShift) & bitMask, static_cast<uint32_t>(OptionsOSPEEDR::VeryHighSpeed));
 }
 
 //Alternate TESTS
@@ -129,14 +148,12 @@ TEST_F(FakeGpioFixture, ConfigureAlternateFunctionTEST)
 {
     using enum AlternateFunction;
     std::array<AlternateFunction, 16> alternateFunctions{ AF0, AF1, AF2, AF3, AF4, AF5, AF6, AF7, AF8, AF9, AF10, AF11, AF12, AF13, AF14, AF15 };
+    static constexpr uint8_t bitShift = 4 * fakeGpio.pin;
+    static constexpr uint8_t bitMask = 0b1111;
 
     for(const auto af : alternateFunctions)
     {
         fakeGpio.ConfigureAlternateFunction(af);
-
-        if (af == AF0)
-            ASSERT_EQ(fakeGpio.port->AFR[0] & (static_cast<uint32_t>(af) << (4 * fakeGpio.pin)), 0); //4 bits occupied
-        else
-            ASSERT_TRUE(fakeGpio.port->AFR[0] & (static_cast<uint32_t>(af) << (4 * fakeGpio.pin))); //4 bits occupied
+        ASSERT_EQ((fakeGpio.port->AFR[0] >> bitShift) & bitMask, static_cast<uint32_t>(af));
     }
 }

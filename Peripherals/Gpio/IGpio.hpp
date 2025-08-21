@@ -5,9 +5,9 @@
 
 enum class OptionsPUPDR
 {
-	// GPIOx_PUPDR (GPIO static_cast<Derived*>(this)->port pull-up/pull-down register):
-    // Reset value: 0x6400 0000 (for static_cast<Derived*>(this)->port A) - pin15 [pull-up], pin14 [pull-down], others [No pull-up/pull-down]
-	// Reset value: 0x0000 0100 (for static_cast<Derived*>(this)->port B) - pin4 [pull-up]
+	// GPIOx_PUPDR (GPIO port pull-up/pull-down register):
+    // Reset value: 0x6400 0000 (port A) - pin15 [pull-up], pin14 [pull-down], others [No pull-up/pull-down]
+	// Reset value: 0x0000 0100 (port B) - pin4 [pull-up]
 	// Reset value: 0x0000 0000 (for other ports)
     None = 0b00, // 00 = No pull-up, no pull-down
     PullUp = 0b01, // 01 = Pull-up
@@ -17,7 +17,7 @@ enum class OptionsPUPDR
 
 enum class OptionsOTYPER
 {
-	// GPIOx_OTYPER (GPIO static_cast<Derived*>(this)->port output type register):
+	// GPIOx_OTYPER (GPIO port output type register):
 	//reset value 0x0000 0000
 	PushPull = 0b0, // 0 = Output push-pull (reset state)
 	OpenDrain = 0b1,// 1 = Output open-drain
@@ -26,9 +26,9 @@ enum class OptionsOTYPER
 enum class OptionsMODER
 {
 	// STM32L476RGT6 Reference Manual:
-	// GPIOx_MODER (GPIO static_cast<Derived*>(this)->port mode register) controls the mode of each pin
-	//Reset value: 0xABFF FFFF (static_cast<Derived*>(this)->port A) - 1010 1011 1111 1111 1111 1111 1111 1111
-	//Reset value: 0xFFFF FEBF (static_cast<Derived*>(this)->port B) - 1111 1111 1111 1111 1111 1110 1011 1111
+	// GPIOx_MODER (GPIO port mode register) controls the mode of each pin
+	//Reset value: 0xABFF FFFF (port A) - 1010 1011 1111 1111 1111 1111 1111 1111
+	//Reset value: 0xFFFF FEBF (port B) - 1111 1111 1111 1111 1111 1110 1011 1111
 	Input = 0b00, // 00 = Input mode
 	Output = 0b01, // 01 = General purpose output mode
 	Alternate = 0b10, // 10 = Alternate function mode
@@ -37,8 +37,8 @@ enum class OptionsMODER
 
 enum class OptionsOSPEEDR
 {
-	// STM32L476RGT6 RM: 8.5.3 GPIO static_cast<Derived*>(this)->port output speed register
-	// Reset value: 0x0C00 0000 for static_cast<Derived*>(this)->port A
+	// STM32L476RGT6 RM: 8.5.3 GPIO port output speed register
+	// Reset value: 0x0C00 0000 for port A
 	// Reset value: 0x0000 0000 for other ports
 	LowSpeed = 0b00, // 00
 	MediumSpeed = 0b01, // 01
@@ -49,7 +49,7 @@ enum class OptionsOSPEEDR
 };
 
 //Datasheet Pinouts and pin description
-//AF2 Datasheet Alternate functino 0 - 7
+//AF2 Datasheet Alternate functinon 0 - 15
 enum class AlternateFunction
 {
 	AF0 = 0b0000,
@@ -117,51 +117,42 @@ protected:
 	void ConfigurePUPDR()
 	{
 		using enum OptionsPUPDR;
-		static_cast<Derived*>(this)->port->PUPDR &= ~(PUPDR_MASKS[Derived::pin]); //00- no pull-up, no pull-down
-		if constexpr (pupdrOption == PullUp)
-			static_cast<Derived*>(this)->port->PUPDR |= PUPDR_MASKS_0[Derived::pin];
-		else if constexpr (pupdrOption == PullDown)
-			static_cast<Derived*>(this)->port->PUPDR |= PUPDR_MASKS_1[Derived::pin];
+		static constexpr uint32_t pupdrMask = 0b11;
+		static constexpr uint32_t bitShift = 2 * Derived::pin;
+
+		static_cast<Derived*>(this)->port->PUPDR &= ~(pupdrMask << bitShift);
+		static_cast<Derived*>(this)->port->PUPDR |= (static_cast<uint32_t>(pupdrOption) << bitShift);
 	}
 
 	template<OptionsOTYPER otyperOption>
 	void ConfigureOTYPER()
 	{
 		using enum OptionsOTYPER;
-		if constexpr (otyperOption == PushPull)
-			static_cast<Derived*>(this)->port->OTYPER &= ~OTYPER_BITS[Derived::pin];
-		else if constexpr (otyperOption == OpenDrain)
-			static_cast<Derived*>(this)->port->OTYPER |= OTYPER_BITS[Derived::pin];
+		static constexpr uint8_t otyperMask = 0b1;
+		static_cast<Derived*>(this)->port->OTYPER &= ~(otyperMask << Derived::pin);//clear bits
+		static_cast<Derived*>(this)->port->OTYPER |= (static_cast<uint32_t>(otyperOption) << Derived::pin);
 	}
 
 	template<OptionsMODER moderOption>
 	void ConfigureMODER()
 	{
 		using enum OptionsMODER;
-		static_cast<Derived*>(this)->port->MODER &= ~(MODER_MASKS[Derived::pin]); //reset to 00
-		if constexpr (moderOption == Input)
-			return;
-		else if constexpr (moderOption == Output)
-			static_cast<Derived*>(this)->port->MODER |= MODER_MASKS_0[Derived::pin];
-		else if constexpr (moderOption == Alternate)
-			static_cast<Derived*>(this)->port->MODER |= MODER_MASKS_1[Derived::pin];
-		else if constexpr (moderOption == Analog)
-			static_cast<Derived*>(this)->port->MODER |= MODER_MASKS[Derived::pin];
+		static constexpr uint32_t moderMask = 0b11;
+		static constexpr uint32_t bitShift = 2 * Derived::pin;
+
+		static_cast<Derived*>(this)->port->MODER &= ~(moderMask << bitShift);//clear bits
+		static_cast<Derived*>(this)->port->MODER |= (static_cast<uint32_t>(moderOption) << bitShift);
 	}
 
 	template<OptionsOSPEEDR ospeedrOption>
 	void ConfigureOSPEEDR()
 	{
 		using enum OptionsOSPEEDR;
-		static_cast<Derived*>(this)->port->OSPEEDR &= ~OSPEEDR_MASKS[Derived::pin];
-		if constexpr (ospeedrOption == LowSpeed)
-			return;
-		else if constexpr (ospeedrOption == MediumSpeed)
-			static_cast<Derived*>(this)->port->OSPEEDR |= OSPEEDR_MASKS_0[Derived::pin];
-		else if constexpr (ospeedrOption == HighSpeed)
-			static_cast<Derived*>(this)->port->OSPEEDR |= OSPEEDR_MASKS_1[Derived::pin];
-		else if constexpr (ospeedrOption == VeryHighSpeed)
-			static_cast<Derived*>(this)->port->OSPEEDR |= OSPEEDR_MASKS[Derived::pin];
+		static constexpr uint32_t ospeedrMask = 0b11;
+		static constexpr uint32_t bitShift = 2 * Derived::pin;
+
+		static_cast<Derived*>(this)->port->OSPEEDR &= ~(ospeedrMask << bitShift);//clear bits
+		static_cast<Derived*>(this)->port->OSPEEDR |= (static_cast<uint32_t>(ospeedrOption) << bitShift);
 	}
 
 public:
