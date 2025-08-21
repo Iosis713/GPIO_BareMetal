@@ -117,8 +117,8 @@ protected:
 	void ConfigurePUPDR()
 	{
 		using enum OptionsPUPDR;
-		static constexpr uint32_t pupdrMask = 0b11;
-		static constexpr uint32_t bitShift = 2 * Derived::pin;
+		static constexpr uint8_t pupdrMask = 0b11;
+		static constexpr uint8_t bitShift = 2 * Derived::pin;
 
 		static_cast<Derived*>(this)->port->PUPDR &= ~(pupdrMask << bitShift);
 		static_cast<Derived*>(this)->port->PUPDR |= (static_cast<uint32_t>(pupdrOption) << bitShift);
@@ -137,8 +137,8 @@ protected:
 	void ConfigureMODER()
 	{
 		using enum OptionsMODER;
-		static constexpr uint32_t moderMask = 0b11;
-		static constexpr uint32_t bitShift = 2 * Derived::pin;
+		static constexpr uint8_t moderMask = 0b11;
+		static constexpr uint8_t bitShift = 2 * Derived::pin;
 
 		static_cast<Derived*>(this)->port->MODER &= ~(moderMask << bitShift);//clear bits
 		static_cast<Derived*>(this)->port->MODER |= (static_cast<uint32_t>(moderOption) << bitShift);
@@ -148,8 +148,8 @@ protected:
 	void ConfigureOSPEEDR()
 	{
 		using enum OptionsOSPEEDR;
-		static constexpr uint32_t ospeedrMask = 0b11;
-		static constexpr uint32_t bitShift = 2 * Derived::pin;
+		static constexpr uint8_t ospeedrMask = 0b11;
+		static constexpr uint8_t bitShift = 2 * Derived::pin;
 
 		static_cast<Derived*>(this)->port->OSPEEDR &= ~(ospeedrMask << bitShift);//clear bits
 		static_cast<Derived*>(this)->port->OSPEEDR |= (static_cast<uint32_t>(ospeedrOption) << bitShift);
@@ -164,8 +164,8 @@ public:
 		using enum AlternateFunction;
 
 		uint8_t LowOrHigh = Derived::pin <= 7 ? 0 : 1;
-		static constexpr uint32_t AFMask = 0b1111;
-		static constexpr uint32_t bitShift = 4 * Derived::pin; //AF is 4 bits wide
+		static constexpr uint8_t AFMask = 0b1111;
+		static constexpr uint8_t bitShift = 4 * Derived::pin; //AF is 4 bits wide
 		static_cast<Derived*>(this)->port->AFR[LowOrHigh] &= ~(AFMask << bitShift);
 		static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= (static_cast<uint32_t>(af) << bitShift);
 	}
