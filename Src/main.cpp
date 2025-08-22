@@ -27,11 +27,11 @@ float CalculateAirSoundSpeed(const float tempC);
 void SetRGBSignal(const float distance);
 
 GpioOutput<GPIO_TypeDef, 5> ld2(GPIOA);
-UART2<USART_TypeDef ,115200, 80> uart2(USART2);
+UART<USART_TypeDef, GPIO_TypeDef, 115200, 80> uart2(USART2);
 
 //PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3(1);
 //PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
-Button<GPIO_TypeDef, 13, OptionsPUPDR::PullUp> userButton(GPIOC);
+//Button<GPIO_TypeDef, 13, OptionsPUPDR::PullUp> userButton(GPIOC);
 
 /////////////////////////////////////////////
 //////			HC-SR04				   //////

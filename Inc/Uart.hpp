@@ -18,10 +18,9 @@
 #include "Config.hpp"
 #include <array>
 #include <concepts>
-#include "Timer.hpp"
 
-#ifndef UART_HPP_
-#define UART_HPP_
+#include "GpioAlternate.hpp"
+#include "Timer.hpp"
 
 //concept basing on USART_TypeDef struct from CMSIS
 template<typename T>
@@ -44,16 +43,28 @@ concept USARTx = requires (T uart)
 	{ uart.RESERVED5 }  -> std::convertible_to<uint16_t&>;				/*!< Reserved, 0x2A                                                 */
 };
 
-template<USARTx Usart, uint32_t baudRate = 115200, std::size_t bufferSize = 80>
-class UART2
+template<USARTx Usart, GpioPort RxTx, uint32_t baudRate = 115200, std::size_t bufferSize = 80>
+class UART
 {
 protected:
 	volatile Usart* const usart = nullptr;
+	volatile RxTx* rx = nullptr;
+	volatile RxTx* tx = nullptr;
+
 	char actualChar;
 	std::array<char, bufferSize> buffer_ {};
+
 	inline void EnableClock() { RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN; };
-	void UartConfig()
+	
+	void ConfigureTX()
 	{
+		/*
+		temp object, UB =/
+		if (usart == USART2)
+		{
+			tx = GpioAlternate<GPIO_TypeDef, 3, AlternateFunction::AF7>(GPIOA);
+		}*/
+
 		//TX PA2
 		GPIOA->MODER &= ~GPIO_MODER_MODE2_0;//11 after reset -- analog = 0b10;
 		//AF7 needs to be 0111 ___ AFR[0] low register [1] high
@@ -62,7 +73,10 @@ protected:
 		GPIOA->AFR[0] |= GPIO_AFRL_AFSEL2_2;
 		//OTYPER = 0b0 - push-pull for reset state
 		//GPIOA->OSPEEDR = 0b00 - very low speed by reset state
+	}
 
+	void ConfigureRX()
+	{
 		//RX PA3
 		GPIOA->MODER &= ~GPIO_MODER_MODE3_0;
 		GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3_0;
@@ -70,11 +84,17 @@ protected:
 		GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3_2;
 		GPIOA->OTYPER |= GPIO_OTYPER_OT3; //why should it be open-drain
 		//GPIOA->OSPEEDR = 0b00 - very low speed by reset state
-
+	}
 		//TO BE REFACTORED FOR UART1 also!!!
 
+
+	void UartConfig()
+	{
+		ConfigureTX();
+		ConfigureRX();
 		//UART2 clock enable
-		RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;
+		if (usart == USART2)
+			RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;
 
 		//USART Baud Rate Register BRR - speed of the USART1
 		//UARTDIV (RM 40.8 USART baud rate register) = 4 000 000 / 115200 = 34,7
@@ -95,11 +115,11 @@ protected:
 
 
 public:
-	UART2(const UART2& source) = delete;
-	UART2(UART2&& source) = delete;
-	UART2& operator=(const UART2& source) = delete;
-	UART2& operator=(UART2&& source) = delete;
-	UART2(Usart* const usart_) 
+	UART(const UART& source) = delete;
+	UART(UART&& source) = delete;
+	UART& operator=(const UART& source) = delete;
+	UART& operator=(UART&& source) = delete;
+	UART(Usart* const usart_) 
 		: usart(usart_)
 		, index_(buffer_.begin())
 	{
@@ -222,5 +242,3 @@ public:
 	};
 
 };
-
-#endif /* UART_HPP_ */
