@@ -55,6 +55,7 @@ PWMChannelOutput<GPIOB_BASE, 1, 4> rgbGreen(pwmTim3.Timer(), AlternateFunction::
 int main(void)
 {
 	SystemTimer::Init(4000);
+	uart2.ConfigureExtiReceive();
 
 	//userButton.ConfigureEXTI<2>(Trigger::Falling);	
 	/*
