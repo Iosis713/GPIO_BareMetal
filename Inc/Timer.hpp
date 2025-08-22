@@ -1,10 +1,3 @@
-/*
- * Timer.hpp
- *
- *  Created on: May 25, 2025
- *      Author: bartoszlozinski
- */
-
 #pragma once
 #ifndef TIMER_HPP_
 #define TIMER_HPP_

@@ -27,7 +27,7 @@ float CalculateAirSoundSpeed(const float tempC);
 void SetRGBSignal(const float distance);
 
 GpioOutput<GPIO_TypeDef, 5> ld2(GPIOA);
-UART2<115200, 80> uart2;
+UART2<USART_TypeDef ,115200, 80> uart2(USART2);
 
 //PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3(1);
 //PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
@@ -56,7 +56,7 @@ int main(void)
 {
 	SystemTimer::Init(4000);
 
-	userButton.ConfigureEXTI<2>(Trigger::Falling);	
+	//userButton.ConfigureEXTI<2>(Trigger::Falling);	
 	/*
 	Timer timerPWM(10);
 	Timer timerADCPrint(250);
@@ -161,7 +161,7 @@ int main(void)
 		////////////////_____SPI_____////////////////
 
 		////////////////_____UART/GPIO EXTI_____////////////////
-		/*
+		
 		if (uart2.GetStringIT() == ERROR_CODE::OK)
 		{
 			uart2.SendString(uart2.GetBuffer().data());
@@ -175,7 +175,7 @@ int main(void)
 
 			uart2.ClearBuffer();
 		}
-		*/
+		
 		////////////////_____UART/GPIO EXTI_____////////////////
 
 		////////////////_____ADC_____////////////////
@@ -204,11 +204,11 @@ int main(void)
 
 		////////////////_____GPIO EXTI_____////////////////
 
-		if (userButton.InterruptOccured())
+		/*if (userButton.InterruptOccured())
 		{
 			ld2.Toggle();
 			userButton.ClearInterruptFlag();
-		}
+		}*/
 
 		////////////////_____GPIO EXTI_____////////////////
 	}
@@ -220,7 +220,7 @@ int main(void)
 //EXTI15_10_IRQHandler
 extern "C" void EXTI15_10_IRQHandler(void)
 {
-	userButton.IrqHandler();
+	//userButton.IrqHandler();
 }
 
 //startup_stm32l476rgtx.s

@@ -1,16 +1,9 @@
 #pragma once
-/*
- * UART.hpp
- *
- *  Created on: May 30, 2025
- *      Author: bartoszlozinski
- */
-
 //TO connect with you linux terminal (for example at ubuntu)
 //
 // check tty com ports with
 // dmesg | grep tty 		(or sudo if not allow due to reading the kernel buffer failed: Operation not permitted)
-// screen /dev/tty*ACMx* [baud rate] (i.e. screen /dev/ttyACM1 11520
+// screen /dev/tty*ACMx* [baud rate] (i.e. screen /dev/ttyACM1 115200
 //
 // to kill screen process: ctrl + A --> K to kill process
 // to detach session:      ctrl + A --> D
@@ -23,16 +16,39 @@
 // try once more
 
 #include "Config.hpp"
-#include "array"
+#include <array>
+#include <concepts>
+#include "Timer.hpp"
 
 #ifndef UART_HPP_
 #define UART_HPP_
 
-template<uint32_t baudRate = 115200, std::size_t bufferSize = 80>
+//concept basing on USART_TypeDef struct from CMSIS
+template<typename T>
+concept USARTx = requires (T uart)
+{
+	{ uart.CR1 } 		-> std::convertible_to<volatile uint32_t&>;		/*!< USART Control register 1,                 Address offset: 0x00 */
+    { uart.CR2 } 		-> std::convertible_to<volatile uint32_t&>;		/*!< USART Control register 2,                 Address offset: 0x04 */
+    { uart.CR3 } 		-> std::convertible_to<volatile uint32_t&>;		/*!< USART Control register 3,                 Address offset: 0x08 */
+    { uart.BRR } 		-> std::convertible_to<volatile uint32_t&>;		/*!< USART Baud rate register,                 Address offset: 0x0C */
+    { uart.GTPR}  		-> std::convertible_to<volatile uint16_t&>;		/*!< USART Guard time and prescaler register,  Address offset: 0x10 */
+    { uart.RESERVED2} 	-> std::convertible_to<uint16_t&>;     			/*!< Reserved, 0x12                                                 */
+    { uart.RTOR } 		-> std::convertible_to<volatile uint32_t&>;     /*!< USART Receiver Time Out register,         Address offset: 0x14 */
+	{ uart.RQR} 		-> std::convertible_to<volatile uint16_t&>;     /*!< USART Request register,                   Address offset: 0x18 */
+    { uart.RESERVED3 } 	-> std::convertible_to<uint16_t&>;       		/*!< Reserved, 0x1A                                                 */
+	{ uart.ISR} 		-> std::convertible_to<volatile uint32_t&>;     /*!< USART Interrupt and status register,      Address offset: 0x1C */
+	{ uart.ICR } 		-> std::convertible_to<volatile uint32_t&>;     /*!< USART Interrupt flag Clear register,      Address offset: 0x20 */
+	{ uart.RDR }        -> std::convertible_to<volatile uint16_t&>;		/*!< USART Receive Data register,              Address offset: 0x24 */
+	{ uart.RESERVED4 }  -> std::convertible_to<uint16_t&>;				/*!< Reserved, 0x26                                                 */
+	{ uart.TDR }        -> std::convertible_to<volatile uint16_t&>;		/*!< USART Transmit Data register,             Address offset: 0x28 */
+	{ uart.RESERVED5 }  -> std::convertible_to<uint16_t&>;				/*!< Reserved, 0x2A                                                 */
+};
+
+template<USARTx Usart, uint32_t baudRate = 115200, std::size_t bufferSize = 80>
 class UART2
 {
 protected:
-
+	volatile Usart* const usart = nullptr;
 	char actualChar;
 	std::array<char, bufferSize> buffer_ {};
 	inline void EnableClock() { RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN; };
@@ -64,15 +80,15 @@ protected:
 		//UARTDIV (RM 40.8 USART baud rate register) = 4 000 000 / 115200 = 34,7
 		//USART2 uses PCLK1 clock by default (reset state 00)
 		//know from USART2SEL bits value
-		USART2->BRR = 4000000 / baudRate;
+		usart->BRR = 4000000 / baudRate;
 
 		//frame 8m1 -- 0b00 - for USART_CR1 (reset value)
 		//PCE parity control enable: 0 - disabled (reset value), 1 - enabled
 		//USART_CR2 STOP register - 00 - 1 stop bit; (RM USART_CR2) reset value
 		//USART_CR1 UE (UART enable bit) - 0 -disabled (reset value): 1 - enabled
-		USART2->CR1 |= USART_CR1_UE; // UART enabled
-		USART2->CR1 |= USART_CR1_TE; //transmitter enabled - 0 disable, 1- enabled
-		USART2->CR1 |= USART_CR1_RE; //receiver enabled - 0 disable, 1- enabled
+		usart->CR1 |= USART_CR1_UE; // UART enabled
+		usart->CR1 |= USART_CR1_TE; //transmitter enabled - 0 disable, 1- enabled
+		usart->CR1 |= USART_CR1_RE; //receiver enabled - 0 disable, 1- enabled
 	};
 	volatile bool messageReady_ = false;
 	std::array<char, bufferSize>::iterator index_;
@@ -83,7 +99,9 @@ public:
 	UART2(UART2&& source) = delete;
 	UART2& operator=(const UART2& source) = delete;
 	UART2& operator=(UART2&& source) = delete;
-	UART2() : index_(buffer_.begin())
+	UART2(Usart* const usart_) 
+		: usart(usart_)
+		, index_(buffer_.begin())
 	{
 		this->EnableClock();
 		UartConfig();
@@ -93,7 +111,7 @@ public:
 	{
 		//put data to transmit register
 		//Transmit data register TDR
-		USART2->TDR = ch;
+		usart->TDR = ch;
 		while(!(USART2->ISR & USART_ISR_TC)) {} //just wait
 		//interrupt status register ISR - what happens inside UART
 		//bit TXE - transmit data register empty
@@ -125,9 +143,9 @@ public:
 
 		//by one sign
 		using enum ERROR_CODE;
-		if (USART2->ISR & USART_ISR_RXNE)
+		if (usart->ISR & USART_ISR_RXNE)
 		{
-			actualChar = USART2->RDR;
+			actualChar = usart->RDR;
 			return OK;
 		}
 		return NOK;
@@ -138,9 +156,9 @@ public:
 		while (i < buffer_.size() - 1)
 		{
 			Timer receiverTimer(50);
-			if (USART2->ISR & USART_ISR_RXNE)
+			if (usart->ISR & USART_ISR_RXNE)
 			{
-				const char c = static_cast<char>(USART2->RDR);
+				const char c = static_cast<char>(usart->RDR);
 				if (c == '\r' || c == '\n')
 					break;
 				else
@@ -172,7 +190,7 @@ public:
 		SYSCFG->EXTICR[0] &= ~SYSCFG_EXTICR1_EXTI3; //0000
 		SYSCFG->EXTICR[0] |= SYSCFG_EXTICR1_EXTI3_PA; //set bit for PA3 exti route to syscfg
 
-		USART2->CR1 |= USART_CR1_RXNEIE; //Enable RX interrupt
+		usart->CR1 |= USART_CR1_RXNEIE; //Enable RX interrupt
 		NVIC_SetPriority(USART2_IRQn, 1); //set priority (for exti ,  priotity = 1
 		NVIC_EnableIRQ(USART2_IRQn);//enable interrupt
 		//enum from stm32l476xx.h (CMSIS file) - Interrupt number definition
@@ -186,9 +204,9 @@ public:
 	{
 		using enum ERROR_CODE;
 		//read data register is not empty (1)
-		if (USART2->ISR & USART_ISR_RXNE)
+		if (usart->ISR & USART_ISR_RXNE)
 		{
-			const char received = USART2->RDR; //Read data register
+			const char received = usart->RDR; //Read data register
 			if (received == '\n' || received == '\r' || index_ >= buffer_.end() - 1)
 			{
 				*index_ = '\0';
