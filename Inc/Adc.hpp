@@ -1,10 +1,51 @@
 #pragma once
-#ifndef ADC_HPP_
-#define ADC_HPP_
 
 #include "Config.hpp"
 #include "../Peripherals/Gpio/IGpio.hpp"
 #include <cassert>
+
+template<typename T>
+concept AdcConcept = requires(T adc)
+{
+	{ adc.ISR } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.IER } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.CR } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.CFGR }-> std::convertible_to<volatile uint32_t&>;
+	{ adc.CFGR2 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.SMPR1 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.SMPR2 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.RESERVED1 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.TR1 }-> std::convertible_to<volatile uint32_t&>;
+	{ adc.TR2 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.TR3 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.RESERVED2 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.SQR1 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.SQR2 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.SQR3 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.SQR4 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.DR } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.RESERVED3 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.RESERVED4 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.JSQR } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.RESERVED5[4] } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.OFR1 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.OFR2 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.OFR3 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.OFR4 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.RESERVED6[4] } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.JDR1 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.JDR2 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.JDR3 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.JDR4 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.RESERVED7[4] } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.AWD2CR } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.AWD3CR } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.RESERVED8 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.RESERVED9 } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.DIFSEL } -> std::convertible_to<volatile uint32_t&>;
+	{ adc.CALFACT } -> std::convertible_to<volatile uint32_t&>;
+};
+
 
 /*
  * adc configured with 3 channels
@@ -34,11 +75,10 @@ enum class SamplingTime : uint16_t
 	Cycles_640_5 = 7
 };
 
-template<std::uintptr_t adcAddr_, uint8_t sequenceLength_>
+template<AdcConcept ADC, uint8_t sequenceLength_>
 class Adc
 {
 private:
-	static constexpr std::uintptr_t adcAddr = adcAddr_;
 	static constexpr uint8_t sequenceLength = sequenceLength_;
 
 	void ClockEnable()
@@ -54,25 +94,24 @@ private:
 		//RM 18.7.3 ADC volate regulator enable (ADVREGEN)
 		//Check which ADC you're using In Datasheet pinouts and pin description
 		//I.e PA0 ADC12_IN5 means it's available for ADC1 and ADC2, channel 5
-		ADC()->CR &= ~ADC_CR_DEEPPWD; //Deep Power Down enable (0 - ADC not in Deep-power down, 1 - in DPD)
-		ADC()->CR |= ADC_CR_ADVREGEN; //Voltage regulator enabled
+		portAdc->CR &= ~ADC_CR_DEEPPWD; //Deep Power Down enable (0 - ADC not in Deep-power down, 1 - in DPD)
+		portAdc->CR |= ADC_CR_ADVREGEN; //Voltage regulator enabled
 	}
 
 	void SetResolution()
 	{
 		//RM 18.7.4 Configuration register - RES (Data resolution)
-		ADC()->CFGR &= ~ADC_CFGR_RES_Msk; //00 - 12-bit (reset state); 01 - 10-bit; 10 - 8-bit; 11 - 6-bit
+		portAdc->CFGR &= ~ADC_CFGR_RES_Msk; //00 - 12-bit (reset state); 01 - 10-bit; 10 - 8-bit; 11 - 6-bit
 	}
 
 	void Calibrate()
 	{
 		//Auto-calibration of ADC
 		//RM 18.7.3 ADC Control register (CR)
-		auto adc = ADC();
-		adc->CR |= ADC_CR_ADCAL;
-		while (adc->CR & ADC_CR_ADCAL) {}; //need to wait until calibration is done
-		adc->CR |= ADC_CR_ADEN; //ADC enable
-		while (!(adc->ISR & ADC_ISR_ADRDY)) {}
+		portAdc->CR |= ADC_CR_ADCAL;
+		while (portAdc->CR & ADC_CR_ADCAL) {}; //need to wait until calibration is done
+		portAdc->CR |= ADC_CR_ADEN; //ADC enable
+		while (!(portAdc->ISR & ADC_ISR_ADRDY)) {}
 	}
 
 	void SetSequenceLength()
@@ -80,16 +119,18 @@ private:
 		static_assert(sequenceLength >= 1 && sequenceLength <= 16, "Number of channel conversions shall be in range 1 - 16!");
 		//RM 18.7.11 Reqular sequence register 1
 		//0000 for 1 conversions, 0001 for 2, 0010 for 3 .... 1111 for 16 conversions
-		ADC()->SQR1 |= ((sequenceLength - 1) << ADC_SQR1_L_Pos);
+		portAdc->SQR1 |= ((sequenceLength - 1) << ADC_SQR1_L_Pos);
 	}
 
 public:
-	ADC_TypeDef* ADC() const { return reinterpret_cast<ADC_TypeDef*>(this->adcAddr); }
+	volatile ADC* const portAdc = nullptr;
+
 	Adc(const Adc& source) = delete;
 	Adc(Adc&& source) = delete;
 	Adc& operator=(const Adc& source) = delete;
 	Adc& operator=(Adc&& source) = delete;
-	Adc()
+	Adc(ADC* const portAdc_)
+		: portAdc(portAdc_)
 	{
 		ClockEnable();
 		RegulateVoltage();
@@ -100,11 +141,10 @@ public:
 
 	void StartConversion()
 	{
-		auto adc = ADC();
 		//RM 18.7.3 Control register
-		adc->CR |= ADC_CR_ADSTART;
+		portAdc->CR |= ADC_CR_ADSTART;
 		//while (adc->CR & ADC_CR_ADSTART) {}; //wait until it's done
-		while (!(adc->ISR & ADC_ISR_EOC)) {}; // wait until end of conversion
+		while (!(portAdc->ISR & ADC_ISR_EOC)) {}; // wait until end of conversion
 		//RM 18.7.1 Interrupt and status register (ISR)
 		//EOC End of conversion flag - 0 - conversion not completed; 1 - regular channel conversion complete
 		//cleared by writing 1 manually or reading ADC_DR
@@ -112,13 +152,13 @@ public:
 
 };
 
-template<std::uintptr_t portAddr_, uint8_t pin_, uint8_t channel_>
-class AdcChannel : public IGpio<AdcChannel<portAddr_, pin_, channel_>>
+template<GpioPort Port, AdcConcept ADC, uint8_t pin_, uint8_t channel_>
+class AdcChannel : public IGpio<AdcChannel<Port, ADC, pin_, channel_>>
 {
 protected:
-	ADC_TypeDef* const adc = nullptr;
+	volatile ADC* const adc = nullptr;
 	static constexpr uint8_t channel = channel_;
-	uint32_t value = 0; //make volatile for DMA when implemented
+	volatile uint32_t value = 0;
 
 	void ConfigureGPIO()
 	{
@@ -126,7 +166,7 @@ protected:
 		this-> template ConfigureMODER<OptionsMODER::Analog>();
 		this-> template ConfigureOSPEEDR<OptionsOSPEEDR::LowSpeed>();
 		this-> template  ConfigurePUPDR<OptionsPUPDR::None>();
-		this->Port()->ASCR |= GPIO_ASCR_ASC[pin];
+		port->ASCR |= GPIO_ASCR_ASC[pin];
 	}
 
 	void ConfigureSequence(const uint8_t sequence)
@@ -145,15 +185,16 @@ protected:
 
 
 public:
-	static constexpr std::uintptr_t portAddr = portAddr_;
+	volatile Port* const port = nullptr;
 	static constexpr uint8_t pin = pin_;
 
 	AdcChannel(const AdcChannel& source) = delete;
 	AdcChannel(AdcChannel&& source) = delete;
 	AdcChannel& operator=(const AdcChannel& source) = delete;
 	AdcChannel& operator=(AdcChannel&& source) = delete;
-	AdcChannel(ADC_TypeDef* const adc_, const uint8_t sequence, const SamplingTime samplingTime = SamplingTime::Cycles_640_5)
+	AdcChannel(volatile ADC* const adc_, Port* const port_, const uint8_t sequence, const SamplingTime samplingTime = SamplingTime::Cycles_640_5)
 		: adc(adc_)
+		, port(port_)
 	{
 		this->EnableClock();
 		ConfigureGPIO();
@@ -171,5 +212,3 @@ public:
 	void Read() { value = adc->DR; }
 
 };
-
-#endif /* ADC_HPP_ */

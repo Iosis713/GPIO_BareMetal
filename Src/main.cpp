@@ -28,139 +28,21 @@ void SetRGBSignal(const float distance);
 
 GpioOutput<GPIO_TypeDef, 5> ld2(GPIOA);
 UART<USART_TypeDef, GPIO_TypeDef, 115200, 80> uart2(USART2);
+Adc<ADC_TypeDef, 1> adc1{ADC1};
+AdcChannel<GPIO_TypeDef, ADC_TypeDef, 0, 1> adc1Channel1{adc1.portAdc, GPIOC, 1};
 
 //PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3(1);
 //PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
 //Button<GPIO_TypeDef, 13, OptionsPUPDR::PullUp> userButton(GPIOC);
 
-/////////////////////////////////////////////
-//////			HC-SR04				   //////
-
-/*
-static constexpr uint32_t ticksPerSecond = 1000000;
-PWM<TIM2_BASE, (4 - 1), (ticksPerSecond - 1)> pwmTim2(2);
-PWMChannelInput<GPIOA_BASE, 0, 1> hc_sr04_echoCh1(pwmTim2.Timer(), AlternateFunction::AF1, Trigger::Rising, PWMDirection::InputDirect);
-PWMChannelInput<GPIOA_BASE, 1, 2> hc_sr04_echoCh2(pwmTim2.Timer(), AlternateFunction::AF1, Trigger::Falling, PWMDirection::InputIndirect);
-PWMChannelOutput<GPIOB_BASE, 10, 3> hc_sr04_trig(pwmTim2.Timer(), AlternateFunction::AF1);
-
-static constexpr uint32_t ticksPerSecondRGB = 1000;
-PWM<TIM3_BASE, (4 - 1), (ticksPerSecondRGB - 1)> pwmTim3(3);
-PWMChannelOutput<GPIOB_BASE, 0, 3> rgbRed(pwmTim3.Timer(), AlternateFunction::AF2, PWMPolarity::ActiveLow);
-PWMChannelOutput<GPIOB_BASE, 1, 4> rgbGreen(pwmTim3.Timer(), AlternateFunction::AF2, PWMPolarity::ActiveLow);
-
-*/
-//////			HC-SR04				   //////
-/////////////////////////////////////////////
-
 int main(void)
 {
 	SystemTimer::Init(4000);
 	uart2.ConfigureExtiReceive();
-
-	//userButton.ConfigureEXTI<2>(Trigger::Falling);	
-	/*
-	Timer timerPWM(10);
-	Timer timerADCPrint(250);
-
-	Adc<ADC1_BASE, 2> adc1;
-	AdcChannel<GPIOC_BASE, 0, 1> adcChannel1(adc1.ADC(), 1);
-	AdcChannel<GPIOC_BASE, 1, 2> adcChannel2(adc1.ADC(), 2);
-	uart2.ConfigureExtiReceive();
-	*/
-
-	/////////////////////////////////////////////
-	/////_______________SPI_______________///////
-	//GpioOutput<GPIOB_BASE, 12> LCD_CS;
-	//GpioOutput<GPIOB_BASE, 2> LCD_RST;
-	//GpioOutput<GPIOB_BASE, 11> LCD_DC; //command (0) /data (1) transmit
-
-	//Datasheet 4 - Pinouts and pin description, table 17
-	//GpioAlternate<GPIOC_BASE, 2, AlternateFunction::AF5> spi2MISO;
-	//[[maybe_unused]] SpiPinsHalfDuplexTX<SpiSCK::SPI2_PB10_AF5, SpiMOSI::SPI2_PC3_AF5> spi2HalfDuplexTXPins;
-	//LCD_CS.Set();
-
-	//Spi<SPI2_BASE, SpiMode::HalfDuplex> spi2;
-	//ExampleUseOfTFTDisplayST7735S(LCD_CS, LCD_RST, LCD_DC, spi2);
-
-	/* MCP23S08
-	//enable GP0 as output
-	McpWriteRegister(ioexp_cs, MCP23S08::IOCON, 0x00);
-	McpWriteRegister(ioexp_cs, MCP23S08::IODIR, 0xFE);
-	McpWriteRegister(ioexp_cs, MCP23S08::GPPU, MCP23S08::GP1); //pull-up for GP1 - button
-	char buffer[64] = "Program starts here:";
-	uart2.SendString(buffer);
-	/////_______________SPI_______________///////
-	/////////////////////////////////////////////
-
-	//McpWriteRegister(LCD_CS, MCP23S08::IOCON, 0x00);
-	//McpWriteRegister(LCD_CS, MCP23S08::IODIR, 0xFE);
-	//McpWriteRegister(LCD_CS, MCP23S08::GPPU, MCP23S08::GP1); //pull-up for GP1 - button
-	//uart2.SendString(buffer);
-	 */
-
-
-	/////////////////////////////////////////////
-	//////			HC-SR04				   //////
-	//////		Distance measurement	   //////
-
-	/*
-	hc_sr04_trig.SetPulse(10); //us
-	uint32_t start = 0;
-	uint32_t stop = 0;
-	char buffer[80];
-	Timer timerHCSR04(20);
-
-	Adc<ADC1_BASE, 1> adc1;
-	AdcChannel<GPIOA_BASE, 6, 11> adc1Channel11(adc1.ADC(), 1);
-	uint32_t rawTemp = 0;
-	float tempC = 0.0f;
-	float airSoundSpeed = 0.0f;
-	float distance = 0.0f;
-	static constexpr uint8_t convertToCentimeters = 100;
-
-
-	//RGB distance monitor (red - "close", green "far")
-	rgbRed.SetPulse(0);
-	rgbGreen.SetPulse(0);
-	*/
-
-	//////			HC-SR04				   //////
-	/////////////////////////////////////////////
+	Timer timerADCPrint{300};
 
 	while (true)
 	{
-		/*
-		//Distance mearusrement
-		if (timerHCSR04.IsExpired())
-		{
-			adc1.StartConversion();
-			adc1Channel11.Read();
-			rawTemp = adc1Channel11.Get();
-			tempC = LM35CalculateTemperatureC(rawTemp);
-			airSoundSpeed = CalculateAirSoundSpeed(tempC);
-			snprintf(buffer, sizeof(buffer), "ADC = %lu [-], Temperature: %.1f [*C], AirSoundSpeed = %.1f [m/s] \n", rawTemp, tempC, airSoundSpeed);
-			uart2.SendString(buffer);
-
-			start = hc_sr04_echoCh1.GetCapturedValue();
-			stop = hc_sr04_echoCh2.GetCapturedValue();
-			distance = (stop - start) * airSoundSpeed * convertToCentimeters / (ticksPerSecond * 2);
-			snprintf(buffer, sizeof(buffer), "Distance: %.1f [cm]", distance);
-			uart2.SendString(buffer);
-
-			SetRGBSignal(distance);
-		}
-		*/
-
-		////////////////_____SPI_____////////////////
-		/*
-		// MCP23S08
-		if ((McpReadRegister(ioexp_cs, MCP23S08::GPIO) & MCP23S08::GP1) == 0)
-			McpWriteRegister(ioexp_cs, MCP23S08::OLAT, 0x01);
-		else
-			McpWriteRegister(ioexp_cs, MCP23S08::OLAT, 0x00);
-		*/
-		////////////////_____SPI_____////////////////
-
 		////////////////_____UART/GPIO EXTI_____////////////////
 		
 		if (uart2.GetStringIT() == ERROR_CODE::OK)
@@ -180,27 +62,20 @@ int main(void)
 		////////////////_____UART/GPIO EXTI_____////////////////
 
 		////////////////_____ADC_____////////////////
-		/*
+		
 		adc1.StartConversion();
-		adcChannel1.Read();
-		adc1.StartConversion();
-		adcChannel2.Read();
+		adc1Channel1.Read();
 
 		if (timerADCPrint.IsExpired())
 		{
 			char buffer[64];
-			snprintf(buffer, sizeof(buffer), "ADC channel 1: %lu, ADC channel 2: %lu\n", static_cast<unsigned long>(adcChannel1.Get()), static_cast<unsigned long>(adcChannel2.Get()));
+			snprintf(buffer, sizeof(buffer), "ADC channel 1: %lu\n", static_cast<unsigned long>(adc1Channel1.Get()));
+
+			//snprintf(buffer, sizeof(buffer), "ADC channel 1: %lu, ADC channel 2: %lu\n", static_cast<unsigned long>(adc1Channel1.Get()), static_cast<unsigned long>(adcChannel2.Get()));
 			uart2.SendString(buffer);
 		}
 
-		if (timerPWM.IsExpired())
-		{
-			if (channel1.GetPulse() < pwmTim3.GetMaxWidth() - 1)
-				channel1.SetPulse(channel1.GetPulse() + 5);
-			else
-				channel1.SetPulse(0);
-		}
-		*/
+		
 		////////////////_____ADC_____////////////////
 
 		////////////////_____GPIO EXTI_____////////////////
