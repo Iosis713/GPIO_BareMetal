@@ -26,7 +26,7 @@ float LM35CalculateTemperatureC(const uint32_t rawTemp);
 float CalculateAirSoundSpeed(const float tempC);
 void SetRGBSignal(const float distance);
 
-void TEST_ADC1_DMA_Init(uint16_t* buffer, std::size_t length);
+void TEST_ADC1_DMA_Init(volatile uint16_t* buffer, std::size_t length);
 
 GpioOutput<GPIO_TypeDef, 5> ld2(GPIOA);
 UART<USART_TypeDef, GPIO_TypeDef, 115200, 80> uart2(USART2);
@@ -34,7 +34,7 @@ UART<USART_TypeDef, GPIO_TypeDef, 115200, 80> uart2(USART2);
 //AdcChannel<GPIO_TypeDef, ADC_TypeDef, 0, 1> adc1Channel1{adc1.adc, GPIOC, 1};
 
 constexpr std::size_t ADC_BUFFER_SIZE = 1;
-uint16_t adcBuffer[ADC_BUFFER_SIZE];
+volatile uint16_t adcBuffer[ADC_BUFFER_SIZE];
 //PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3(1);
 //PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
 //Button<GPIO_TypeDef, 13, OptionsPUPDR::PullUp> userButton(GPIOC);
@@ -284,7 +284,7 @@ void SetRGBSignal(const float distance)
 }*/
 
 
-void TEST_ADC1_DMA_Init([[maybe_unused]]uint16_t* buffer, [[maybe_unused]]std::size_t length)
+void TEST_ADC1_DMA_Init([[maybe_unused]] volatile uint16_t* buffer, [[maybe_unused]]std::size_t length)
 {
     // --- 1. Enable clocks ---
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN | RCC_AHB2ENR_ADCEN;
@@ -311,18 +311,18 @@ void TEST_ADC1_DMA_Init([[maybe_unused]]uint16_t* buffer, [[maybe_unused]]std::s
 
     // --- 4. ADC channel 1 ---
     ADC1->SQR1 &= ~ADC_SQR1_L_Msk;        // single conversion
-    ADC1->SQR1 &= ~ADC_SQR1_SQ1_Msk;
-	ADC1->SQR1 |= ((0) << ADC_SQR1_L_Pos);
-	
-    //ADC1->SQR1 |= 1 << ADC_SQR1_SQ1_Pos; // channel 1 in SQ1
-    ADC1->SMPR1 &= ~ADC_SMPR1_SMP1_Msk;
+   	ADC1->SQR1 |= ((length - 1) << ADC_SQR1_L_Pos);
+	ADC1->SQR1 &= ~ADC_SQR1_SQ1_Msk;
+    ADC1->SQR1 |= 1 << ADC_SQR1_SQ1_Pos; // channel 1 in SQ1
+    
+	ADC1->SMPR1 &= ~ADC_SMPR1_SMP1_Msk;
     ADC1->SMPR1 |= 0b111 << ADC_SMPR1_SMP1_Pos; // max sample time
 
     // --- 5. Configure DMA1 Channel1 ---
     DMA1_Channel1->CCR &= ~DMA_CCR_EN;
     DMA1_Channel1->CPAR = (uint32_t)&ADC1->DR;
     DMA1_Channel1->CMAR = (uint32_t)adcBuffer;
-    DMA1_Channel1->CNDTR = 1;
+    DMA1_Channel1->CNDTR = length;
     DMA1_Channel1->CCR = DMA_CCR_MINC | DMA_CCR_CIRC | DMA_CCR_PSIZE_0 | DMA_CCR_MSIZE_0;
     DMA1_Channel1->CCR &= ~DMA_CCR_PINC;
 
