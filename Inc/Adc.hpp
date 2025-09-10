@@ -4,6 +4,42 @@
 #include "../Peripherals/Gpio/IGpio.hpp"
 #include <cassert>
 
+
+class DmaChannel 
+{
+protected:
+public:
+	volatile DMA_Channel_TypeDef* const channel = nullptr;
+	DmaChannel(volatile DMA_Channel_TypeDef* const channel_)
+	 	: channel(channel_)
+	{
+		RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+	}
+		
+	DmaChannel() = delete;
+	~DmaChannel() = default;
+
+	void Configure(const uint32_t peripheralAddress, const uint32_t memoryAddress, const uint32_t length)
+	{
+		channel->CCR &= ~DMA_CCR_EN;
+		channel->CPAR = peripheralAddress; //RM 11.6.5 Channel Peripheral Address Register
+		channel->CMAR = memoryAddress; //RM 11.6.6
+		channel->CNDTR = length; //RM 11.6.4 Channel x Number of Data to Transfer Register
+
+		channel->CCR |= DMA_CCR_MINC; //memory increment enabled RM 11.6.3
+		channel->CCR |= DMA_CCR_CIRC; //circular mode
+		channel->CCR |= DMA_CCR_PL_1;
+		channel->CCR |= DMA_CCR_PSIZE_0; //Peripheral to memory - 16 bits data;
+		channel->CCR |= DMA_CCR_MSIZE_0; //memory size 16 bits;
+
+		DMA1_CSELR->CSELR &= ~(0xF << (0 * 4)); // clear C1S
+		DMA1_CSELR->CSELR |= DMA_CSELR_C1S;
+	}
+
+	void Enable() { channel->CCR |= DMA_CCR_EN; }
+	void Disable() { channel->CCR &= ~DMA_CCR_EN; }
+};
+
 template<typename T>
 concept AdcConcept = requires(T adc)
 {
@@ -85,24 +121,24 @@ private:
 		//RM 18.7.3 ADC volate regulator enable (ADVREGEN)
 		//Check which ADC you're using In Datasheet pinouts and pin description
 		//I.e PA0 ADC12_IN5 means it's available for ADC1 and ADC2, channel 5
-		portAdc->CR &= ~ADC_CR_DEEPPWD; //Deep Power Down enable (0 - ADC not in Deep-power down, 1 - in DPD)
-		portAdc->CR |= ADC_CR_ADVREGEN; //Voltage regulator enabled
+		adc->CR &= ~ADC_CR_DEEPPWD; //Deep Power Down enable (0 - ADC not in Deep-power down, 1 - in DPD)
+		adc->CR |= ADC_CR_ADVREGEN; //Voltage regulator enabled
 	}
 
 	void SetResolution()
 	{
 		//RM 18.7.4 Configuration register - RES (Data resolution)
-		portAdc->CFGR &= ~ADC_CFGR_RES_Msk; //00 - 12-bit (reset state); 01 - 10-bit; 10 - 8-bit; 11 - 6-bit
+		adc->CFGR &= ~ADC_CFGR_RES_Msk; //00 - 12-bit (reset state); 01 - 10-bit; 10 - 8-bit; 11 - 6-bit
 	}
 
 	void Calibrate()
 	{
 		//Auto-calibration of ADC
 		//RM 18.7.3 ADC Control register (CR)
-		portAdc->CR |= ADC_CR_ADCAL;
-		while (portAdc->CR & ADC_CR_ADCAL) {}; //need to wait until calibration is done
-		portAdc->CR |= ADC_CR_ADEN; //ADC enable
-		while (!(portAdc->ISR & ADC_ISR_ADRDY)) {}
+		adc->CR |= ADC_CR_ADCAL;
+		while (adc->CR & ADC_CR_ADCAL) {}; //need to wait until calibration is done
+		adc->CR |= ADC_CR_ADEN; //ADC enable
+		while (!(adc->ISR & ADC_ISR_ADRDY)) {}
 	}
 
 	void SetSequenceLength()
@@ -110,18 +146,18 @@ private:
 		static_assert(sequenceLength >= 1 && sequenceLength <= 16, "Number of channel conversions shall be in range 1 - 16!");
 		//RM 18.7.11 Reqular sequence register 1
 		//0000 for 1 conversions, 0001 for 2, 0010 for 3 .... 1111 for 16 conversions
-		portAdc->SQR1 |= ((sequenceLength - 1) << ADC_SQR1_L_Pos);
+		adc->SQR1 |= ((sequenceLength - 1) << ADC_SQR1_L_Pos);
 	}
 
 public:
-	volatile ADC* const portAdc = nullptr;
+	volatile ADC* const adc = nullptr;
 
 	Adc(const Adc& source) = delete;
 	Adc(Adc&& source) = delete;
 	Adc& operator=(const Adc& source) = delete;
 	Adc& operator=(Adc&& source) = delete;
-	Adc(ADC* const portAdc_)
-		: portAdc(portAdc_)
+	Adc(ADC* const adc_)
+		: adc(adc_)
 	{
 		ClockEnable();
 		RegulateVoltage();
@@ -133,12 +169,31 @@ public:
 	void StartConversion()
 	{
 		//RM 18.7.3 Control register
-		portAdc->CR |= ADC_CR_ADSTART;
+		while (!(adc->ISR & ADC_ISR_ADRDY)) {};
+		adc->CR |= ADC_CR_ADSTART;
+		//Check ADSTART adn ADRDY flags
+	}
+
+	void WaitUntilEndOfConversion()
+	{
 		//while (adc->CR & ADC_CR_ADSTART) {}; //wait until it's done
-		while (!(portAdc->ISR & ADC_ISR_EOC)) {}; // wait until end of conversion
+		while (!(adc->ISR & ADC_ISR_EOC)) {}; // wait until end of conversion
 		//RM 18.7.1 Interrupt and status register (ISR)
 		//EOC End of conversion flag - 0 - conversion not completed; 1 - regular channel conversion complete
 		//cleared by writing 1 manually or reading ADC_DR
+	}
+
+	void EnableDma(DmaChannel& dma, uint16_t* buffer, std::size_t length)
+	{
+		dma.Configure(reinterpret_cast<uint32_t>(adc->DR),
+					  reinterpret_cast<uint32_t>(buffer),
+					  length);
+
+		//Enable ADC DMA Request
+		adc->CFGR |= ADC_CFGR_DMAEN;
+		adc->CFGR |= ADC_CFGR_DMACFG;//RM 18.7.5 circular mode
+		adc->CFGR |= ADC_CFGR_CONT;
+		dma.Enable();
 	}
 
 };
@@ -170,10 +225,9 @@ protected:
 			adc->SQR2 |= (channel << ADC_SQR_SQ[sequence - 1]);
 		else if (sequence >= 10 && sequence <= 14)
 			adc->SQR3 |= (channel << ADC_SQR_SQ[sequence - 1]);
-		else if (sequence >= 115 && sequence <= 16)
+		else if (sequence >= 11 && sequence <= 16)
 			adc->SQR4 |= (channel << ADC_SQR_SQ[sequence - 1]);
 	}
-
 
 public:
 	volatile Port* const port = nullptr;
@@ -201,5 +255,4 @@ public:
 
 	uint32_t Get() { return this->value; }
 	void Read() { value = adc->DR; }
-
 };
