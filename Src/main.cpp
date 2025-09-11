@@ -7,6 +7,7 @@
 #include "../Inc/Pwm.hpp"
 #include "../Peripherals/Adc/Adc.hpp"
 #include "../Peripherals/Adc/AdcChannel.hpp"
+#include "../Peripherals/Dma/DmaChannel.hpp"
 #include "../Inc/Spi.hpp"
 #include "../Inc/Mcp23S08.hpp"
 #include "../Inc/LCD_TFT_ST7735S.hpp"
@@ -54,15 +55,9 @@ int main(void)
 
 	while (true)
 	{
-		
-
 		//[[maybe_unused]] uint16_t latestValue = adcBuffer[0];
 
 		//[[maybe_unused]] volatile uint32_t cndtr = DMA1_Channel1->CNDTR;
-
-		//ADC1->CR |= ADC_CR_ADSTART;
-		//while (!(ADC1->ISR & ADC_ISR_EOC));
-		//[[maybe_unused]] uint16_t val = ADC1->DR; 
 		////////////////_____UART/GPIO EXTI_____////////////////
 		
 		if (uart2.GetStringIT() == ERROR_CODE::OK)
@@ -330,11 +325,12 @@ void TEST_ADC1_DMA_Init([[maybe_unused]] volatile uint16_t* buffer, [[maybe_unus
     DMA1_CSELR->CSELR &= ~(0xF << 0);
     DMA1_CSELR->CSELR |= 0x0 << 0; // ADC1 -> DMA1CH1
 
-    // --- 7. Enable DMA channel ---
-    DMA1_Channel1->CCR |= DMA_CCR_EN;
 
     // --- 8. Enable ADC DMA + circular mode ---
     ADC1->CFGR |= ADC_CFGR_DMAEN | ADC_CFGR_DMACFG | ADC_CFGR_CONT;
+    
+	// --- 7. Enable DMA channel ---
+    DMA1_Channel1->CCR |= DMA_CCR_EN;
 
     // --- 9. Start ADC ---
     ADC1->CR |= ADC_CR_ADSTART;

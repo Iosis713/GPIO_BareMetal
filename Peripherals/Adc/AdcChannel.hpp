@@ -1,15 +1,25 @@
 
 #pragma once
 #include "Adc.hpp"
+#include "../Gpio/GpioAnalog.hpp"
+
+
+
+
+template<typename Derived>
+class IAdcChannel
+{};
 
 template<GpioPort Port, AdcConcept ADC, uint8_t pin_, uint8_t channel_>
-class AdcChannel : public IGpio<AdcChannel<Port, ADC, pin_, channel_>>
+class AdcChannel
 {
 protected:
 	volatile ADC* const adc = nullptr;
 	static constexpr uint8_t channel = channel_;
+    GpioAnalog<Port, pin_> gpioAnalog;
 	volatile uint32_t value = 0;
 
+    /*
 	void ConfigureGPIO()
 	{
 		static_assert(pin >= 0 && pin <= 15, "Invalid pin number: needs to be in range of 0 - 15!");
@@ -17,7 +27,7 @@ protected:
 		this-> template ConfigureOSPEEDR<OptionsOSPEEDR::LowSpeed>();
 		this-> template  ConfigurePUPDR<OptionsPUPDR::None>();
 		port->ASCR |= GPIO_ASCR_ASC[pin];
-	}
+	}*/
 
 	void ConfigureSequence(const uint8_t sequence)
 	{
@@ -34,8 +44,8 @@ protected:
 	}
 
 public:
-	volatile Port* const port = nullptr;
-	static constexpr uint8_t pin = pin_;
+	//volatile Port* const port = nullptr;
+	//static constexpr uint8_t pin = pin_;
 
 	AdcChannel(const AdcChannel& source) = delete;
 	AdcChannel(AdcChannel&& source) = delete;
@@ -43,10 +53,10 @@ public:
 	AdcChannel& operator=(AdcChannel&& source) = delete;
 	AdcChannel(volatile ADC* const adc_, Port* const port_, const uint8_t sequence, const SamplingTime samplingTime = SamplingTime::Cycles_640_5)
 		: adc(adc_)
-		, port(port_)
+		, gpioAnalog(port_)
 	{
-		this->EnableClock();
-		ConfigureGPIO();
+		//this->EnableClock();
+		//ConfigureGPIO();
 		ConfigureSequence(sequence);
 		ConfigureSamplingTime(samplingTime);
 	}
