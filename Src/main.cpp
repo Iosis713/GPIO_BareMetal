@@ -32,11 +32,7 @@ GpioOutput<GPIO_TypeDef, 5> ld2(GPIOA);
 UART<USART_TypeDef, GPIO_TypeDef, 115200, 80> uart2(USART2);
 Adc<ADC_TypeDef, 1> adc1{ADC1};
 AdcChannel<GPIO_TypeDef, ADC_TypeDef, 0, 1> adc1Channel1{adc1.adc, GPIOC, 1};
-//AdcDmaChannel<GPIO_TypeDef, ADC_TypeDef, 0, 1> adc1dma1channel1{adc1.adc, GPIOC, DMA1_Channel1, 1};
 
-
-constexpr std::size_t ADC_BUFFER_SIZE = 1;
-volatile uint16_t adcBuffer[ADC_BUFFER_SIZE];
 //PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3(1);
 //PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
 //Button<GPIO_TypeDef, 13, OptionsPUPDR::PullUp> userButton(GPIOC);
@@ -75,6 +71,8 @@ int main(void)
 
 		////////////////_____ADC_____////////////////
 		
+		//FOR NON DMA USAGE
+
 		//adc1.StartConversion();
 		//adc1.WaitUntilEndOfConversion();
 		//adc1Channel1.Read();
