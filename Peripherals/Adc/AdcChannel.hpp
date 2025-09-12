@@ -11,7 +11,6 @@ protected:
 	volatile ADC* const adc = nullptr;
 	static constexpr uint8_t channel = channel_;
 	GpioAnalog<Port, pin_> gpioAnalog;
-	volatile uint32_t value = 0;
 
 public:
 	AdcChannel(const AdcChannel& source) = delete;
@@ -26,6 +25,6 @@ public:
 		this->ConfigureSamplingTime(samplingTime);
 	}
 
-	uint32_t Get() { return this->value; }
+	volatile uint16_t value = 0;
 	void Read() { value = adc->DR; }
 };

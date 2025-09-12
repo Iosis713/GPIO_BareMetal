@@ -7,7 +7,6 @@
 #include "../Inc/Pwm.hpp"
 #include "../Peripherals/Adc/Adc.hpp"
 #include "../Peripherals/Adc/AdcChannel.hpp"
-#include "../Peripherals/Adc/AdcDmaChannel.hpp"
 #include "../Peripherals/Dma/DmaChannel.hpp"
 #include "../Inc/Spi.hpp"
 #include "../Inc/Mcp23S08.hpp"
@@ -29,13 +28,11 @@ float LM35CalculateTemperatureC(const uint32_t rawTemp);
 float CalculateAirSoundSpeed(const float tempC);
 void SetRGBSignal(const float distance);
 
-void TEST_ADC1_DMA_Init(volatile uint16_t* buffer, std::size_t length);
-
 GpioOutput<GPIO_TypeDef, 5> ld2(GPIOA);
 UART<USART_TypeDef, GPIO_TypeDef, 115200, 80> uart2(USART2);
 Adc<ADC_TypeDef, 1> adc1{ADC1};
-//AdcChannel<GPIO_TypeDef, ADC_TypeDef, 0, 1> adc1Channel1{adc1.adc, GPIOC, 1};
-AdcDmaChannel<GPIO_TypeDef, ADC_TypeDef, 0, 1> adc1dma1channel1{adc1.adc, GPIOC, DMA1_Channel1, 1};
+AdcChannel<GPIO_TypeDef, ADC_TypeDef, 0, 1> adc1Channel1{adc1.adc, GPIOC, 1};
+//AdcDmaChannel<GPIO_TypeDef, ADC_TypeDef, 0, 1> adc1dma1channel1{adc1.adc, GPIOC, DMA1_Channel1, 1};
 
 
 constexpr std::size_t ADC_BUFFER_SIZE = 1;
@@ -47,22 +44,17 @@ volatile uint16_t adcBuffer[ADC_BUFFER_SIZE];
 int main(void)
 {
 	SystemTimer::Init(4000);
-	//uart2.ConfigureExtiReceive();
-	//Timer timerADCPrint{300};
+	uart2.ConfigureExtiReceive();
+	Timer timerADCPrint{300};
 
-	//DmaChannel dma1ch1(DMA1_Channel1);
-	//adc1.EnableDma(dma1ch1, adcBuffer, ADC_BUFFER_SIZE);
-	adc1.EnableDma(adc1dma1channel1.dmaChannel, &adc1dma1channel1.value, 1);
+	DmaChannel dma1ch1(DMA1_Channel1);
+	adc1.EnableDma(dma1ch1, &adc1Channel1.value, 1);
 	adc1.StartConversion();
-	adc1.WaitUntilEndOfConversion();
-
-	//TEST_ADC1_DMA_Init(adcBuffer, ADC_BUFFER_SIZE);
 
 	while (true)
 	{
-		[[maybe_unused]] uint16_t latestValue = adc1dma1channel1.value;
+		[[maybe_unused]] uint16_t latestValue = adc1Channel1.value;
 
-		//[[maybe_unused]] volatile uint32_t cndtr = DMA1_Channel1->CNDTR;
 		////////////////_____UART/GPIO EXTI_____////////////////
 		
 		if (uart2.GetStringIT() == ERROR_CODE::OK)
@@ -83,22 +75,18 @@ int main(void)
 
 		////////////////_____ADC_____////////////////
 		
-		
-		//[[maybe_unused]] uint16_t ch1 = adcBuffer[0];
-/*
-		adc1.StartConversion();
-		adc1.WaitUntilEndOfConversion();
-		adc1Channel1.Read();
+		//adc1.StartConversion();
+		//adc1.WaitUntilEndOfConversion();
+		//adc1Channel1.Read();
 
 		if (timerADCPrint.IsExpired())
 		{
 			char buffer[64];
-			snprintf(buffer, sizeof(buffer), "ADC channel 1: %lu\n", static_cast<unsigned long>(adc1Channel1.Get()));
+			snprintf(buffer, sizeof(buffer), "ADC channel 1: %lu\n", static_cast<unsigned long>(adc1Channel1.value));
 
 			//snprintf(buffer, sizeof(buffer), "ADC channel 1: %lu, ADC channel 2: %lu\n", static_cast<unsigned long>(adc1Channel1.Get()), static_cast<unsigned long>(adcChannel2.Get()));
 			uart2.SendString(buffer);
 		}
-*/
 		////////////////_____ADC_____////////////////
 
 		////////////////_____GPIO EXTI_____////////////////
@@ -282,62 +270,3 @@ void SetRGBSignal(const float distance)
 	rgbGreen.SetPulse(distancePercentGreen * maxPWMwidth / 100);
 	rgbRed.SetPulse((100 - distancePercentGreen) * maxPWMwidth / 100);
 }*/
-
-
-void TEST_ADC1_DMA_Init([[maybe_unused]] volatile uint16_t* buffer, [[maybe_unused]]std::size_t length)
-{
-    // --- 1. Enable clocks ---
-    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN | RCC_AHB2ENR_ADCEN;
-    RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
-    RCC->CCIPR |= RCC_CCIPR_ADCSEL;
-	//RCC->CCIPR |= 0b11 << RCC_CCIPR_ADCSEL_Pos; // system clock
-
-    // --- 2. PC0 analog ---
-    GPIOC->MODER |= (0b11 << 0);
-    GPIOC->PUPDR &= ~(0b11 << 0);
-	GPIOC->ASCR |= GPIO_ASCR_ASC0;
-
-    // --- 3. ADC regulator + calibration ---
-    ADC1->CR &= ~ADC_CR_DEEPPWD;
-    ADC1->CR |= ADC_CR_ADVREGEN;
-	ADC1->CFGR &= ~ADC_CFGR_RES_Msk; //00 - 12-bit (reset state); 01 - 10-bit; 10 - 8-bit; 11 - 6-bit
-
-    Delay(20);
-    ADC1->CR |= ADC_CR_ADCAL;
-    while (ADC1->CR & ADC_CR_ADCAL);
-
-    ADC1->CR |= ADC_CR_ADEN;
-    while (!(ADC1->ISR & ADC_ISR_ADRDY));
-
-    // --- 4. ADC channel 1 ---
-    ADC1->SQR1 &= ~ADC_SQR1_L_Msk;        // single conversion
-   	ADC1->SQR1 |= ((length - 1) << ADC_SQR1_L_Pos);
-	ADC1->SQR1 &= ~ADC_SQR1_SQ1_Msk;
-    ADC1->SQR1 |= 1 << ADC_SQR1_SQ1_Pos; // channel 1 in SQ1
-    
-	ADC1->SMPR1 &= ~ADC_SMPR1_SMP1_Msk;
-    ADC1->SMPR1 |= 0b111 << ADC_SMPR1_SMP1_Pos; // max sample time
-
-    // --- 5. Configure DMA1 Channel1 ---
-    DMA1_Channel1->CCR &= ~DMA_CCR_EN;
-    DMA1_Channel1->CPAR = (uint32_t)&ADC1->DR;
-    DMA1_Channel1->CMAR = (uint32_t)adcBuffer;
-    DMA1_Channel1->CNDTR = length;
-    DMA1_Channel1->CCR = DMA_CCR_MINC | DMA_CCR_CIRC | DMA_CCR_PSIZE_0 | DMA_CCR_MSIZE_0;
-    DMA1_Channel1->CCR &= ~DMA_CCR_PINC;
-
-    // --- 6. DMA request mapping ---
-    DMA1_CSELR->CSELR &= ~(0xF << 0);
-    DMA1_CSELR->CSELR |= 0x0 << 0; // ADC1 -> DMA1CH1
-
-
-    // --- 8. Enable ADC DMA + circular mode ---
-    ADC1->CFGR |= ADC_CFGR_DMAEN | ADC_CFGR_DMACFG | ADC_CFGR_CONT;
-    
-	// --- 7. Enable DMA channel ---
-    DMA1_Channel1->CCR |= DMA_CCR_EN;
-
-    // --- 9. Start ADC ---
-    ADC1->CR |= ADC_CR_ADSTART;
-	while (!(ADC1->ISR & ADC_ISR_EOC));
-}
