@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../../Inc/Config.hpp"
-#include "../Gpio/IGpio.hpp"
 #include "../Dma/DmaChannel.hpp"
 #include <cassert>
 
@@ -151,7 +150,7 @@ public:
 
 	void EnableDma(DmaChannel& dma, volatile uint16_t* buffer, std::size_t length)
 	{
-		dma.Configure(reinterpret_cast<uint32_t>(adc->DR),
+		dma.Configure(reinterpret_cast<uint32_t>(&adc->DR),
 					  reinterpret_cast<uint32_t>(buffer),
 					  length);
 

@@ -7,6 +7,7 @@
 #include "../Inc/Pwm.hpp"
 #include "../Peripherals/Adc/Adc.hpp"
 #include "../Peripherals/Adc/AdcChannel.hpp"
+#include "../Peripherals/Adc/AdcDmaChannel.hpp"
 #include "../Peripherals/Dma/DmaChannel.hpp"
 #include "../Inc/Spi.hpp"
 #include "../Inc/Mcp23S08.hpp"
@@ -33,7 +34,9 @@ void TEST_ADC1_DMA_Init(volatile uint16_t* buffer, std::size_t length);
 GpioOutput<GPIO_TypeDef, 5> ld2(GPIOA);
 UART<USART_TypeDef, GPIO_TypeDef, 115200, 80> uart2(USART2);
 Adc<ADC_TypeDef, 1> adc1{ADC1};
-AdcChannel<GPIO_TypeDef, ADC_TypeDef, 0, 1> adc1Channel1{adc1.adc, GPIOC, 1};
+//AdcChannel<GPIO_TypeDef, ADC_TypeDef, 0, 1> adc1Channel1{adc1.adc, GPIOC, 1};
+AdcDmaChannel<GPIO_TypeDef, ADC_TypeDef, 0, 1> adc1dma1channel1{adc1.adc, GPIOC, DMA1_Channel1, 1};
+
 
 constexpr std::size_t ADC_BUFFER_SIZE = 1;
 volatile uint16_t adcBuffer[ADC_BUFFER_SIZE];
@@ -45,17 +48,19 @@ int main(void)
 {
 	SystemTimer::Init(4000);
 	//uart2.ConfigureExtiReceive();
-	Timer timerADCPrint{300};
+	//Timer timerADCPrint{300};
 
 	//DmaChannel dma1ch1(DMA1_Channel1);
 	//adc1.EnableDma(dma1ch1, adcBuffer, ADC_BUFFER_SIZE);
-	//adc1.StartConversion();
+	adc1.EnableDma(adc1dma1channel1.dmaChannel, &adc1dma1channel1.value, 1);
+	adc1.StartConversion();
+	adc1.WaitUntilEndOfConversion();
 
 	//TEST_ADC1_DMA_Init(adcBuffer, ADC_BUFFER_SIZE);
 
 	while (true)
 	{
-		//[[maybe_unused]] uint16_t latestValue = adcBuffer[0];
+		[[maybe_unused]] uint16_t latestValue = adc1dma1channel1.value;
 
 		//[[maybe_unused]] volatile uint32_t cndtr = DMA1_Channel1->CNDTR;
 		////////////////_____UART/GPIO EXTI_____////////////////
@@ -80,7 +85,7 @@ int main(void)
 		
 		
 		//[[maybe_unused]] uint16_t ch1 = adcBuffer[0];
-
+/*
 		adc1.StartConversion();
 		adc1.WaitUntilEndOfConversion();
 		adc1Channel1.Read();
@@ -93,7 +98,7 @@ int main(void)
 			//snprintf(buffer, sizeof(buffer), "ADC channel 1: %lu, ADC channel 2: %lu\n", static_cast<unsigned long>(adc1Channel1.Get()), static_cast<unsigned long>(adcChannel2.Get()));
 			uart2.SendString(buffer);
 		}
-
+*/
 		////////////////_____ADC_____////////////////
 
 		////////////////_____GPIO EXTI_____////////////////

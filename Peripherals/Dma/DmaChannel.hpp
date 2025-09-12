@@ -1,6 +1,7 @@
 #pragma once
 #include "../../Inc/Config.hpp"
 
+//configured for dma1ch1 only right now
 class DmaChannel 
 {
 protected:
@@ -15,7 +16,7 @@ public:
 	DmaChannel() = delete;
 	~DmaChannel() = default;
 
-	void Configure(const uint32_t peripheralAddress, const uint32_t memoryAddress, const uint32_t length)
+	void Configure(uint32_t peripheralAddress, uint32_t memoryAddress, const uint32_t length)
 	{
 		channel->CCR &= ~DMA_CCR_EN;
 		channel->CPAR = peripheralAddress; //RM 11.6.5 Channel Peripheral Address Register
@@ -29,7 +30,8 @@ public:
 		channel->CCR |= DMA_CCR_MSIZE_0; //memory size 16 bits;
 
 		DMA1_CSELR->CSELR &= ~(0xF << (0 * 4)); // clear C1S
-		DMA1_CSELR->CSELR |= DMA_CSELR_C1S;
+		//DMA1_CSELR->CSELR |= DMA_CSELR_C1S;
+		DMA1_CSELR->CSELR |= 0x0 << 0; //ADC1->DMA1CH1
 	}
 
 	void Enable() { channel->CCR |= DMA_CCR_EN; }
