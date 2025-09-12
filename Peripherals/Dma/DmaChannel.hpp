@@ -16,6 +16,9 @@ public:
 	DmaChannel() = delete;
 	~DmaChannel() = default;
 
+	//REFACTOR REQUIRED!!!!!!
+	//MORE GENERIC class to configure also other dma(1,2) and channels
+
 	void Configure(uint32_t peripheralAddress, uint32_t memoryAddress, const uint32_t length)
 	{
 		channel->CCR &= ~DMA_CCR_EN;
@@ -29,9 +32,7 @@ public:
 		channel->CCR |= DMA_CCR_PSIZE_0; //Peripheral to memory - 16 bits data;
 		channel->CCR |= DMA_CCR_MSIZE_0; //memory size 16 bits;
 
-		DMA1_CSELR->CSELR &= ~(0xF << (0 * 4)); // clear C1S
-		//DMA1_CSELR->CSELR |= DMA_CSELR_C1S;
-		DMA1_CSELR->CSELR |= 0x0 << 0; //ADC1->DMA1CH1
+		DMA1_CSELR->CSELR &= ~DMA_CSELR_C1S; // clear C1S
 	}
 
 	void Enable() { channel->CCR |= DMA_CCR_EN; }
