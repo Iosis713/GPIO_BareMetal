@@ -14,6 +14,7 @@ protected:
 	{
 		static_assert(channel >= 1 && channel <= 16, "Channel number shall be in range of 1 - 16!");
 		//ADC123_IN1 for PC0 sequence 1 for channel 1 (and value 1), but SQ1 with value 3 for channel 3
+		
 		if (sequence <= 4 )
 			adc->SQR1 |= (channel << ADC_SQR_SQ[sequence - 1]);
 		else if (sequence >= 5 && sequence <= 9)
@@ -39,6 +40,8 @@ public:
 		: adc(adc_)
 		, gpioAnalog(port_)
 	{
+		assert(adc && "ADC member must not be nullptr!");
+
 		ConfigureSequence(sequence);
 		ConfigureSamplingTime(samplingTime);
 	}

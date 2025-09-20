@@ -1,5 +1,6 @@
 #pragma once
 #include "../../Inc/Config.hpp"
+#include <cassert>
 
 //configured for dma1ch1 only right now
 class DmaChannel 
@@ -10,6 +11,7 @@ public:
 	DmaChannel(volatile DMA_Channel_TypeDef* const channel_)
 	 	: channel(channel_)
 	{
+		assert(channel && "DMA channel must not be nullptr!");
 		RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
 	}
 		
@@ -19,7 +21,7 @@ public:
 	//REFACTOR REQUIRED!!!!!!
 	//MORE GENERIC class to configure also other dma(1,2) and channels
 
-	void Configure(uint32_t peripheralAddress, uint32_t memoryAddress, const uint32_t length)
+	void Configure(const uint32_t peripheralAddress, const uint32_t memoryAddress, const uint32_t length)
 	{
 		channel->CCR &= ~DMA_CCR_EN;
 		channel->CPAR = peripheralAddress; //RM 11.6.5 Channel Peripheral Address Register

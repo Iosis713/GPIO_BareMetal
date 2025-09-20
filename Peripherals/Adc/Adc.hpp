@@ -124,6 +124,8 @@ public:
 	Adc(ADC* const adc_)
 		: adc(adc_)
 	{
+		assert (adc && "ADC member must not be nullptr!");
+		
 		ClockEnable();
 		RegulateVoltage();
 		SetResolution();
@@ -148,16 +150,19 @@ public:
 		//cleared by writing 1 manually or reading ADC_DR
 	}
 
-	void EnableDma(DmaChannel& dma, volatile uint16_t* buffer, std::size_t length)
+	void EnableDma(DmaChannel& dma, volatile uint16_t* buffer, const std::size_t length)
 	{
-		dma.Configure(reinterpret_cast<uint32_t>(&adc->DR),
-					  reinterpret_cast<uint32_t>(buffer),
-					  length);
-
-		//Enable ADC DMA Request
-		adc->CFGR |= ADC_CFGR_DMAEN;
-		adc->CFGR |= ADC_CFGR_DMACFG;//RM 18.7.5 circular mode
-		adc->CFGR |= ADC_CFGR_CONT;
-		dma.Enable();
+		if (buffer)
+		{
+			dma.Configure(reinterpret_cast<uint32_t>(&adc->DR),
+						  reinterpret_cast<uint32_t>(buffer),
+						  length);
+			
+			//Enable ADC DMA Request
+			adc->CFGR |= ADC_CFGR_DMAEN;
+			adc->CFGR |= ADC_CFGR_DMACFG;//RM 18.7.5 circular mode
+			adc->CFGR |= ADC_CFGR_CONT;
+			dma.Enable();
+		}
 	}
 };
