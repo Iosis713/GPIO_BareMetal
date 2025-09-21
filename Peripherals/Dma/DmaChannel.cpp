@@ -1,10 +1,12 @@
 #include "DmaChannel.hpp"
+#include <algorithm>
+#include <ranges>
 
 DmaChannel::DmaChannel(volatile DMA_Channel_TypeDef* const channel_)
 	: channel(channel_)
 {
 	assert(channel && "DMA channel must not be nullptr!");
-	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+	RCC->AHB1ENR |= RccAhb1enrDma(channel);
 }
 
 void DmaChannel::Configure(const uint32_t peripheralAddress, const uint32_t memoryAddress, const uint32_t length)
