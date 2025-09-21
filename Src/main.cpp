@@ -44,7 +44,8 @@ int main(void)
 	Timer timerADCPrint{300};
 
 	DmaChannel dma1ch1(DMA1_Channel1);
-	adc1.EnableDma(dma1ch1, &adc1Channel1.value, 1);
+	volatile uint16_t* const buffer {&adc1Channel1.value};
+	adc1.EnableDma(dma1ch1, buffer, 1);
 	adc1.StartConversion();
 
 	while (true)
