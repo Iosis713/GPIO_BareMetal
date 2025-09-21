@@ -150,13 +150,14 @@ public:
 		//cleared by writing 1 manually or reading ADC_DR
 	}
 
-	void EnableDma(DmaChannel& dma, volatile uint16_t* buffer, const std::size_t length)
+	void EnableDma(DmaChannel& dma, volatile uint16_t* buffer, const std::size_t length, const uint8_t dmaRequest /*RM 11.6.7 - 4 bit*/)
 	{
 		if (buffer)
 		{
 			dma.Configure(reinterpret_cast<uint32_t>(&adc->DR),
 						  reinterpret_cast<uint32_t>(buffer),
-						  length);
+						  length,
+						  dmaRequest);
 			
 			//Enable ADC DMA Request
 			adc->CFGR |= ADC_CFGR_DMAEN;

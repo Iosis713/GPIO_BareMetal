@@ -9,7 +9,7 @@ DmaChannel::DmaChannel(volatile DMA_Channel_TypeDef* const channel_)
 	RCC->AHB1ENR |= RccAhb1enrDma(channel);
 }
 
-void DmaChannel::Configure(const uint32_t peripheralAddress, const uint32_t memoryAddress, const uint32_t length)
+void DmaChannel::Configure(const uint32_t peripheralAddress, const uint32_t memoryAddress, const uint32_t length, const uint8_t dmaRequest /*RM 11.6.7 - 4 bit*/)
 {
 	channel->CCR &= ~DMA_CCR_EN;
 	channel->CPAR = peripheralAddress; //RM 11.6.5 Channel Peripheral Address Register
@@ -20,7 +20,11 @@ void DmaChannel::Configure(const uint32_t peripheralAddress, const uint32_t memo
 	channel->CCR |= DMA_CCR_PL_1;
 	channel->CCR |= DMA_CCR_PSIZE_0; //Peripheral to memory - 16 bits data;
 	channel->CCR |= DMA_CCR_MSIZE_0; //memory size 16 bits;
-	DMA1_CSELR->CSELR &= ~DMA_CSELR_C1S; // clear C1S
+
+	const uint32_t bitShift = GetChannelIndex(channel) - 1;
+	constexpr uint8_t cselrMask = 0b0000;
+	DmaCSELR(channel)->CSELR &= cselrMask << bitShift;
+	DmaCSELR(channel)->CSELR |= dmaRequest << bitShift;
 }
 
 void DmaChannel::Enable() { channel->CCR |= DMA_CCR_EN; }

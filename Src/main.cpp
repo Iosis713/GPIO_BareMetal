@@ -8,6 +8,7 @@
 #include "../Peripherals/Adc/Adc.hpp"
 #include "../Peripherals/Adc/AdcChannel.hpp"
 #include "../Peripherals/Dma/DmaChannel.hpp"
+#include "../Peripherals/Dma/DmaRequest.hpp"
 #include "../Inc/Spi.hpp"
 #include "../Inc/Mcp23S08.hpp"
 #include "../Inc/LCD_TFT_ST7735S.hpp"
@@ -45,7 +46,7 @@ int main(void)
 
 	DmaChannel dma1ch1(DMA1_Channel1);
 	volatile uint16_t* const buffer {&adc1Channel1.value};
-	adc1.EnableDma(dma1ch1, buffer, 1);
+	adc1.EnableDma(dma1ch1, buffer, 1, static_cast<uint8_t>(DMA1Request::ADC1_Request));//RM 11.6.7
 	adc1.StartConversion();
 
 	while (true)
