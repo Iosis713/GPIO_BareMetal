@@ -4,7 +4,8 @@
 #include "../Inc/Timer.hpp"
 #include "../Inc/Uart.hpp"
 #include "../Inc/Config.hpp"
-#include "../Inc/Pwm.hpp"
+#include "../Peripherals/Pwm/Pwm.hpp"
+#include "../Peripherals/Pwm/PwmChannelOutput.hpp"
 #include "../Peripherals/Adc/Adc.hpp"
 #include "../Peripherals/Adc/AdcChannel.hpp"
 #include "../Peripherals/Dma/DmaChannel.hpp"
@@ -34,8 +35,8 @@ UART<USART_TypeDef, GPIO_TypeDef, 115200, 80> uart2(USART2);
 Adc<ADC_TypeDef, 1> adc1{ADC1};
 AdcChannel<GPIO_TypeDef, ADC_TypeDef, 0, 1> adc1Channel1{adc1.adc, GPIOC, 1};
 
-//PWM<TIM3_BASE, (4 - 1), (1000 - 1)> pwmTim3(1);
-//PWMChannel<GPIOA_BASE, 6, 1> channel1(pwmTim3.Timer(), AlternateFunction::AF2);
+PWM<TIM3_BASE, (4 - 1), (1024 - 1)> pwmTim3(1);
+PWMChannelOutput<GPIO_TypeDef, 6, 1> channel1(pwmTim3.Timer(), GPIOA, AlternateFunction::AF2);
 //Button<GPIO_TypeDef, 13, OptionsPUPDR::PullUp> userButton(GPIOC);
 
 int main(void)
@@ -48,6 +49,8 @@ int main(void)
 	volatile uint16_t* const buffer {&adc1Channel1.value};
 	adc1.EnableDma(dma1ch1, buffer, 1, static_cast<uint8_t>(DMA1Request::ADC1_Request));//RM 11.6.7
 	adc1.StartConversion();
+
+	uint32_t currentPulse = 0;
 
 	while (true)
 	{
@@ -79,11 +82,15 @@ int main(void)
 		//adc1.WaitUntilEndOfConversion();
 		//adc1Channel1.Read();
 
+		currentPulse = (adc1Channel1.value / 4) > pwmTim3.GetMaxWidth() ? pwmTim3.GetMaxWidth() : (adc1Channel1.value / 4);
+		channel1.SetPulse(currentPulse);
+
 		if (timerADCPrint.IsExpired())
 		{
 			char buffer[64];
 			snprintf(buffer, sizeof(buffer), "ADC channel 1: %lu\n", static_cast<unsigned long>(adc1Channel1.value));
-
+			uart2.SendString(buffer);
+			snprintf(buffer, sizeof(buffer), "Pulse value: %lu Pulse percentage: %lu ", currentPulse, (currentPulse * 100 / pwmTim3.GetMaxWidth()) );
 			//snprintf(buffer, sizeof(buffer), "ADC channel 1: %lu, ADC channel 2: %lu\n", static_cast<unsigned long>(adc1Channel1.Get()), static_cast<unsigned long>(adcChannel2.Get()));
 			uart2.SendString(buffer);
 		}
@@ -134,8 +141,8 @@ extern "C" void TIM2_IRQHandler(void)
 
 extern "C" void TIM3_IRQHandler(void)
 {
-	//pwmTim3.InterruptHandler();
-	//channel1.InterruptHandler();
+	pwmTim3.InterruptHandler();
+	channel1.InterruptHandler();
 
 	//rgbGreen.InterruptHandler();
 	//rgbRed.InterruptHandler();

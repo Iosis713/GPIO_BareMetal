@@ -27,7 +27,7 @@ set(ASM_FLAGS "-x assembler-with-cpp")
 # Warning flags for C++
 # -Wall - standard warnings
 # -Wextra - extended warnings
-set(CXX_WARNINGS "-Wall -Wextra")
+set(CXX_WARNINGS "-Wall -Wextra -Wpedantic -Werror")
 
 # Warning flags for C
 # -Wall - standard warnings
