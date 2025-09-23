@@ -2,10 +2,6 @@
 #include "Config.hpp"
 #include "../Peripherals/Gpio/GpioInput.hpp"
 
-static constexpr std::array<uint32_t, 4> TIM_CCER_CCxP {
-	TIM_CCER_CC1P, TIM_CCER_CC2P, TIM_CCER_CC3P, TIM_CCER_CC4P
-};
-
 static constexpr std::array<uint32_t, 4> TIM_CCER_CCxNP {
 	TIM_CCER_CC1NP, TIM_CCER_CC2NP, TIM_CCER_CC3NP, TIM_CCER_CC4NP
 };

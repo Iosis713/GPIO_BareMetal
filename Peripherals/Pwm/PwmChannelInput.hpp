@@ -46,7 +46,9 @@ private:
 		else
 			timer->CCR4 = 0;
 
-		timer->CCER |= TIM_CCER_CCxE[channel - 1]; //Capture/compare enable register (TIMx_CCER1) RM 31.4.11
+		static constexpr uint8_t CCxEshift = 4 * (channel - 1);
+		timer->CCER |= (CCxEshift << TIM_CCER_CC1E_Pos)
+		//timer->CCER |= TIM_CCER_CCxE[channel - 1]; //Capture/compare enable register (TIMx_CCER1) RM 31.4.11
 		// OCxM must be left at reset value (0b000 = Frozen) in input mode
 
 		//Trigger Rising/falling
@@ -59,9 +61,8 @@ private:
 
 	void ConfigureDirectionMode(const PWMDirection direction)
 	{
-		//Output direction is default (00);
 		auto& CCMR = (channel <= 2) ? timer->CCMR1 : timer->CCMR2;
-		CCMR &= ~(PWMDirection::Output << TIM_CCMR_CCxS_Pos[channel - 1]);// 00 output
+		CCMR &= ~(PWMDirection::Output << TIM_CCMR_CCxS_Pos[channel - 1]);
 		CCMR |= (direction << TIM_CCMR_CCxS_Pos[channel - 1]);
 	}
 

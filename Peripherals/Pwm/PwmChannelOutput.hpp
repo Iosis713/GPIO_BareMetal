@@ -136,7 +136,7 @@ public:
 		if constexpr (channel == 1)
 		{
 			if (timer->SR & TIM_SR_CC1IF)
-						timer->SR &= ~(TIM_SR_CC1IF); //capture compare event
+				timer->SR &= ~(TIM_SR_CC1IF); //capture compare event
 		}
 		else if constexpr (channel == 2)
 		{
@@ -157,10 +157,11 @@ public:
 
 	void ConfigurePolarity(const PWMPolarity polarity)
 	{
+		static constexpr uint8_t shift = 4 * (channel - 1);
 		if (polarity == PWMPolarity::ActiveHigh)
-			timer->CCER &= ~(TIM_CCER_CCxP[channel - 1]);
+			timer->CCER &= ~(shift << TIM_CCER_CC1P_Msk);
 		else if (polarity == PWMPolarity::ActiveLow)
-			timer->CCER |= TIM_CCER_CCxP[channel - 1];
+			timer->CCER |= (shift << TIM_CCER_CC1P_Msk);
 	}
 
 };
