@@ -61,22 +61,8 @@ private:
 	{
 		//Output direction is default (00);
 		auto& CCMR = (channel <= 2) ? timer->CCMR1 : timer->CCMR2;
-		CCMR &= ~(TIM_CCMR_CCxS[channel - 1][0]);// 00 output
-		CCMR &= ~(TIM_CCMR_CCxS[channel - 1][1]);
-
-		if (direction == PWMDirection::InputDirect)
-		{
-			CCMR |= TIM_CCMR_CCxS[channel - 1][0];// 01 input direct
-		}
-		else if (direction == PWMDirection::InputIndirect)
-		{
-			CCMR |= TIM_CCMR_CCxS[channel - 1][1];// 10 input indirect
-		}
-		else if (direction == PWMDirection::InputTRC)
-		{
-			CCMR |= TIM_CCMR_CCxS[channel - 1][0];// 11 input TRC
-			CCMR |= TIM_CCMR_CCxS[channel - 1][1];
-		}
+		CCMR &= ~(PWMDirection::Output << TIM_CCMR_CCxS_Pos[channel - 1]);// 00 output
+		CCMR |= (direction << TIM_CCMR_CCxS_Pos[channel - 1]);
 	}
 
 public:

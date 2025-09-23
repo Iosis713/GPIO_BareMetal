@@ -10,20 +10,19 @@ static constexpr std::array<uint32_t, 4> TIM_CCER_CCxNP {
 	TIM_CCER_CC1NP, TIM_CCER_CC2NP, TIM_CCER_CC3NP, TIM_CCER_CC4NP
 };
 
-static constexpr std::array<std::array<uint32_t, 2>, 4> TIM_CCMR_CCxS = {{
-	{{TIM_CCMR1_CC1S_0, TIM_CCMR1_CC1S_1}}, {{TIM_CCMR1_CC2S_0, TIM_CCMR1_CC2S_1}}, {{TIM_CCMR2_CC3S_0, TIM_CCMR2_CC3S_1}}, {{TIM_CCMR2_CC4S_0, TIM_CCMR2_CC4S_1}}
-}};
+static constexpr std::array<uint32_t, 4> TIM_CCMR_CCx_Pos = {
+	TIM_CCMR1_CC1S_Pos, TIM_CCMR1_CC2S_Pos, TIM_CCMR2_CC3S_Pos, TIM_CCMR2_CC4S_Pos};
 
 static constexpr std::array<uint32_t, 4> TIM_CCER_CCxE = { TIM_CCER_CC1E, TIM_CCER_CC2E, TIM_CCER_CC3E, TIM_CCER_CC4E };
 
 static constexpr std::array<uint32_t, 4> TIM_DIER_CCxIE = { TIM_DIER_CC1IE, TIM_DIER_CC2IE, TIM_DIER_CC3IE, TIM_DIER_CC4IE };
 
-enum class PWMDirection
+enum class PWMDirection : uint8_t
 {
-	Output,
-	InputDirect,
-	InputIndirect,
-	InputTRC
+	Output = 0b00,
+	InputDirect = 0b01,
+	InputIndirect = 0b10,
+	InputTRC = 0b11
 };
 
 enum class PWMPolarity
