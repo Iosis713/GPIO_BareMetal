@@ -1,5 +1,6 @@
 #pragma once
 #include "../Gpio/IGpio.hpp"
+#include "Pwm.hpp"
 
 template<GpioPort Port
         , uint8_t pin_
@@ -163,5 +164,4 @@ public:
 		else if (polarity == PWMPolarity::ActiveLow)
 			timer->CCER |= (shift << TIM_CCER_CC1P_Msk);
 	}
-
 };

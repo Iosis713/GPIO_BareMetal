@@ -35,8 +35,8 @@ UART<USART_TypeDef, GPIO_TypeDef, 115200, 80> uart2(USART2);
 Adc<ADC_TypeDef, 1> adc1{ADC1};
 AdcChannel<GPIO_TypeDef, ADC_TypeDef, 0, 1> adc1Channel1{adc1.adc, GPIOC, 1};
 
-PWM<TIM3_BASE, (4 - 1), (1024 - 1)> pwmTim3(1);
-PWMChannelOutput<GPIO_TypeDef, 6, 1> channel1(pwmTim3.Timer(), GPIOA, AlternateFunction::AF2);
+PWM<TIM_TypeDef, (4 - 1), (1024 - 1)> pwmTim3(TIM3, 1);
+PWMChannelOutput<GPIO_TypeDef, 6, 1> channel1(pwmTim3.timer, GPIOA, AlternateFunction::AF2);
 //Button<GPIO_TypeDef, 13, OptionsPUPDR::PullUp> userButton(GPIOC);
 
 int main(void)
