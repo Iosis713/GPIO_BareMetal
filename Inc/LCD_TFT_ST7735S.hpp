@@ -6,7 +6,7 @@
 
 #include "../Peripherals/Gpio/GpioOutput.hpp"
 #include "../Inc/LCD_TFT_ST7735S.hpp"
-#include "../Inc/Spi.hpp"
+#include "../Peripherals/Spi/Spi.hpp"
 #include "../Inc/Timer.hpp"
 #include <array>
 #include <span>

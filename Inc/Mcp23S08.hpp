@@ -10,7 +10,7 @@
 #define MCP23S08_HPP_
 
 #include <cstdint>
-#include "Spi.hpp"
+#include "../Peripherals/Spi/Spi.hpp"
 #include "../Peripherals/Gpio/GpioOutput.hpp"
 
 namespace MCP23S08 {
