@@ -75,12 +75,11 @@ enum class SpiSCK
 	SPI3_PC10_AF6
 };
 
-
 class ISpiPins
 {
 protected:
 	template<SpiSCK spiSCK_>
-	static const auto /*GpioAlternate<T1, T2, T3>*/ ConfigureSCK()
+	static constexpr auto /*GpioAlternate<T1, T2, T3>*/ ConfigureSCK()
 	{
 		using enum SpiSCK;
 		if constexpr (spiSCK_ == SPI1_PA5_AF5)
@@ -98,7 +97,7 @@ protected:
 	}
 
 	template<SpiMISO spiMISO_>
-	static const auto ConfigureMISO()
+	static constexpr auto ConfigureMISO()
 	{
 		using enum SpiMISO;
 		if constexpr (spiMISO_ == SPI1_PA6_AF5)
@@ -118,7 +117,7 @@ protected:
 	}
 
 	template<SpiMOSI spiMOSI_>
-	static const auto ConfigureMOSI()
+	static constexpr auto ConfigureMOSI()
 	{
 		using enum SpiMOSI;
 		if constexpr (spiMOSI_ == SPI1_PA7_AF5)
@@ -137,8 +136,6 @@ protected:
 			return GpioAlternate<GPIO_TypeDef, 12, AlternateFunction::AF6>{GPIOC};
 	}
 public:
-	//ISpiPins(const ISpiPins& source) = delete;
-	//ISpiPins(ISpiPins&& source) = delete;
 	ISpiPins& operator=(const ISpiPins& source) = delete;
 	ISpiPins& operator=(ISpiPins&& source) = delete;
 };
@@ -154,9 +151,9 @@ public:
 	SpiPinsFullDuplex& operator=(SpiPinsFullDuplex&& source) = delete;
 	SpiPinsFullDuplex() = default;
 
-	static const auto sck = ConfigureSCK<spiSCK_>();
-	static const auto miso = ConfigureMISO<spiMISO_>();
-	static const auto mosi = ConfigureMOSI<spiMOSI_>();
+	static const inline auto sck = ConfigureSCK<spiSCK_>();
+	static const inline auto miso = ConfigureMISO<spiMISO_>();
+	static const inline auto mosi = ConfigureMOSI<spiMOSI_>();
 };
 
 template<SpiSCK spiSCK_, SpiMOSI spiMOSI_>
@@ -170,8 +167,8 @@ public:
 	SpiPinsHalfDuplexTX& operator=(SpiPinsHalfDuplexTX&& source) = delete;
 	SpiPinsHalfDuplexTX() = default;
 
-	static const auto sck = ConfigureSCK<spiSCK_>();
-	static const auto mosi = ConfigureMOSI<spiMOSI_>();
+	static const inline auto sck = ConfigureSCK<spiSCK_>();
+	static const inline auto mosi = ConfigureMOSI<spiMOSI_>();
 };
 
 template<SpiSCK spiSCK_, SpiMOSI spiMISO_>
@@ -185,8 +182,8 @@ public:
 	SpiPinsHalfDuplexRX& operator=(SpiPinsHalfDuplexRX&& source) = delete;
 	SpiPinsHalfDuplexRX() = default;
 
-	static const auto sck = ConfigureSCK<spiSCK_>();
-	static const auto miso = ConfigureMOSI<spiMISO_>();
+	static constexpr auto sck = ConfigureSCK<spiSCK_>();
+	static constexpr auto miso = ConfigureMOSI<spiMISO_>();
 };
 
 template<typename Derived>

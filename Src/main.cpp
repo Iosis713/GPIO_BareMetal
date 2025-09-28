@@ -51,19 +51,17 @@ int main(void)
 	uint32_t currentPulse = 0;
 	*/
 
-	//Spi<SPI2_BASE, SpiMode::FullDuplex> spi2;
-	//[[maybe_unused]] SpiPinsFullDuplex<SpiSCK::SPI2_PB10_AF5, SpiMISO::SPI2_PC2_AF5, SpiMOSI::SPI2_PC3_AF5> spi2Pins;
-	GpioAlternate<GPIO_TypeDef, 10, AlternateFunction::AF5> spi2SCK(GPIOB);
-	GpioAlternate<GPIO_TypeDef, 2, AlternateFunction::AF5> spi2MISO(GPIOC);
-	GpioAlternate<GPIO_TypeDef, 3, AlternateFunction::AF5> spi2MOSI(GPIOC);
+	Spi<SPI2_BASE, SpiMode::FullDuplex> spi2;
+	[[maybe_unused]] SpiPinsFullDuplex<SpiSCK::SPI2_PB10_AF5, SpiMISO::SPI2_PC2_AF5, SpiMOSI::SPI2_PC3_AF5> spi2Pins;
 
-	EnableSpiClocks();
-	SpiConfigFullDuplex();
+	//EnableSpiClocks();
+	//SpiConfigFullDuplex();
 	GpioOutput<GPIO_TypeDef, 0> ioexp_cs(GPIOC);
 	ioexp_cs.Set();
 
 	ioexp_cs.Clear();
-	McpWriteRegister(ioexp_cs, MCP23S08::IODIR, 0xFE);
+	McpWriteRegister(ioexp_cs, spi2, MCP23S08::IODIR, 0xFE);
+	McpWriteRegister(ioexp_cs, spi2, MCP23S08::GPPU, 0x02); //pull-up resistor for GP1 - button
 	ioexp_cs.Set();
 	//Timer mcp23s08LedTimer(300);
 
@@ -121,19 +119,11 @@ int main(void)
 
 		////////////////________SPI________////////////////
 
-		
-		ioexp_cs.Clear();
-		McpWriteRegister(ioexp_cs, MCP23S08::OLAT, 0x01);
-		ioexp_cs.Set();
+		if ((McpReadRegister(ioexp_cs, spi2, MCP23S08::GPIO) & 0x02) == 0)
+			McpWriteRegister(ioexp_cs, spi2, MCP23S08::OLAT, 0x01); //turn led on
+		else
+			McpWriteRegister(ioexp_cs, spi2, MCP23S08::OLAT, 0x00);	//turn led off
 
-		Delay(500);
-
-		ioexp_cs.Clear();
-		McpWriteRegister(ioexp_cs, MCP23S08::OLAT, 0x00);
-		ioexp_cs.Set();
-
-		Delay(500);
-		
 		////////////////________SPI________////////////////
 	}
 }
