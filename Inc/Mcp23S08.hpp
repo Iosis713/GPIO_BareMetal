@@ -51,7 +51,7 @@ concept SpiConcept = requires(T spi, uint8_t value)
 };
 
 template<GpioOutputConcept Gpio, SpiConcept Spi>
-void McpWriteRegister(Gpio& CSline /*GpioOutput*/, Spi& spi, const uint8_t reg, const uint8_t value)
+void McpWriteRegister(Gpio& CSline , Spi& spi, const uint8_t reg, const uint8_t value)
 {
 	CSline.Clear(); // select MCP
 	spi.Transmit(0x40);
@@ -60,7 +60,7 @@ void McpWriteRegister(Gpio& CSline /*GpioOutput*/, Spi& spi, const uint8_t reg, 
 	CSline.Set();
 }
 template<GpioOutputConcept Gpio, SpiConcept Spi>
-uint8_t McpReadRegister(Gpio& CSline /*GpioOutput*/, Spi& spi, const uint8_t reg)
+uint8_t McpReadRegister(Gpio& CSline, Spi& spi, const uint8_t reg)
 {
 	CSline.Clear();
 	spi.Transmit(0x41); //opcode for read (R/W = 1)
