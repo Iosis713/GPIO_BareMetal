@@ -24,7 +24,6 @@ set(C_SRCS
     Src/sysmem.c
     Src/main.cpp
     Src/Timer.cpp
-    Src/Spi.cpp
     Peripherals/Dma/DmaChannel.cpp
     Startup/startup_stm32l476rgtx.s
     Drivers/CMSIS/Device/ST/STM32L4xx/Source/system_stm32l4xx.cpp)

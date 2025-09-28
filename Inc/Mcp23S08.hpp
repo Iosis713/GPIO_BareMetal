@@ -42,9 +42,6 @@ void McpWriteRegister(auto& CSline /*GpioOutput*/, auto& spi, const uint8_t reg,
 	spi.Transmit(0x40);
 	spi.Transmit(reg);
 	spi.Transmit(value);
-	//Spi2Transmit(0x40); //opcode for write to MCP23S08 (A2:A0 = 000);
-	//Spi2Transmit(reg); //register address
-	//Spi2Transmit(value); //data
 	CSline.Set();
 }
 
@@ -53,7 +50,7 @@ uint8_t McpReadRegister(auto& CSline /*GpioOutput*/, auto& spi, const uint8_t re
 	CSline.Clear();
 	spi.Transmit(0x41); //opcode for read (R/W = 1)
 	spi.Transmit(reg); //register address
-	volatile const uint8_t received = Spi2Receive();
+	volatile const uint8_t received = spi.Receive();
 	CSline.Set();
 	return received;
 }
