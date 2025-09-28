@@ -11,6 +11,7 @@
 
 #include <cstdint>
 #include "Spi.hpp"
+#include "../Peripherals/Gpio/GpioOutput.hpp"
 
 namespace MCP23S08 {
 static constexpr uint8_t IODIR = 0x00;
@@ -35,8 +36,22 @@ static constexpr uint8_t GP6 = 0x40;
 static constexpr uint8_t GP7 = 0x80;
 };
 
-//abbreviated template
-void McpWriteRegister(auto& CSline /*GpioOutput*/, auto& spi, const uint8_t reg, const uint8_t value)
+template<typename T>
+concept GpioOutputConcept = requires (T gpio)
+{
+	gpio.Clear();
+	gpio.Set();
+};
+
+template<typename T>
+concept SpiConcept = requires(T spi, uint8_t value)
+{
+	spi.Transmit(value);
+	spi.Receive();
+};
+
+template<GpioOutputConcept Gpio, SpiConcept Spi>
+void McpWriteRegister(Gpio& CSline /*GpioOutput*/, Spi& spi, const uint8_t reg, const uint8_t value)
 {
 	CSline.Clear(); // select MCP
 	spi.Transmit(0x40);
@@ -44,8 +59,8 @@ void McpWriteRegister(auto& CSline /*GpioOutput*/, auto& spi, const uint8_t reg,
 	spi.Transmit(value);
 	CSline.Set();
 }
-
-uint8_t McpReadRegister(auto& CSline /*GpioOutput*/, auto& spi, const uint8_t reg)
+template<GpioOutputConcept Gpio, SpiConcept Spi>
+uint8_t McpReadRegister(Gpio& CSline /*GpioOutput*/, Spi& spi, const uint8_t reg)
 {
 	CSline.Clear();
 	spi.Transmit(0x41); //opcode for read (R/W = 1)
