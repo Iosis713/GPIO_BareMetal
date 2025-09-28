@@ -164,8 +164,8 @@ public:
 		using enum AlternateFunction;
 
 		uint8_t LowOrHigh = Derived::pin <= 7 ? 0 : 1;
-		static constexpr uint8_t AFMask = 0b1111;
-		static constexpr uint8_t bitShift = 4 * Derived::pin; //AF is 4 bits wide
+		static constexpr uint32_t AFMask = 0b1111;
+		static constexpr uint32_t bitShift = 4 * (Derived::pin % 8); //AF is 4 bits wide
 		static_cast<Derived*>(this)->port->AFR[LowOrHigh] &= ~(AFMask << bitShift);
 		static_cast<Derived*>(this)->port->AFR[LowOrHigh] |= (static_cast<uint32_t>(af) << bitShift);
 	}

@@ -1,13 +1,12 @@
 #include "../Peripherals/Gpio/GpioOutput.hpp"
-
-#include "../Inc/Button.hpp"
+//#include "../Inc/Button.hpp"
 #include "../Inc/Timer.hpp"
 #include "../Inc/Uart.hpp"
 #include "../Inc/Config.hpp"
-#include "../Peripherals/Pwm/Pwm.hpp"
-#include "../Peripherals/Pwm/PwmChannelOutput.hpp"
-#include "../Peripherals/Adc/Adc.hpp"
-#include "../Peripherals/Adc/AdcChannel.hpp"
+//#include "../Peripherals/Pwm/Pwm.hpp"
+//#include "../Peripherals/Pwm/PwmChannelOutput.hpp"
+//#include "../Peripherals/Adc/Adc.hpp"
+//#include "../Peripherals/Adc/AdcChannel.hpp"
 #include "../Peripherals/Dma/DmaChannel.hpp"
 #include "../Peripherals/Dma/DmaRequest.hpp"
 #include "../Inc/Spi.hpp"
@@ -32,30 +31,44 @@ void SetRGBSignal(const float distance);
 
 GpioOutput<GPIO_TypeDef, 5> ld2(GPIOA);
 UART<USART_TypeDef, GPIO_TypeDef, 115200, 80> uart2(USART2);
-Adc<ADC_TypeDef, 1> adc1{ADC1};
-AdcChannel<GPIO_TypeDef, ADC_TypeDef, 0, 1> adc1Channel1{adc1.adc, GPIOC, 1};
+//Adc<ADC_TypeDef, 1> adc1{ADC1};
+//AdcChannel<GPIO_TypeDef, ADC_TypeDef, 0, 1> adc1Channel1{adc1.adc, GPIOC, 1};
 
-PWM<TIM_TypeDef, (4 - 1), (1024 - 1)> pwmTim3(TIM3, 1);
-PWMChannelOutput<GPIO_TypeDef, 6, 1> channel1(pwmTim3.timer, GPIOA, AlternateFunction::AF2);
+//PWM<TIM_TypeDef, (4 - 1), (1024 - 1)> pwmTim3(TIM3, 1);
+//PWMChannelOutput<GPIO_TypeDef, 6, 1> channel1(pwmTim3.timer, GPIOA, AlternateFunction::AF2);
 //Button<GPIO_TypeDef, 13, OptionsPUPDR::PullUp> userButton(GPIOC);
 
 int main(void)
 {
 	SystemTimer::Init(4000);
 	uart2.ConfigureExtiReceive();
-	Timer timerADCPrint{300};
+	//Timer timerADCPrint{300};
 
-	DmaChannel dma1ch1(DMA1_Channel1);
+	/*DmaChannel dma1ch1(DMA1_Channel1);
 	volatile uint16_t* const buffer {&adc1Channel1.value};
 	adc1.EnableDma(dma1ch1, buffer, 1, static_cast<uint8_t>(DMA1Request::ADC1_Request));//RM 11.6.7
 	adc1.StartConversion();
-
 	uint32_t currentPulse = 0;
+	*/
+
+	//Spi<SPI2_BASE, SpiMode::FullDuplex> spi2;
+	//[[maybe_unused]] SpiPinsFullDuplex<SpiSCK::SPI2_PB10_AF5, SpiMISO::SPI2_PC2_AF5, SpiMOSI::SPI2_PC3_AF5> spi2Pins;
+	GpioAlternate<GPIO_TypeDef, 10, AlternateFunction::AF5> spi2SCK(GPIOB);
+	GpioAlternate<GPIO_TypeDef, 2, AlternateFunction::AF5> spi2MISO(GPIOC);
+	GpioAlternate<GPIO_TypeDef, 3, AlternateFunction::AF5> spi2MOSI(GPIOC);
+
+	EnableSpiClocks();
+	SpiConfigFullDuplex();
+	GpioOutput<GPIO_TypeDef, 0> ioexp_cs(GPIOC);
+	ioexp_cs.Set();
+
+	ioexp_cs.Clear();
+	McpWriteRegister(ioexp_cs, MCP23S08::IODIR, 0xFE);
+	ioexp_cs.Set();
+	//Timer mcp23s08LedTimer(300);
 
 	while (true)
 	{
-		[[maybe_unused]] uint16_t latestValue = adc1Channel1.value;
-
 		////////////////_____UART/GPIO EXTI_____////////////////
 		
 		if (uart2.GetStringIT() == ERROR_CODE::OK)
@@ -77,11 +90,11 @@ int main(void)
 		////////////////_____ADC_____////////////////
 		
 		//FOR NON DMA USAGE
-
 		//adc1.StartConversion();
 		//adc1.WaitUntilEndOfConversion();
 		//adc1Channel1.Read();
 
+		/*
 		currentPulse = (adc1Channel1.value / 4) > pwmTim3.GetMaxWidth() ? pwmTim3.GetMaxWidth() : (adc1Channel1.value / 4);
 		channel1.SetPulse(currentPulse);
 
@@ -91,9 +104,9 @@ int main(void)
 			snprintf(buffer, sizeof(buffer), "ADC channel 1: %lu\n", static_cast<unsigned long>(adc1Channel1.value));
 			uart2.SendString(buffer);
 			snprintf(buffer, sizeof(buffer), "Pulse value: %lu Pulse percentage: %lu ", currentPulse, (currentPulse * 100 / pwmTim3.GetMaxWidth()) );
-			//snprintf(buffer, sizeof(buffer), "ADC channel 1: %lu, ADC channel 2: %lu\n", static_cast<unsigned long>(adc1Channel1.Get()), static_cast<unsigned long>(adcChannel2.Get()));
 			uart2.SendString(buffer);
 		}
+		*/
 		////////////////_____ADC_____////////////////
 
 		////////////////_____GPIO EXTI_____////////////////
@@ -105,6 +118,23 @@ int main(void)
 		}*/
 
 		////////////////_____GPIO EXTI_____////////////////
+
+		////////////////________SPI________////////////////
+
+		
+		ioexp_cs.Clear();
+		McpWriteRegister(ioexp_cs, MCP23S08::OLAT, 0x01);
+		ioexp_cs.Set();
+
+		Delay(500);
+
+		ioexp_cs.Clear();
+		McpWriteRegister(ioexp_cs, MCP23S08::OLAT, 0x00);
+		ioexp_cs.Set();
+
+		Delay(500);
+		
+		////////////////________SPI________////////////////
 	}
 }
 
@@ -141,8 +171,8 @@ extern "C" void TIM2_IRQHandler(void)
 
 extern "C" void TIM3_IRQHandler(void)
 {
-	pwmTim3.InterruptHandler();
-	channel1.InterruptHandler();
+	//pwmTim3.InterruptHandler();
+	//channel1.InterruptHandler();
 
 	//rgbGreen.InterruptHandler();
 	//rgbRed.InterruptHandler();
