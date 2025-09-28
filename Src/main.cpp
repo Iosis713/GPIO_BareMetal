@@ -52,7 +52,7 @@ int main(void)
 	uint32_t currentPulse = 0;
 	*/
 
-	Spi<SPI2_BASE, SpiMode::FullDuplex> spi2;
+	Spi<SPI_TypeDef, SpiMode::FullDuplex> spi2(SPI2);
 	[[maybe_unused]] SpiPinsFullDuplex<SpiSCK::SPI2_PB10_AF5, SpiMISO::SPI2_PC2_AF5, SpiMOSI::SPI2_PC3_AF5> spi2Pins;
 
 	GpioOutput<GPIO_TypeDef, 0> ioexp_cs(GPIOC);
