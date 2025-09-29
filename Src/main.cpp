@@ -10,7 +10,7 @@
 #include "../Peripherals/Dma/DmaChannel.hpp"
 #include "../Peripherals/Dma/DmaRequest.hpp"
 #include "../Peripherals/Spi/Spi.hpp"
-#include "../Peripherals/Spi/SpiPinsFullDuplex.hpp"
+#include "../Peripherals/Spi/SpiPins.hpp"
 #include "../Inc/Mcp23S08.hpp"
 #include "../Inc/LCD_TFT_ST7735S.hpp"
 #include "../Inc/I2C.hpp"
@@ -53,14 +53,16 @@ int main(void)
 	*/
 
 	Spi<SPI_TypeDef, SpiMode::FullDuplex> spi2(SPI2);
-	[[maybe_unused]] SpiPinsFullDuplex<SpiSCK::SPI2_PB10_AF5, SpiMISO::SPI2_PC2_AF5, SpiMOSI::SPI2_PC3_AF5> spi2Pins;
+	[[maybe_unused]] const auto spi2SCK = SpiPins::ConfigureSCK<SpiSCK::SPI2_PB10_AF5>();
+	[[maybe_unused]] const auto spi2MISO = SpiPins::ConfigureMISO<SpiMISO::SPI2_PC2_AF5>();
+	[[maybe_unused]] const auto spi2MOSI = SpiPins::ConfigureMOSI<SpiMOSI::SPI2_PC3_AF5>();
 
 	GpioOutput<GPIO_TypeDef, 0> ioexp_cs(GPIOC);
 	ioexp_cs.Set();
 
 	ioexp_cs.Clear();
-	McpWriteRegister(ioexp_cs, spi2, MCP23S08::IODIR, 0xFE);
-	McpWriteRegister(ioexp_cs, spi2, MCP23S08::GPPU, 0x02); //pull-up resistor for GP1 - button
+	McpWriteRegister(ioexp_cs, spi2, MCP23S08::IODIR, 0xFE); //all bits are 1, but bit [0] = 0b1111 1110
+	McpWriteRegister(ioexp_cs, spi2, MCP23S08::GPPU, 0x02); //pull-up resistor for GP1 - button for bit[1] = 0b10
 	ioexp_cs.Set();
 	//Timer mcp23s08LedTimer(300);
 

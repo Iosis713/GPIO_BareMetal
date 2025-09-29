@@ -4,7 +4,6 @@
 //////////////////////////////////////////////////
 //////////////////////////////////////////////////
 //			NEED TO ADD ALSO DMA				//
-// 			WRITE UNIT TESTS FOR ISpi			//
 //////////////////////////////////////////////////
 //////////////////////////////////////////////////
 
@@ -21,7 +20,7 @@ enum class HalfDuplexDirection
 };
 
 template<typename T>
-concept SpiInterface = requires(T spi)
+concept SpiStructure = requires(T spi)
 {
 	{ spi.CR1 } -> std::convertible_to<volatile uint32_t>;
 	{ spi.CR2 } -> std::convertible_to<volatile uint32_t>;
@@ -32,10 +31,10 @@ concept SpiInterface = requires(T spi)
 	{ spi.TXCRCR } -> std::convertible_to<volatile uint32_t>;
 };
 
-template<SpiInterface SpiStruct, SpiMode spiMode_>
+template<SpiStructure SpiStruct, SpiMode spiMode_>
 class Spi
 {
-protected:
+private:
 	inline void WaitUntilTXEIsEmpty() { while(!(spi->SR & SPI_SR_TXE));}
 	inline void WriteData(const uint8_t data) { *reinterpret_cast<volatile uint8_t*>(&spi->DR) = data; }
 	inline void WaitUntilRXNEIsNotEmpty() { while(!(spi->SR & SPI_SR_RXNE)); }
@@ -99,7 +98,7 @@ protected:
 		else if (spiMode == SpiMode::FullDuplex)
 		{
 			//bidimode already 0 by default;
-			(this)->spi->CR1 &= ~(SPI_CR1_RXONLY); //Receive only mode enabled (0 for full duplex)
+			spi->CR1 &= ~(SPI_CR1_RXONLY); //Receive only mode enabled (0 for full duplex)
 		}
 		spi->CR2 &= ~SPI_CR2_DS; //clear all bits
 		spi->CR2 |= (0b0111 << SPI_CR2_DS_Pos); //0111 for 8 bit
