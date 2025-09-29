@@ -2,6 +2,14 @@
 #include "../../Inc/Config.hpp"
 #include <cassert>
 
+/*
+
+TO DO
+Add CCR_DIR selection (runtime) to configure memory->peripheral and peripheral->memory data transfer
+as it is required for SPI
+
+*/
+
 class DmaChannel 
 {
 private:
