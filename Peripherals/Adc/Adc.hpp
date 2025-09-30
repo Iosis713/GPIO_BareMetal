@@ -158,6 +158,7 @@ public:
 						  reinterpret_cast<uint32_t>(buffer),
 						  length,
 						  dmaRequest);
+			dma.SetCircularMode();
 			
 			//Enable ADC DMA Request
 			adc->CFGR |= ADC_CFGR_DMAEN;

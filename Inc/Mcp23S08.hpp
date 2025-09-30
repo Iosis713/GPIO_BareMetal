@@ -12,6 +12,8 @@
 #include <cstdint>
 #include "../Peripherals/Spi/Spi.hpp"
 #include "../Peripherals/Gpio/GpioOutput.hpp"
+#include "../Peripherals/Dma/DmaChannel.hpp"
+#include "../Peripherals/Dma/DmaRequest.hpp"
 
 namespace MCP23S08 {
 static constexpr uint8_t IODIR = 0x00;
@@ -69,5 +71,23 @@ uint8_t McpReadRegister(Gpio& CSline, Spi& spi, const uint8_t reg)
 	CSline.Set();
 	return received;
 }
+
+template<GpioOutputConcept Gpio, SpiConcept Spi>
+void McpWriteRegisterDma(Gpio& CSline, Spi& spi, DmaChannel& dmaTx, const uint8_t reg, const uint8_t value, const DMA1Request dmaRequest)
+{
+	static uint8_t txBuffer[3] { 0x40, reg, value };
+	CSline.Clear();
+
+	spi.EnableDma(dmaTx, txBuffer, 1, static_cast<uint8_t>(dmaRequest), HalfDuplexDirection::Transmit);
+}
+
+template<GpioOutputConcept Gpio, SpiConcept Spi>
+void McpWriteRegisterDma_IRQHandler(Gpio& CSline, Spi& spi, DmaChannel& dmaTx)
+{
+	spi.DisableDmaTX();
+	dmaTx.Disable();
+	CSline.Set();
+}
+
 
 #endif /* MCP23S08_HPP_ */

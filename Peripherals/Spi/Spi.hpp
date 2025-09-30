@@ -1,5 +1,6 @@
 #pragma once
 #include "Config.hpp"
+#include "../Dma/DmaChannel.hpp"
 
 //////////////////////////////////////////////////
 //////////////////////////////////////////////////
@@ -109,6 +110,9 @@ private:
 		spi->CR1 |= SPI_CR1_SPE; //spi enabled
 	}
 
+	inline void EnableDmaTX() { spi->CR2 |= SPI_CR2_TXDMAEN; }
+	inline void EnableDmaRX() { spi->CR2 |= SPI_CR2_RXDMAEN; }
+
 public:
 	volatile SpiStruct* const spi = nullptr;
 	static constexpr SpiMode spiMode = spiMode_;
@@ -149,4 +153,32 @@ public:
 		WaitUntilRXNEIsNotEmpty();
 		return ReadData();
 	}
+	
+	void EnableDma(DmaChannel& dma, volatile uint8_t* buffer, const std::size_t length, const uint8_t dmaRequest /*RM 11.6.7 - 4 bit*/, const HalfDuplexDirection direction)
+	{
+		if (buffer)
+		{
+			DmaDirection dmaDirection = DmaDirection::ReadFromPeripheralRX;
+			if (direction == HalfDuplexDirection::Transmit)
+				dmaDirection = DmaDirection::ReadFromMemoryTX;
+
+			dma.Configure(reinterpret_cast<uint32_t>(&spi->DR),
+						  reinterpret_cast<uint32_t>(buffer),
+						  length,
+						  dmaRequest,
+						  dmaDirection,
+						  DmaMemoryPeripheralSize::bits_8);
+
+			if (direction == HalfDuplexDirection::Receive)
+				EnableDmaRX();
+			else
+				EnableDmaTX();
+
+			dma.EnableInterruptTC();
+			dma.Enable();
+		}
+	}
+
+	inline void DisableDmaTX() { spi->CR2 &= ~SPI_CR2_TXDMAEN; }
+	inline void DisableDmaRX() { spi->CR2 &= ~SPI_CR2_RXDMAEN; }
 };

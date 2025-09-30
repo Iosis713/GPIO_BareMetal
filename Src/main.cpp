@@ -39,6 +39,10 @@ UART<USART_TypeDef, GPIO_TypeDef, 115200, 80> uart2(USART2);
 //PWMChannelOutput<GPIO_TypeDef, 6, 1> channel1(pwmTim3.timer, GPIOA, AlternateFunction::AF2);
 //Button<GPIO_TypeDef, 13, OptionsPUPDR::PullUp> userButton(GPIOC);
 
+DmaChannel dmaTx(DMA1_Channel2);
+Spi<SPI_TypeDef, SpiMode::FullDuplex> spi2(SPI2);
+GpioOutput<GPIO_TypeDef, 0> ioexp_cs(GPIOC);
+
 int main(void)
 {
 	SystemTimer::Init(4000);
@@ -52,12 +56,10 @@ int main(void)
 	uint32_t currentPulse = 0;
 	*/
 
-	Spi<SPI_TypeDef, SpiMode::FullDuplex> spi2(SPI2);
 	SpiPins::ConfigureSCK<SpiSCK::SPI2_PB10_AF5>();
 	SpiPins::ConfigureMISO<SpiMISO::SPI2_PC2_AF5>();
 	SpiPins::ConfigureMOSI<SpiMOSI::SPI2_PC3_AF5>();
 
-	GpioOutput<GPIO_TypeDef, 0> ioexp_cs(GPIOC);
 	ioexp_cs.Clear();
 	McpWriteRegister(ioexp_cs, spi2, MCP23S08::IODIR, 0xFE); //all bits are 1, but bit [0] = 0b1111 1110
 	McpWriteRegister(ioexp_cs, spi2, MCP23S08::GPPU, 0x02); //pull-up resistor for GP1 - button for bit[1] = 0b10
@@ -118,10 +120,18 @@ int main(void)
 
 		////////////////________SPI________////////////////
 
+		
 		if ((McpReadRegister(ioexp_cs, spi2, MCP23S08::GPIO) & 0x02) == 0)
 			McpWriteRegister(ioexp_cs, spi2, MCP23S08::OLAT, 0x01); //turn led on
 		else
 			McpWriteRegister(ioexp_cs, spi2, MCP23S08::OLAT, 0x00);	//turn led off
+		
+
+		//MCP23S08 expander with dma test
+		/*Delay(250);
+		McpWriteRegisterDma(ioexp_cs, spi2, dmaTx, MCP23S08::OLAT, 0x01, DMA1Request::SPI2_TX);
+		Delay(250);
+		McpWriteRegisterDma(ioexp_cs, spi2, dmaTx, MCP23S08::OLAT, 0x00, DMA1Request::SPI2_TX);*/
 
 		////////////////________SPI________////////////////
 	}
@@ -130,6 +140,16 @@ int main(void)
 
 //interrupt handling function from start-up
 //startup_stm32l476rgtx.s
+
+extern "C" void DMA1_Channel2_IRQHandler(void)
+{
+	if (DMA1->ISR & DMA_ISR_TCIF2)
+	{
+		DMA1->IFCR |= DMA_IFCR_CTCIF2;
+		McpWriteRegisterDma_IRQHandler(ioexp_cs, spi2, dmaTx);
+	}
+}
+
 //EXTI15_10_IRQHandler
 extern "C" void EXTI15_10_IRQHandler(void)
 {

@@ -9,11 +9,23 @@ Add CCR_DIR selection (runtime) to configure memory->peripheral and peripheral->
 as it is required for SPI
 
 */
+enum class DmaDirection
+{
+	ReadFromPeripheralRX,
+	ReadFromMemoryTX
+};
+
+enum class DmaMemoryPeripheralSize : uint8_t
+{
+	bits_8 = 0b00, //RM 11.6.3
+	bits_16 = 0b01,
+	bits_32 = 0b10
+};
 
 class DmaChannel 
 {
 private:
-	static constexpr bool IsDma1(volatile DMA_Channel_TypeDef* channel)
+	constexpr bool IsDma1()
 	{
 		return (channel == DMA1_Channel1 || channel == DMA1_Channel2 || 
 				channel == DMA1_Channel3 || channel == DMA1_Channel4 ||
@@ -21,17 +33,17 @@ private:
 				channel == DMA1_Channel7) ? true : false;
 	}
 
-	static constexpr uint32_t RccAhb1enrDma(volatile DMA_Channel_TypeDef* channel)
+	constexpr uint32_t RccAhb1enrDma()
 	{
-		return (IsDma1(channel))? RCC_AHB1ENR_DMA1EN : RCC_AHB1ENR_DMA2EN;
+		return (IsDma1())? RCC_AHB1ENR_DMA1EN : RCC_AHB1ENR_DMA2EN;
 	}
 
-	static constexpr DMA_Request_TypeDef* DmaCSELR(volatile DMA_Channel_TypeDef* channel)
+	constexpr DMA_Request_TypeDef* DmaCSELR()
 	{
-		return (IsDma1(channel)) ? DMA1_CSELR : DMA2_CSELR;
+		return (IsDma1()) ? DMA1_CSELR : DMA2_CSELR;
 	}
 
-	static constexpr std::size_t GetChannelIndex(volatile DMA_Channel_TypeDef* channel)
+	constexpr std::size_t GetChannelIndex()
 	{
 		if (channel == DMA1_Channel1 || channel == DMA2_Channel1) return 1;
 		if (channel == DMA1_Channel2 || channel == DMA2_Channel2) return 2;
@@ -49,7 +61,10 @@ public:
 	DmaChannel() = delete;
 	~DmaChannel() = default;
 
-	void Configure(const uint32_t peripheralAddress, const uint32_t memoryAddress, const uint32_t length, const uint8_t dmaRequest /*RM 11.6.7 - 4 bit*/);
+	void Configure(const uint32_t peripheralAddress, const uint32_t memoryAddress, const uint32_t length, const uint8_t dmaRequest /*RM 11.6.7 - 4 bit*/, const DmaDirection dmaDir = DmaDirection::ReadFromPeripheralRX, const DmaMemoryPeripheralSize dmaSize = DmaMemoryPeripheralSize::bits_16);
 	void Enable();
 	void Disable();
+	void SetCircularMode();
+
+	void EnableInterruptTC(); // TC-Transfer Complete
 };
