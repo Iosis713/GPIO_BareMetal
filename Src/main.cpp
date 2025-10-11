@@ -11,7 +11,7 @@
 #include "../Peripherals/Dma/DmaRequest.hpp"
 #include "../Peripherals/Spi/Spi.hpp"
 #include "../Peripherals/Spi/SpiPins.hpp"
-#include "../Inc/Mcp23S08.hpp"
+#include "../Devices/Mcp23S08.hpp"
 #include "../Inc/LCD_TFT_ST7735S.hpp"
 #include "../Inc/I2C.hpp"
 #include "../Inc/LPS25HB.hpp"
