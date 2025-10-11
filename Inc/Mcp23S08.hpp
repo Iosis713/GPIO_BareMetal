@@ -1,13 +1,4 @@
-/*
- * Mcp23S08.hpp
- *
- *  Created on: Jun 28, 2025
- *      Author: bartoszlozinski
- */
-
 #pragma once
-#ifndef MCP23S08_HPP_
-#define MCP23S08_HPP_
 
 #include <cstdint>
 #include "../Peripherals/Spi/Spi.hpp"
@@ -15,19 +6,22 @@
 #include "../Peripherals/Dma/DmaChannel.hpp"
 #include "../Peripherals/Dma/DmaRequest.hpp"
 
-namespace MCP23S08 {
-static constexpr uint8_t IODIR = 0x00;
-static constexpr uint8_t IPOL = 0x01;
-static constexpr uint8_t GPINTEN = 0x02;
-static constexpr uint8_t DEFVAL	= 0x03;
-static constexpr uint8_t INTCON	= 0x04;
-static constexpr uint8_t IOCON= 0x05;
-static constexpr uint8_t GPPU = 0x06;
-static constexpr uint8_t INTF = 0x07;
-static constexpr uint8_t INTCAP	= 0x08;
-static constexpr uint8_t GPIO = 0x09;
-static constexpr uint8_t OLAT = 0x0A;
+enum class MCP23S08Reg : uint8_t
+{
+	IODIR = 0x00,
+	IPOL = 0x01,
+	GPINTEN = 0x02,
+	DEFVAL	= 0x03,
+	INTCON	= 0x04,
+	IOCON= 0x05,
+	GPPU = 0x06,
+	INTF = 0x07,
+	INTCAP	= 0x08,
+	GPIO = 0x09,
+	OLAT = 0x0A,
+};
 
+namespace MCP23S08 {
 static constexpr uint8_t GP0 = 0x01;
 static constexpr uint8_t GP1 = 0x02;
 static constexpr uint8_t GP2 = 0x04;
@@ -52,25 +46,45 @@ concept SpiConcept = requires(T spi, uint8_t value)
 	spi.Receive();
 };
 
-template<GpioOutputConcept Gpio, SpiConcept Spi>
-void McpWriteRegister(Gpio& CSline , Spi& spi, const uint8_t reg, const uint8_t value)
+template <GpioOutputConcept GPIO, SpiConcept SPI>
+class Mcp23S08
 {
-	CSline.Clear(); // select MCP
-	spi.Transmit(0x40);
-	spi.Transmit(reg);
-	spi.Transmit(value);
-	CSline.Set();
-}
-template<GpioOutputConcept Gpio, SpiConcept Spi>
-uint8_t McpReadRegister(Gpio& CSline, Spi& spi, const uint8_t reg)
-{
-	CSline.Clear();
-	spi.Transmit(0x41); //opcode for read (R/W = 1)
-	spi.Transmit(reg); //register address
-	volatile const uint8_t received = spi.Receive();
-	CSline.Set();
-	return received;
-}
+private:
+	GPIO& csLine = nullptr;
+	SPI& spi = nullptr;
+
+public:
+	Mcp23S08() = delete;
+	Mcp23S08(const Mcp23S08& source) = delete;
+	Mcp23S08(Mcp23S08&& source) = delete;
+	Mcp23S08& operator=(const Mcp23S08& source) = delete;
+	Mcp23S08& operator=(Mcp23S08&& source) = delete;
+	~Mcp23S08() = default;
+	
+	Mcp23S08(GPIO& csLine_, SPI& spi_)
+		: csLine(csLine_)
+		, spi(spi_)
+		{};
+
+	void Write(const MCP23S08Reg reg, const uint8_t value)
+	{
+		csLine.Clear();
+		spi.Transmit(0x40);
+		spi.Transmit(static_cast<uint8_t>(reg));
+		spi.Transmit(value);
+		csLine.Set();
+	}
+
+	uint8_t Read(const MCP23S08Reg reg)
+	{
+		csLine.Clear();
+		spi.Transmit(0x41); //opcode for read (R/W = 1)
+		spi.Transmit(static_cast<uint8_t>(reg)); //register address
+		volatile const uint8_t received = spi.Receive();
+		csLine.Set();
+		return received;
+	}
+};
 
 template<GpioOutputConcept Gpio, SpiConcept Spi>
 void McpWriteRegisterDma(Gpio& CSline, Spi& spi, DmaChannel& dmaTx, const uint8_t reg, const uint8_t value, const DMA1Request dmaRequest)
@@ -97,6 +111,3 @@ void McpWriteRegisterDma_IRQHandler(Gpio& CSline, Spi& spi, DmaChannel& dmaTx)
 		CSline.Set();
 	}
 }
-
-
-#endif /* MCP23S08_HPP_ */

@@ -60,11 +60,11 @@ int main(void)
 	SpiPins::ConfigureMISO<SpiMISO::SPI2_PC2_AF5>();
 	SpiPins::ConfigureMOSI<SpiMOSI::SPI2_PC3_AF5>();
 
-	ioexp_cs.Clear();
-	McpWriteRegister(ioexp_cs, spi2, MCP23S08::IODIR, 0xFE); //all bits are 1, but bit [0] = 0b1111 1110
-	McpWriteRegister(ioexp_cs, spi2, MCP23S08::GPPU, 0x02); //pull-up resistor for GP1 - button for bit[1] = 0b10
-	McpWriteRegister(ioexp_cs, spi2, MCP23S08::OLAT, 0x00); //turn led off
-	ioexp_cs.Set();
+	Mcp23S08 mcp23s08{ioexp_cs, spi2 };
+	mcp23s08.Write(MCP23S08Reg::IODIR, 0xFE);
+	mcp23s08.Write(MCP23S08Reg::GPPU, 0x02);
+	mcp23s08.Write(MCP23S08Reg::OLAT, 0x00);
+
 	Timer mcp23s08LedTimer(300);
 
 	while (true)
@@ -122,16 +122,16 @@ int main(void)
 		////////////////________SPI________////////////////
 
 		/*
-		if ((McpReadRegister(ioexp_cs, spi2, MCP23S08::GPIO) & 0x02) == 0)
-			McpWriteRegister(ioexp_cs, spi2, MCP23S08::OLAT, 0x01); //turn led on
+		if ((mcp23s08(MCP23S08Reg::GPIO) & 0x02) == 0)
+				mcp23s08.Write(MCP23S08Reg::OLAT, 0x01);
 		else
-			McpWriteRegister(ioexp_cs, spi2, MCP23S08::OLAT, 0x00);	//turn led off
+			mcp23s08.Write(MCP23S08Reg::OLAT, 0x00);
 		*/
 
-		Delay(250);
-		McpWriteRegister(ioexp_cs, spi2, MCP23S08::OLAT, 0x01);
-		Delay(250);
-		McpWriteRegister(ioexp_cs, spi2, MCP23S08::OLAT, 0x00);
+		Delay(500);
+		mcp23s08.Write(MCP23S08Reg::OLAT, 0x01);
+		Delay(500);
+		mcp23s08.Write(MCP23S08Reg::OLAT, 0x00);
 
 		////////////////________SPI________////////////////
 	}
