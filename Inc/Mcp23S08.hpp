@@ -76,17 +76,26 @@ template<GpioOutputConcept Gpio, SpiConcept Spi>
 void McpWriteRegisterDma(Gpio& CSline, Spi& spi, DmaChannel& dmaTx, const uint8_t reg, const uint8_t value, const DMA1Request dmaRequest)
 {
 	static uint8_t txBuffer[3] { 0x40, reg, value };
-	CSline.Clear();
-
-	spi.EnableDma(dmaTx, txBuffer, 1, static_cast<uint8_t>(dmaRequest), HalfDuplexDirection::Transmit);
+	if (spi.IsReady())
+	{
+		CSline.Clear();
+		dmaTx.Enable();
+		//spi.EnableDma(dmaTx, txBuffer, 3, static_cast<uint8_t>(dmaRequest), HalfDuplexDirection::Transmit);
+		spi.TransmitDma(dmaTx, txBuffer, 3, static_cast<uint8_t>(dmaRequest));
+	}
 }
 
 template<GpioOutputConcept Gpio, SpiConcept Spi>
 void McpWriteRegisterDma_IRQHandler(Gpio& CSline, Spi& spi, DmaChannel& dmaTx)
 {
-	spi.DisableDmaTX();
-	dmaTx.Disable();
-	CSline.Set();
+	if (dmaTx.TransferComplete())
+	{
+		dmaTx.ClearTransferCompleteFlag();
+		dmaTx.Disable();
+		spi.DisableDmaTX();
+		while(!spi.IsReady());
+		CSline.Set();
+	}
 }
 
 

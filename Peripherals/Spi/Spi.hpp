@@ -139,6 +139,23 @@ public:
 		[[maybe_unused]] volatile uint8_t dummyRead = ReadData();
 	}
 
+	void TransmitDma(DmaChannel& dma, volatile uint8_t* buffer, const std::size_t length, const uint8_t dmaRequest /*RM 11.6.7 - 4 bit*/)
+	{
+		if (buffer && IsReady())
+		{	
+			spi->CR1 &= ~SPI_CR1_SPE;
+			dma.Configure(reinterpret_cast<uint32_t>(&spi->DR),
+						  reinterpret_cast<uint32_t>(buffer),
+						  length,
+						  dmaRequest,
+						  DmaMemoryPeripheralSize::bits_8);
+			dma.EnableInterruptTC();
+			EnableDmaTX();
+			dma.Enable();
+			spi->CR1 |= SPI_CR1_SPE;
+		}
+	}
+
 	[[nodiscard]] uint8_t Receive()
 	{
 		//not configured for switching mode for half duplex yet
@@ -158,15 +175,10 @@ public:
 	{
 		if (buffer)
 		{
-			DmaDirection dmaDirection = DmaDirection::ReadFromPeripheralRX;
-			if (direction == HalfDuplexDirection::Transmit)
-				dmaDirection = DmaDirection::ReadFromMemoryTX;
-
 			dma.Configure(reinterpret_cast<uint32_t>(&spi->DR),
 						  reinterpret_cast<uint32_t>(buffer),
 						  length,
 						  dmaRequest,
-						  dmaDirection,
 						  DmaMemoryPeripheralSize::bits_8);
 
 			if (direction == HalfDuplexDirection::Receive)
@@ -181,4 +193,6 @@ public:
 
 	inline void DisableDmaTX() { spi->CR2 &= ~SPI_CR2_TXDMAEN; }
 	inline void DisableDmaRX() { spi->CR2 &= ~SPI_CR2_RXDMAEN; }
+	inline bool IsReady() { return !(spi->SR & SPI_SR_BSY); } 
 };
+
