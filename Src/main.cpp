@@ -122,7 +122,7 @@ int main(void)
 		////////////////________SPI________////////////////
 
 		/*
-		if ((mcp23s08(MCP23S08Reg::GPIO) & 0x02) == 0)
+		if ((mcp23s08(MCP23S08Reg::GPIO) & MCP23S08::GP1) == 0)
 				mcp23s08.Write(MCP23S08Reg::OLAT, 0x01);
 		else
 			mcp23s08.Write(MCP23S08Reg::OLAT, 0x00);
