@@ -50,8 +50,8 @@ template <GpioOutputConcept GPIO, SpiConcept SPI>
 class Mcp23S08
 {
 private:
-	GPIO& csLine = nullptr;
-	SPI& spi = nullptr;
+	GPIO& csLine;
+	SPI& spi;
 
 public:
 	Mcp23S08() = delete;
