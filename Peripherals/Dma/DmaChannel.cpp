@@ -31,7 +31,6 @@ void DmaChannel::Configure(const uint32_t peripheralAddress, const uint32_t memo
 	channel->CMAR = memoryAddress; //RM 11.6.6
 	channel->CNDTR = length; //RM 11.6.4 Channel x Number of Data to Transfer Register
 
-
 	channel->CCR |= (static_cast<uint8_t>(dmaSize) << DMA_CCR_PSIZE_Pos);
 	channel->CCR |= (static_cast<uint8_t>(dmaSize) << DMA_CCR_MSIZE_Pos);
 

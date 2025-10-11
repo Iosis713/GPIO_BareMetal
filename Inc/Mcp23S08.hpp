@@ -80,7 +80,7 @@ void McpWriteRegisterDma(Gpio& CSline, Spi& spi, DmaChannel& dmaTx, const uint8_
 	{
 		CSline.Clear();
 		dmaTx.Enable();
-		//spi.EnableDma(dmaTx, txBuffer, 3, static_cast<uint8_t>(dmaRequest), HalfDuplexDirection::Transmit);
+		spi.EnableDma(dmaTx, txBuffer, 3, static_cast<uint8_t>(dmaRequest), HalfDuplexDirection::Transmit);
 		spi.TransmitDma(dmaTx, txBuffer, 3, static_cast<uint8_t>(dmaRequest));
 	}
 }

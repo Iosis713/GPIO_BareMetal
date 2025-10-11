@@ -70,7 +70,7 @@ public:
 
 	void EnableInterruptTC(); // TC-Transfer Complete
 
-	[[nodiscard]] bool TransferComplete() const noexcept
+	[[nodiscard]] bool TransferComplete() noexcept
 	{
 		return ( DMA1->ISR & (DMA_ISR_TCIF1 << ((GetChannelIndex() - 1) * 4)));
 	} 

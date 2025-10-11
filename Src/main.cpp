@@ -39,7 +39,7 @@ UART<USART_TypeDef, GPIO_TypeDef, 115200, 80> uart2(USART2);
 //PWMChannelOutput<GPIO_TypeDef, 6, 1> channel1(pwmTim3.timer, GPIOA, AlternateFunction::AF2);
 //Button<GPIO_TypeDef, 13, OptionsPUPDR::PullUp> userButton(GPIOC);
 
-DmaChannel dmaTx(DMA1_Channel5, DmaDirection::ReadFromMemoryTX);
+//DmaChannel dmaTx(DMA1_Channel5, DmaDirection::ReadFromMemoryTX);
 Spi<SPI_TypeDef, SpiMode::FullDuplex> spi2(SPI2);
 GpioOutput<GPIO_TypeDef, 0> ioexp_cs(GPIOC);
 
@@ -63,9 +63,9 @@ int main(void)
 	ioexp_cs.Clear();
 	McpWriteRegister(ioexp_cs, spi2, MCP23S08::IODIR, 0xFE); //all bits are 1, but bit [0] = 0b1111 1110
 	McpWriteRegister(ioexp_cs, spi2, MCP23S08::GPPU, 0x02); //pull-up resistor for GP1 - button for bit[1] = 0b10
+	McpWriteRegister(ioexp_cs, spi2, MCP23S08::OLAT, 0x00); //turn led off
 	ioexp_cs.Set();
 	Timer mcp23s08LedTimer(300);
-	[[maybe_unused]] uint8_t toggledValue = 0x01;
 
 	while (true)
 	{
@@ -128,25 +128,10 @@ int main(void)
 			McpWriteRegister(ioexp_cs, spi2, MCP23S08::OLAT, 0x00);	//turn led off
 		*/
 
-		//MCP23S08 expander with dma test
-		
-		/*if (spi2.IsReady())
-		{
-			McpWriteRegisterDma(ioexp_cs, spi2, dmaTx, MCP23S08::OLAT, toggledValue, DMA1Request::SPI2_TX);
-
-			if (toggledValue == 0x01)
-				toggledValue = 0x00;
-			else
-				toggledValue = 0x01;
-			Delay(250);
-		}*/
-
-		//Delay(250);
-		//McpWriteRegister(ioexp_cs, spi2, MCP23S08::OLAT, 0x01);
-		//McpWriteRegisterDma(ioexp_cs, spi2, dmaTx, MCP23S08::OLAT, 0x01, DMA1Request::SPI2_TX);
-		//Delay(250);
-		//McpWriteRegister(ioexp_cs, spi2, MCP23S08::OLAT, 0x00);
- 		//McpWriteRegisterDma(ioexp_cs, spi2, dmaTx, MCP23S08::OLAT, 0x00, DMA1Request::SPI2_TX);
+		Delay(250);
+		McpWriteRegister(ioexp_cs, spi2, MCP23S08::OLAT, 0x01);
+		Delay(250);
+		McpWriteRegister(ioexp_cs, spi2, MCP23S08::OLAT, 0x00);
 
 		////////////////________SPI________////////////////
 	}
@@ -158,11 +143,11 @@ int main(void)
 
 extern "C" void DMA1_Channel5_IRQHandler(void)
 {
-	if (DMA1->ISR & DMA_ISR_TCIF5)
+	/*if (DMA1->ISR & DMA_ISR_TCIF5)
 	{
 		DMA1->IFCR |= DMA_IFCR_CTCIF5;
 		McpWriteRegisterDma_IRQHandler(ioexp_cs, spi2, dmaTx);
-	}
+	}*/
 }
 
 
