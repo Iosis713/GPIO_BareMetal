@@ -128,9 +128,9 @@ int main(void)
 			mcp23s08.Write(MCP23S08Reg::OLAT, 0x00);
 		*/
 
-		Delay(500);
+		Delay(250);
 		mcp23s08.Write(MCP23S08Reg::OLAT, 0x01);
-		Delay(500);
+		Delay(250);
 		mcp23s08.Write(MCP23S08Reg::OLAT, 0x00);
 
 		////////////////________SPI________////////////////

@@ -139,6 +139,12 @@ public:
 		[[maybe_unused]] volatile uint8_t dummyRead = ReadData();
 	}
 
+	void Transmit(const std::initializer_list<uint8_t> dataList)
+	{
+		for (const auto& value : dataList)
+			Transmit(value);
+	}
+
 	void TransmitDma(DmaChannel& dma, volatile uint8_t* buffer, const std::size_t length, const uint8_t dmaRequest /*RM 11.6.7 - 4 bit*/)
 	{
 		if (buffer && IsReady())

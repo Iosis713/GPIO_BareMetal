@@ -69,17 +69,16 @@ public:
 	void Write(const MCP23S08Reg reg, const uint8_t value)
 	{
 		csLine.Clear();
-		spi.Transmit(0x40);
-		spi.Transmit(static_cast<uint8_t>(reg));
-		spi.Transmit(value);
+		static constexpr uint8_t writeCommand = 0x40;
+		spi.Transmit({writeCommand, static_cast<uint8_t>(reg), value});
 		csLine.Set();
 	}
 
 	uint8_t Read(const MCP23S08Reg reg)
 	{
 		csLine.Clear();
-		spi.Transmit(0x41); //opcode for read (R/W = 1)
-		spi.Transmit(static_cast<uint8_t>(reg)); //register address
+		static constexpr uint8_t readCommand = 0x41;
+		spi.Transmit({readCommand, static_cast<uint8_t>(reg)});
 		volatile const uint8_t received = spi.Receive();
 		csLine.Set();
 		return received;
