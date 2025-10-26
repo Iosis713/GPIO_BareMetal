@@ -50,8 +50,10 @@ template <GpioOutputConcept GPIO, SpiConcept SPI>
 class Mcp23S08
 {
 private:
+	bool interruptTransmissionFinished = true;
 	GPIO& csLine;
 	SPI& spi;
+	uint8_t itCounterWrite = 0;
 
 public:
 	Mcp23S08() = delete;
@@ -71,6 +73,23 @@ public:
 		csLine.Clear();
 		static constexpr uint8_t writeCommand = 0x40;
 		spi.Transmit({writeCommand, static_cast<uint8_t>(reg), value});
+		csLine.Set();
+	}
+
+	void WriteIT(const MCP23S08Reg reg, const uint8_t value)
+	{
+		static constexpr uint8_t writeCommand = 0x40;
+		if (interruptTransmissionFinished)
+		{
+			csLine.Clear();
+			spi.TransmitIT(std::array<uint8_t, 3>{writeCommand, static_cast<uint8_t>(reg), value});
+		}
+	}
+
+
+	void InterruptHandler()
+	{
+		interruptTransmissionFinished = true;
 		csLine.Set();
 	}
 

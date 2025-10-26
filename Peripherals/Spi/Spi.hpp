@@ -36,6 +36,14 @@ template<SpiStructure SpiStruct, SpiMode spiMode_>
 class Spi
 {
 private:
+	bool busy = false;
+	const uint8_t* txBuffer = nullptr;
+	std::size_t txSize = 0;
+	std::size_t txIndex = 0;
+
+	volatile bool txReadyFlag = false;
+	volatile bool rxReadyFlag = false;
+
 	inline void WaitUntilTXEIsEmpty() { while(!(spi->SR & SPI_SR_TXE));}
 	inline void WriteData(const uint8_t data) { *reinterpret_cast<volatile uint8_t*>(&spi->DR) = data; }
 	inline void WaitUntilRXNEIsNotEmpty() { while(!(spi->SR & SPI_SR_RXNE)); }
@@ -112,6 +120,26 @@ private:
 
 	inline void EnableDmaTX() { spi->CR2 |= SPI_CR2_TXDMAEN; }
 	inline void EnableDmaRX() { spi->CR2 |= SPI_CR2_RXDMAEN; }
+	inline void EnableInterruptTX() { spi->CR2 |= SPI_CR2_TXEIE; }
+	inline void DisableInterruptTX() { spi->CR2 &= ~SPI_CR2_TXEIE; }
+
+	void IrqHandlerTX()
+	{
+		if (spi->SR & SPI_SR_TXE)
+		{
+			txReadyFlag = true;
+			DisableInterruptTX();
+		}
+	}
+
+	void IrqHandlerRX()
+	{
+		if (spi->SR & SPI_SR_RXNE)
+		{
+			rxReadyFlag = true;
+			[[maybe_unused]] volatile uint8_t dummy = ReadData();
+		}
+	}
 
 public:
 	volatile SpiStruct* const spi = nullptr;
@@ -145,6 +173,65 @@ public:
 			Transmit(value);
 	}
 
+	void TransmitIT(const uint8_t value)
+	{
+		if (busy)
+			return;
+
+		busy = true;
+		WriteData(value);
+		EnableInterruptTX();
+	}
+
+	template<std::size_t N>
+	void TransmitIT(const std::array<uint8_t, N>& data)
+	{
+		if (busy)
+		{
+			if (txReadyFlag)
+			{
+				if (txIndex < txSize)
+				{
+					WriteData(txBuffer[txIndex++]);
+				}
+				else
+				{
+					busy = false;
+					txReadyFlag = false;
+				}
+			}
+		}
+		else
+		{
+			busy = true;
+			txBuffer = data.data();
+			txSize = data.size();
+			txIndex = 0;
+			txReadyFlag = true;
+			EnableInterruptTX();
+		}
+	}
+
+	void IRQHandlerTX()
+	{
+		if ((spi->SR & SPI_SR_TXE) && (spi->CR2 & SPI_CR2_TXEIE))
+		{
+			if constexpr (spiMode == SpiMode::FullDuplex)
+			{
+				IrqHandlerTX();
+				IrqHandlerRX();
+			}
+			else
+			{
+				if (GetTransmissionDirection() == HalfDuplexDirection::Transmit)
+					IrqHandlerTX();
+				else
+					IrqHandlerRX();
+			}
+		}
+	}
+
+	//to be changed
 	void TransmitDma(DmaChannel& dma, volatile uint8_t* buffer, const std::size_t length, const uint8_t dmaRequest /*RM 11.6.7 - 4 bit*/)
 	{
 		if (buffer && IsReady())
@@ -195,6 +282,18 @@ public:
 			dma.EnableInterruptTC();
 			dma.Enable();
 		}
+	}
+
+	void SetInterruptPriority(const uint8_t priority)
+	{
+		IRQn_Type spiIrqn = SPI1_IRQn;
+		if (spi == SPI2)
+			spiIrqn = SPI2_IRQn;
+		else if (spi == SPI3)
+			spiIrqn = SPI3_IRQn;
+
+		NVIC_EnableIRQ(spiIrqn);
+		NVIC_SetPriority(spiIrqn, priority);
 	}
 
 	inline void DisableDmaTX() { spi->CR2 &= ~SPI_CR2_TXDMAEN; }

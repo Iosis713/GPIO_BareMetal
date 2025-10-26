@@ -42,6 +42,7 @@ UART<USART_TypeDef, GPIO_TypeDef, 115200, 80> uart2(USART2);
 //DmaChannel dmaTx(DMA1_Channel5, DmaDirection::ReadFromMemoryTX);
 Spi<SPI_TypeDef, SpiMode::FullDuplex> spi2(SPI2);
 GpioOutput<GPIO_TypeDef, 0> ioexp_cs(GPIOC);
+Mcp23S08 mcp23s08{ioexp_cs, spi2 };
 
 int main(void)
 {
@@ -60,12 +61,14 @@ int main(void)
 	SpiPins::ConfigureMISO<SpiMISO::SPI2_PC2_AF5>();
 	SpiPins::ConfigureMOSI<SpiMOSI::SPI2_PC3_AF5>();
 
-	Mcp23S08 mcp23s08{ioexp_cs, spi2 };
 	mcp23s08.Write(MCP23S08Reg::IODIR, 0xFE);
 	mcp23s08.Write(MCP23S08Reg::GPPU, 0x02);
 	mcp23s08.Write(MCP23S08Reg::OLAT, 0x00);
 
-	Timer mcp23s08LedTimer(300);
+	Timer mcp23s08LedTimer(1000);
+	uint8_t ledValue = 0x01;
+
+	spi2.SetInterruptPriority(2);
 
 	while (true)
 	{
@@ -128,10 +131,15 @@ int main(void)
 			mcp23s08.Write(MCP23S08Reg::OLAT, 0x00);
 		*/
 
-		Delay(250);
-		mcp23s08.Write(MCP23S08Reg::OLAT, 0x01);
-		Delay(250);
-		mcp23s08.Write(MCP23S08Reg::OLAT, 0x00);
+		if (mcp23s08LedTimer.IsExpired())
+		{
+			if (ledValue == 0x01)
+				ledValue = 0x00;
+			else
+				ledValue = 0x01;
+		}
+
+		mcp23s08.WriteIT(MCP23S08Reg::OLAT, ledValue);
 
 		////////////////________SPI________////////////////
 	}
@@ -150,6 +158,11 @@ extern "C" void DMA1_Channel5_IRQHandler(void)
 	}*/
 }
 
+extern "C" void SPI2_IRQHandler(void)
+{
+	spi2.IRQHandlerTX();
+	mcp23s08.InterruptHandler();
+}
 
 //EXTI15_10_IRQHandler
 extern "C" void EXTI15_10_IRQHandler(void)
