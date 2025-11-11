@@ -13,8 +13,8 @@
 #include "../Peripherals/Spi/SpiPins.hpp"
 #include "../Devices/Mcp23S08.hpp"
 #include "../Inc/LCD_TFT_ST7735S.hpp"
-#include "../Inc/I2C.hpp"
-#include "../Inc/LPS25HB.hpp"
+#include "../Peripherals/I2C/I2C.hpp"
+#include "../Devices/LPS25HB.hpp"
 #include <stdio.h>
 #include <cstring>
 

@@ -2,7 +2,7 @@
 #ifndef LPS25HB_HPP_
 #define LPS25HB_HPP_
 
-#include "I2C.hpp"
+#include "../Peripherals/I2C/I2C.hpp"
 #include <cmath>
 
 namespace LPS25HB_Registers
