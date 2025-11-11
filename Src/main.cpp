@@ -76,8 +76,8 @@ int main(void)
 	constexpr uint32_t timingRegister = 0x00100D14;
 	Timer lps25hbTimer(1000);
 
-	I2c<I2C1_BASE> i2c1{timingRegister};
-	LPS25HB<I2c<I2C1_BASE>> lps25hb{i2c1};
+	I2c<I2C_TypeDef> i2c1{I2C1, timingRegister};
+	LPS25HB<I2c<I2C_TypeDef>> lps25hb{i2c1};
 
 	while (true)
 	{

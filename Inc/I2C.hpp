@@ -11,13 +11,11 @@ template<typename Derived>
 class I2cInterface
 {
 protected:
-	inline I2C_TypeDef* I2C() const { return reinterpret_cast<I2C_TypeDef*>(Derived::i2cAddr); }
-
 	void EnableClock()
 	{
 		//RM 6.2 --> PCLK1 or HSI16 or SYSCLK for I2Cx (x = 1, 2, 3)
 		//PCLK1 is under APB1 (SYSCLK -->AHB PRES --> APB1 PRESC)
-		if constexpr (Derived::i2cAddr == I2C1_BASE)
+		if (static_cast<Derived*>(this)->i2c == I2C1)
 		{
 			RCC->APB1ENR1 |= RCC_APB1ENR1_I2C1EN; //RM 6.4.19
 			//Reset I2C1 RM 6.4.13
@@ -27,14 +25,14 @@ protected:
 			RCC->CCIPR &= ~RCC_CCIPR_I2C1SEL_Msk;
 
 		}
-		else if constexpr (Derived::i2cAddr == I2C2_BASE)
+		else if (static_cast<Derived*>(this)->i2c == I2C2)
 		{
 			RCC->APB1ENR1 |= RCC_APB1ENR1_I2C2EN;
 			RCC->APB1RSTR1 |= RCC_APB1RSTR1_I2C2RST;
 			RCC->APB1RSTR1 &= ~(RCC_APB1RSTR1_I2C2RST);
 			RCC->CCIPR &= ~RCC_CCIPR_I2C2SEL_Msk;
 		}
-		else if constexpr (Derived::i2cAddr == I2C3_BASE)
+		else if (static_cast<Derived*>(this)->i2c == I2C3)
 		{
 			RCC->APB1ENR1 |= RCC_APB1ENR1_I2C3EN;
 			RCC->APB1RSTR1 |= RCC_APB1RSTR1_I2C3RST;
@@ -46,68 +44,66 @@ protected:
 	void ConfigI2C(const uint32_t timingRegister)
 	{
 		//CR1 = 0 by default RM 39.9.1.
-		auto i2c = I2C();
-		i2c->CR1 &= ~(I2C_CR1_PE);
-		i2c->CR1 &= ~(I2C_CR1_DNF_Msk);
-		i2c->CR1 &= ~(I2C_CR1_ANFOFF); //enabled analog filer
+		static_cast<Derived*>(this)->i2c->CR1 &= ~(I2C_CR1_PE);
+		static_cast<Derived*>(this)->i2c->CR1 &= ~(I2C_CR1_DNF_Msk);
+		static_cast<Derived*>(this)->i2c->CR1 &= ~(I2C_CR1_ANFOFF); //enabled analog filer
 
-		i2c->CR2 &= ~(I2C_CR2_ADD10); //master operates in 7 bit addressing mode
-		i2c->CR2 &= ~(I2C_CR2_SADD); //slave operates in 7 bit addressing mode (ADD10 = 0); by default anyway
+		static_cast<Derived*>(this)->i2c->CR2 &= ~(I2C_CR2_ADD10); //master operates in 7 bit addressing mode
+		static_cast<Derived*>(this)->i2c->CR2 &= ~(I2C_CR2_SADD); //slave operates in 7 bit addressing mode (ADD10 = 0); by default anyway
 
 		//TIMINGR 0x10909CEC from CubeMX Forbot
 		//but from CubeMX for 4MH MSI setup: 0x00100D14
 		SetTimingRegister(timingRegister);
 		//i2c->TIMINGR = 0x00100D14;
 
-
-		i2c->OAR1 &= ~(I2C_OAR1_OA1MODE);
-		i2c->OAR1 &= ~(I2C_OAR1_OA1EN);
-		i2c->OAR2 &= ~(I2C_OAR2_OA2EN);
-		i2c->CR1 |= I2C_CR1_PE;
+		static_cast<Derived*>(this)->i2c->OAR1 &= ~(I2C_OAR1_OA1MODE);
+		static_cast<Derived*>(this)->i2c->OAR1 &= ~(I2C_OAR1_OA1EN);
+		static_cast<Derived*>(this)->i2c->OAR2 &= ~(I2C_OAR2_OA2EN);
+		static_cast<Derived*>(this)->i2c->CR1 |= I2C_CR1_PE;
 	}
 
 	inline void SetTimingRegister(const uint32_t timingRegister)
 	{
-		I2C()->TIMINGR = timingRegister;
+		static_cast<Derived*>(this)->i2c->TIMINGR = timingRegister;
 	}
 
 	inline bool IsrBusy()
 	{
-		return (I2C()->ISR & I2C_ISR_BUSY); // true = busy, false = idle
+		return (static_cast<Derived*>(this)->i2c->ISR & I2C_ISR_BUSY); // true = busy, false = idle
 	}
 
 	inline bool IsrTxisEmpty()
 	{
-		return (I2C()->ISR & I2C_ISR_TXIS); // true = empty (can write data), false = not empty
+		return (static_cast<Derived*>(this)->i2c->ISR & I2C_ISR_TXIS); // true = empty (can write data), false = not empty
 	}
 
 	inline bool IsrTransferCompleted()
 	{
-		return (I2C()->ISR & I2C_ISR_TC); //true =TransferCompleted
+		return (static_cast<Derived*>(this)->i2c->ISR & I2C_ISR_TC); //true =TransferCompleted
 	}
 
 	inline bool IsrStopDetected()
 	{
-		return (I2C()->ISR & I2C_ISR_STOPF); // true = stop detected
+		return (static_cast<Derived*>(this)->i2c->ISR & I2C_ISR_STOPF); // true = stop detected
 	}
 
 	inline bool IsrReceiveDataNotEmpty()
 	{
-		return (I2C()->ISR & I2C_ISR_RXNE); //true = data avaiable in RXDR
+		return (static_cast<Derived*>(this)->i2c->ISR & I2C_ISR_RXNE); //true = data avaiable in RXDR
 	}
 
 	inline void StopDetectionClear()
 	{
-		I2C()->ICR |= I2C_ICR_STOPCF;
+		static_cast<Derived*>(this)->i2c->ICR |= I2C_ICR_STOPCF;
 	}
 };
 
-template<std::uintptr_t i2cAddr_>
-class I2c : public I2cInterface<I2c<i2cAddr_>>
+template<typename I2CStruct>
+class I2c : public I2cInterface<I2c<I2CStruct>>
 {
-	friend class I2cInterface<I2c<i2cAddr_>>;
+	friend class I2cInterface<I2c<I2CStruct>>;
 protected:
-	static constexpr std::uintptr_t i2cAddr = i2cAddr_;
+	volatile I2CStruct* const i2c = nullptr;
 
 public:
 	I2c(const I2c& source) = delete;
@@ -115,7 +111,8 @@ public:
 	I2c& operator=(const I2c& source) = delete;
 	I2c& operator=(I2c&& source) = delete;
 	I2c() = delete;
-	I2c(const uint32_t timingRegister)
+	I2c(I2CStruct* const i2c_, const uint32_t timingRegister)
+		: i2c(i2c_)
 	{
 		this->template EnableClock();
 		this->template ConfigI2C(timingRegister);
@@ -126,7 +123,6 @@ public:
 		if (size == 0 || size > 8) //24AA01 has 8-byte write page limit
 			return false;
 
-		auto i2c = this->I2C();
 		while (this->IsrBusy()) {} //wait if bus is busy
 
 		//Configure I2C1 to write:
@@ -159,8 +155,6 @@ public:
 	{
 		if (size == 0)
 			return false;
-
-		auto i2c = this->I2C();
 
 		while (this->IsrBusy()) {} // Wait until I2C bus is idle
 		// First, send a dummy write to set EEPROM's itnernal memory address pointer
