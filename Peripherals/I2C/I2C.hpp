@@ -1,10 +1,29 @@
 #pragma once
+
 #include "I2cInterface.hpp"
+#include <array>
 
 //right now only for I2C_1 like in forbot course:
 //https://forbot.pl/blog/kurs-stm32l4-zewnetrzna-pamiec-eeprom-i2c-id47820
 
-template<typename I2CStruct>
+template<typename T>
+concept I2CStructure = requires(T structure)
+{
+	{ structure.CR1 }	  -> std::convertible_to<volatile uint32_t&>; 
+	{ structure.CR1 }     -> std::convertible_to<volatile uint32_t&>; 
+	{ structure.CR2 }     -> std::convertible_to<volatile uint32_t&>;
+	{ structure.OAR1 }    -> std::convertible_to<volatile uint32_t&>;
+	{ structure.OAR2 }    -> std::convertible_to<volatile uint32_t&>;
+	{ structure.TIMINGR } -> std::convertible_to<volatile uint32_t&>;
+	{ structure.TIMEOUTR }-> std::convertible_to<volatile uint32_t&>;
+	{ structure.ISR }     -> std::convertible_to<volatile uint32_t&>;
+	{ structure.ICR }     -> std::convertible_to<volatile uint32_t&>;
+	{ structure.PECR }    -> std::convertible_to<volatile uint32_t&>;
+	{ structure.RXDR }    -> std::convertible_to<volatile uint32_t&>;
+	{ structure.TXDR }    -> std::convertible_to<volatile uint32_t&>;
+};
+
+template<I2CStructure I2CStruct>
 class I2c : public I2cInterface<I2c<I2CStruct>>
 {
 	friend class I2cInterface<I2c<I2CStruct>>;
@@ -29,9 +48,10 @@ public:
 		this->template ConfigI2C(timingRegister);
 	}
 
-	bool Write(const uint8_t devAddr, const uint8_t memAddr, const uint8_t* const data, const std::size_t size)
+	template<std::size_t DataSize>
+	bool Write(const uint8_t devAddr, const uint8_t memAddr, std::array<uint8_t, DataSize> data)
 	{
-		if (size == 0 || size > 8) //24AA01 has 8-byte write page limit
+		if (data.size() == 0 || data.size() > 8) //24AA01 has 8-byte write page limit
 			return false;
 
 		WaitWhileIsrBusy();
@@ -41,18 +61,18 @@ public:
 		// - (1 + len): 1 byte for mem_addr + N data bytes
 		// - START: trigger start condition
 
-		i2c->CR2 = (devAddr & 0xFE)							//Ensure LSB=0 for write (xxxx xxx0)
-			      | ((size + 1) << I2C_CR2_NBYTES_Pos)		//total number of bytes to send
-				  | I2C_CR2_START;							//generate start condition
+		i2c->CR2 = (devAddr & 0xFE)								//Ensure LSB=0 for write (xxxx xxx0)
+			      | ((data.size() + 1) << I2C_CR2_NBYTES_Pos)	//total number of bytes to send
+				  | I2C_CR2_START;								//generate start condition
 
 		WaitUntilTXBufferIsReady();
 		i2c->TXDR = memAddr;
 
 		//send each byte of data
-		for (std::size_t i = 0; i < size; ++i)
+		for (const auto& value : data)
 		{
 			WaitUntilTXBufferIsReady();
-			i2c->TXDR = data[i];
+			i2c->TXDR = value;
 		}
 
 		WaitUntilTransferCompleted();

@@ -58,7 +58,7 @@ public:
 
 	void WriteRegister(const uint8_t reg, const uint8_t value)
 	{
-		i2c.Write(LPS25HB_ADDR, reg, &value, 1);
+		i2c.Write(LPS25HB_ADDR, reg, std::array<uint8_t, 1>{ value });
 	}
 
 	void SetPressureCalibration(const uint16_t value)
