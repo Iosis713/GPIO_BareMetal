@@ -82,9 +82,10 @@ public:
 		return true;
 	}
 
-	bool Read(const uint8_t devAddr, const uint8_t memAddr, uint8_t* const data, const std::size_t size)
+	template<std::size_t DataSize>
+	bool Read(const uint8_t devAddr, const uint8_t memAddr, std::array<uint8_t, DataSize>& data)
 	{
-		if (size == 0)
+		if (data.size() == 0)
 			return false;
 
 		WaitWhileIsrBusy();
@@ -99,15 +100,15 @@ public:
 
 		//Read: repeat start - read
 		i2c->CR2 = (devAddr & 0xFE)				// Device address
-				  | (size << I2C_CR2_NBYTES_Pos)	// number of bytes to read
+				  | (data.size() << I2C_CR2_NBYTES_Pos)	// number of bytes to read
 				  | I2C_CR2_RD_WRN					// Read mode (RM 639.9.3 Transfer direction (0 - write, 1 - read)
 				  | I2C_CR2_START;					//Generated repeated start
 
 		//Read loop
-		for (size_t i = 0; i < size; ++i)
+		for (auto& value : data)
 		{
 			WaitUntilRxBufferNotEmpty();
-			data[i] = static_cast<uint8_t>(I2C1->RXDR);	//register is 32bit, even if data is only 8 bit
+			value = static_cast<uint8_t>(I2C1->RXDR);	//register is 32bit, even if data is only 8 bit
 		}
 
 		WaitUntilTransferCompleted();//Wait until all bytes received; CR39.9.7. - Transfer complete (master mode)

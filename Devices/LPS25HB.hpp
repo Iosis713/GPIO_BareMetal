@@ -1,6 +1,4 @@
 #pragma once
-#ifndef LPS25HB_HPP_
-#define LPS25HB_HPP_
 
 #include "../Peripherals/I2C/I2C.hpp"
 #include <cmath>
@@ -49,11 +47,11 @@ public:
 	explicit LPS25HB(I2cType& i2c_) //no implicit conversion
 		: i2c(i2c_)	{}
 
-	uint8_t ReadRegister(const uint8_t reg, const std::size_t size = 1)
+	uint8_t ReadRegister(const uint8_t reg)
 	{
-		uint8_t resultValue = 0;
-		i2c.Read(LPS25HB_ADDR, reg, &resultValue, size);
-		return resultValue;
+		std::array<uint8_t, 1> resultValue = {0};
+		i2c.Read(LPS25HB_ADDR, reg, resultValue);
+		return resultValue[0];
 	}
 
 	void WriteRegister(const uint8_t reg, const uint8_t value)
@@ -125,7 +123,4 @@ public:
 		const float height = -airGasConst / (g * airMolarMass) * temperatureK * log (absolutePressure / seaLevelPressure); //m
 		return height;
 	}
-
 };
-
-#endif /* LPS25HB_HPP_ */
