@@ -1,11 +1,3 @@
-/*
- * I2C.hpp
- *
- *  Created on: Jul 12, 2025
- *      Author: bartoszlozinski
- */
-
-
 #pragma once
 #ifndef I2C_HPP_
 #define I2C_HPP_

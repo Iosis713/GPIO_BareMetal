@@ -40,9 +40,10 @@ UART<USART_TypeDef, GPIO_TypeDef, 115200, 80> uart2(USART2);
 //Button<GPIO_TypeDef, 13, OptionsPUPDR::PullUp> userButton(GPIOC);
 
 //DmaChannel dmaTx(DMA1_Channel5, DmaDirection::ReadFromMemoryTX);
-Spi<SPI_TypeDef, SpiMode::FullDuplex> spi2(SPI2);
-GpioOutput<GPIO_TypeDef, 0> ioexp_cs(GPIOC);
-Mcp23S08 mcp23s08{ioexp_cs, spi2 };
+
+//Spi<SPI_TypeDef, SpiMode::FullDuplex> spi2(SPI2);
+//GpioOutput<GPIO_TypeDef, 0> ioexp_cs(GPIOC);
+//Mcp23S08 mcp23s08{ioexp_cs, spi2 };
 
 int main(void)
 {
@@ -57,6 +58,8 @@ int main(void)
 	uint32_t currentPulse = 0;
 	*/
 
+	//SPI
+	/*
 	SpiPins::ConfigureSCK<SpiSCK::SPI2_PB10_AF5>();
 	SpiPins::ConfigureMISO<SpiMISO::SPI2_PC2_AF5>();
 	SpiPins::ConfigureMOSI<SpiMOSI::SPI2_PC3_AF5>();
@@ -69,6 +72,12 @@ int main(void)
 	uint8_t ledValue = 0x01;
 
 	spi2.SetInterruptPriority(2);
+	*/
+	constexpr uint32_t timingRegister = 0x00100D14;
+	Timer lps25hbTimer(1000);
+
+	I2c<I2C1_BASE> i2c1{timingRegister};
+	LPS25HB<I2c<I2C1_BASE>> lps25hb{i2c1};
 
 	while (true)
 	{
@@ -123,14 +132,7 @@ int main(void)
 		////////////////_____GPIO EXTI_____////////////////
 
 		////////////////________SPI________////////////////
-
 		/*
-		if ((mcp23s08(MCP23S08Reg::GPIO) & MCP23S08::GP1) == 0)
-				mcp23s08.Write(MCP23S08Reg::OLAT, 0x01);
-		else
-			mcp23s08.Write(MCP23S08Reg::OLAT, 0x00);
-		*/
-
 		if (mcp23s08LedTimer.IsExpired())
 		{
 			if (ledValue == 0x01)
@@ -140,8 +142,16 @@ int main(void)
 		}
 
 		mcp23s08.WriteIT(MCP23S08Reg::OLAT, ledValue);
-
+		*/
 		////////////////________SPI________////////////////
+
+		/*			I2C					*/
+
+		if (lps25hbTimer.IsExpired())
+			ExampleUseOfLSB25HB_I2c(lps25hb);
+
+
+		/*			I2C					*/
 	}
 }
 
@@ -160,8 +170,8 @@ extern "C" void DMA1_Channel5_IRQHandler(void)
 
 extern "C" void SPI2_IRQHandler(void)
 {
-	spi2.IRQHandlerTX();
-	mcp23s08.InterruptHandler();
+	//spi2.IRQHandlerTX();
+	//mcp23s08.InterruptHandler();
 }
 
 //EXTI15_10_IRQHandler
@@ -244,7 +254,7 @@ void ExampleUseOfTFTDisplayST7735S(auto& LCD_CS, auto& LCD_RST, auto& LCD_DC, au
 	LCDCopy(LCD_DC, LCD_CS, spi);
 }
 
-void ExampleUseOfLSB25HB_I2c(auto& lsb25hb)
+void ExampleUseOfLSB25HB_I2c(auto& lps25hb)
 {
 	////////////////////////////////////////////////////////////
 		//////___________________I2C__________________________//////
@@ -252,7 +262,7 @@ void ExampleUseOfLSB25HB_I2c(auto& lsb25hb)
 		GpioAlternate<GPIO_TypeDef, 6, AlternateFunction::AF4, OptionsOTYPER::OpenDrain> i2c1SCL(GPIOB);
 		GpioAlternate<GPIO_TypeDef, 7, AlternateFunction::AF4, OptionsOTYPER::OpenDrain> i2c1SDA(GPIOB);
 
-		I2c<I2C1_BASE> i2c1{0x00100D14}; //from cubemx for specifc clock
+		//I2c<I2C1_BASE> i2c1{0x00100D14}; //from cubemx for specifc clock
 
 		/*
 		 *EEPROM
@@ -266,7 +276,7 @@ void ExampleUseOfLSB25HB_I2c(auto& lsb25hb)
 		i2c1.Read(deviceAddress, memoryAddress, &readResult, 1);
 		*/
 
-		LPS25HB lps25hb(i2c1);
+		//LPS25HB lps25hb(i2c1);
 		uart2.SendString("Searching...\n");
 		const uint8_t whoAmI = lps25hb.ReadRegister(LPS25HB_Registers::WHO_AM_I);
 

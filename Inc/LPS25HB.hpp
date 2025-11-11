@@ -1,10 +1,3 @@
-/*
- * LPS25HB.hpp
- *
- *  Created on: Jul 13, 2025
- *      Author: bartoszlozinski
- */
-
 #pragma once
 #ifndef LPS25HB_HPP_
 #define LPS25HB_HPP_
